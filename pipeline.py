@@ -100,12 +100,14 @@ class Pipeline:
         if (not self.pipelinerunsplithalf):
             self.runsplithalf()
         # compute seed connectivity maps for each split half
-        r_sh1=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[0]), \
+        (r_sh1,t_sh1,p_sh1)=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[0]), \
                                     fileutils.addniigzext(self.connectivityseedfile), \
-                                    self.splithalfoutputs[0]+'_seedconn.nii.gz')
-        r_sh2=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[1]), \
+                                    self.splithalfoutputs[0]+'_seedconn.nii.gz', \
+                                    1) # p_thresh = 1 (i.e., do not threshold)
+        (r_sh2,t_sh2,p_sh2)=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[1]), \
                                     fileutils.addniigzext(self.connectivityseedfile), \
-                                    self.splithalfoutputs[1]+'_seedconn.nii.gz')
+                                    self.splithalfoutputs[1]+'_seedconn.nii.gz', \
+                                    1) # p_thresh = 1 (i.e., do not threshold)
         # now compute the correlation between r_sh1 and r_sh2
         # first reshape into 1D
         r_sh1_1D=np.reshape(r_sh1,(1,np.prod(r_sh1.shape[0:3])))
