@@ -206,7 +206,7 @@ def getsubjects(subjectfile):
     return(subjects)
 
                 
-def makeconnseed(data,seedatlasfile,atlasfile,seedname):
+def makeconnseed(data,seedatlasfile,atlasfile,ofile):
     # data is a Data object
     # seedatlasfile contains a probabilistic seed ROI on MNI space (e.g., data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz)
     img=nibabel.load(data.bold)
@@ -238,12 +238,11 @@ def makeconnseed(data,seedatlasfile,atlasfile,seedname):
     # now use the transformation matrix to transfrom the atlas to subject-specific functional space
     p=subprocess.Popen(['flirt', '-in', seedatlasfile,\
                         '-applyxfm', '-init', obase+'_temp_mni2func.mat',\
-                        '-out', os.path.abspath(data.opath)+'/'+seedname,\
+                        '-out', ofile,\
                         '-paddingsize', '0.0', '-interp', 'trilinear', '-ref', obase+'_temp_bet_refvol'])
     p.communicate()
     # threshold at 50% and binarize
-    p=subprocess.Popen(['fslmaths', os.path.abspath(data.opath)+'/'+seedname, '-thr', '50', '-bin',\
-                        os.path.abspath(data.opath)+'/'+seedname])
+    p=subprocess.Popen(['fslmaths', ofile, '-thr', '50', '-bin', ofile])
     p.communicate()
     # remove temp files
     os.remove(fileutils.addniigzext(obase+'_temp_tmean'))
@@ -256,7 +255,8 @@ def makeconnseed(data,seedatlasfile,atlasfile,seedname):
     os.remove(obase+'_temp_struct2mni.mat')
     os.remove(obase+'_temp_func2mni.mat')
     os.remove(obase+'_temp_mni2func.mat')
-    
+    return(fileutils.addniigzext(ofile)) # also return the path to the seed file
+
 def savesubjects(filename,subjects):
     f=open(filename, 'w')
     for subj in subjects:

@@ -161,8 +161,8 @@ def makesteps(pipelinefile,data):
     steps=[]
     f=open(pipelinefile)
     line=f.readline()
-    while line != '':
-        s=line.split()
+    s=line.split()
+    while len(s)>0:
         name=s[0]
         params=s[1:]
         if s[0]=='retroicor':
@@ -175,6 +175,7 @@ def makesteps(pipelinefile,data):
         step=PreprocessingStep(name,params)
         steps.append(step)
         line=f.readline()
+        s=line.split()
     return(steps)
 
 def permutations(l):

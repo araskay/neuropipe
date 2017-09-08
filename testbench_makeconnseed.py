@@ -7,4 +7,4 @@ data.opath='/home/mkayvanrad/code/pipeline/temp/'
 seedatlasfile='/home/mkayvanrad/data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz'
 atlasfile='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain'
 
-workflow.makeconnseed(data,seedatlasfile,atlasfile,'pcc')
+workflow.makeconnseed(data,seedatlasfile,atlasfile,'/home/mkayvanrad/code/pipeline/temp/pcc.nii.gz')

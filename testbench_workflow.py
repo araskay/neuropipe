@@ -3,27 +3,27 @@ from pipeline import Pipeline
 from preprocessingstep import PreprocessingStep
 import fileutils
 import preprocessingstep
-import sys, getopt
+import sys, getopt, os
 
 # dictionary of corresponding sessions for Healthy elderly data set
 # sessions.keys() gives you all subject IDs
 # multiple sessions per subject are added to the lists on the right
 sessions=dict()
-#sessions['11912']=['20170201']
-#sessions['7397']=['20170213']
-#sessions['6051']=['20170222']
-#sessions['13719']=['20170316']
-#sessions['4592']=['20170328']
-#sessions['10306']=['20170329']
-#sessions['8971']=['20170413']
-#sessions['12087']=['20170421']
+sessions['11912']=['20170201']
+sessions['7397']=['20170213']
+sessions['6051']=['20170222']
+sessions['13719']=['20170316']
+sessions['4592']=['20170328']
+sessions['10306']=['20170329']
+sessions['8971']=['20170413']
+sessions['12087']=['20170421']
 sessions['12475']=['20170501']
 sessions['10724']=['20170526']
-#sessions['7334']=['20170605']
-#sessions['14804']=['20170608']
-#sessions['7982']=['20170612']
-#sessions['12420']=['20170615']
-#sessions['8060']=['20170628']
+sessions['7334']=['20170605']
+sessions['14804']=['20170608']
+sessions['7982']=['20170612']
+sessions['12420']=['20170615']
+sessions['8060']=['20170628']
 
 # parse command-line arguments
 try:
@@ -37,8 +37,11 @@ for (opt,arg) in opts:
         sys.exit()
     elif opt in ('-p','--pipeline'):
         pipelinefile=arg
-     
+
 basePath='/home/mkayvanrad/data/healthyelderly'
+seedatlasfile='/home/mkayvanrad/data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz'
+atlasfile='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain'
+seqname='mbepi'
 
 optimalwf=workflow.Workflow('Optimal Pipe')
 fixedwf=workflow.Workflow('Fixed Pipe')
@@ -47,24 +50,22 @@ for subj in sessions.keys():
     for sess in sessions[subj]:
         data=workflow.Data()
         data.bold=basePath+'/'+subj+'/'+sess+'/nii/mbepi.nii.gz'
+        data.structural=basePath+'/'+subj+'/'+sess+'/processed/mprage_swp_brain.nii.gz'
         data.card=basePath+'/'+subj+'/'+sess+'/physio/siemens/3fmri102b'+subj+'.puls.1D'
         data.resp=basePath+'/'+subj+'/'+sess+'/physio/biopac/run3.resp.1D'
-        
-        # make preprocessing steps
-        #afnissmooth=PreprocessingStep('ssmooth',['-fwhm',6])
-        #motcor=PreprocessingStep('motcor',[])
-        #retroicor=PreprocessingStep('retroicor', ['-ignore','10', '-card',run.data.card,'-resp',run.data.resp])
+        data.opath=basePath+'/'+subj+'/'+sess+'/processed'
+        data.connseed=workflow.makeconnseed(data,seedatlasfile,atlasfile,basePath+'/'+subj+'/'+sess+'/processed/pcc_harvard-oxford_'+seqname+'space')
         
         originalsteps=preprocessingstep.makesteps(pipelinefile,data)
         
         # fixed workflow
         subject=workflow.Subject(subj)
         session=workflow.Session(sess)
-        run=workflow.Run('mbepi',data)
+        run=workflow.Run(seqname,data)
         pipe=Pipeline('fixedpipe',originalsteps)
         pipe.setibase(fileutils.removeniftiext(data.bold))
-        pipe.setobase('/home/mkayvanrad/code/pipeline/temp/'+subj+'_'+sess)
-        pipe.setconnectivityseedfile(basePath+'/'+subj+'/'+sess+'/processed/pcc_harvard-oxford_mbepispace.nii.gz')
+        pipe.setobase(os.path.abspath(data.opath)+'/'+run.seqname)
+        pipe.setconnectivityseedfile(data.connseed)
         run.addpipeline(pipe)
         session.addrun(run)
         subject.addsession(session)
@@ -73,21 +74,24 @@ for subj in sessions.keys():
         # optimal workflow
         subject=workflow.Subject(subj)
         session=workflow.Session(sess)
-        run=workflow.Run('mbepi',data)
+        run=workflow.Run(seqname,data)
         count=0
         for steps in preprocessingstep.permutations(originalsteps):
             count=count+1
             pipe=Pipeline('pipe'+str(count),steps)
             pipe.setibase(fileutils.removeniftiext(data.bold))
-            pipe.setobase('/home/mkayvanrad/code/pipeline/temp/'+subj+'_'+sess)
-            pipe.setconnectivityseedfile(basePath+'/'+subj+'/'+sess+'/processed/pcc_harvard-oxford_mbepispace.nii.gz')
+            pipe.setobase(os.path.abspath(data.opath)+'/'+run.seqname)
+            pipe.setconnectivityseedfile(data.connseed)
             run.addpipeline(pipe)
         session.addrun(run)
         subject.addsession(session)
         optimalwf.addsubject(subject)
 
-optimalwf.computebetweensubjectreproducibility('mbepi')
-fixedwf.computebetweensubjectreproducibility('mbepi')
+workflow.savesubjects(basePath+'/subjects1.txt',fixedwf.subjects)
+workflow.savesubjects(basePath+'/subjects2.txt',fixedwf.subjects)
+        
+optimalwf.computebetweensubjectreproducibility(seqname)
+fixedwf.computebetweensubjectreproducibility(seqname)
 
 print(optimalwf.name,':')
 for betsubj in optimalwf.betweensubjectreproducibility:
