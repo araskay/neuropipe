@@ -11,7 +11,7 @@ afnissmooth=PreprocessingStep('ssmooth',['-fwhm',6])
 motcor=PreprocessingStep('motcor',[])
 retroicor=PreprocessingStep('retroicor',['-ignore','10','-card','/home/mkayvanrad/code/pipeline/temp/3fmri102b12475.puls.1D','-resp','/home/mkayvanrad/code/pipeline/temp/run3.resp.1D']);
 
-steps=[retroicor]
+steps=[motcor]
 
 pipe1=Pipeline('pipe1',steps)
 pipe1.setibase(ibase)

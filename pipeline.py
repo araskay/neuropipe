@@ -6,6 +6,7 @@ import seedcorr
 import fileutils
 import subprocess # used to run bash commands
 import os
+import spmsim
 
 class Pipeline:
     def __init__(self,name,steps):
@@ -13,10 +14,12 @@ class Pipeline:
         self.steps=steps
         self.keepintermed=False
         self.output=''
+        self.pipelinerun=False
         self.pipelinerunsplithalf=False
         self.splithalfoutputs=['','']
         self.splithalfseedconnreproducibility=None
         self.connectivityseedfile=''
+        self.seedconnoutput=''
     
     def setibase(self,ibase):
         self.ibase=ibase
@@ -53,14 +56,15 @@ class Pipeline:
                 step.setobase(stepobase)
                 step.removeofiles()
                 stepibase=stepobase
-
+        self.pipelinerun=True
                 
         
     def runsplithalf(self):
-        # get and save pipeline parameters to restore at the end
+        # get and save pipeline attributes to restore at the end
         ibase=self.ibase
         obase=self.obase
         output=self.output
+        pipelinerun=self.pipelinerun
         # read input and split it into half
         img_nib=nibabel.load(fileutils.addniigzext(ibase))
         img=img_nib.get_data()
@@ -85,10 +89,11 @@ class Pipeline:
         self.obase=obase+'_splithalf2'
         self.run()
         self.splithalfoutputs[1]=self.output
-        # restore pipeline's original ibase, obase, and output
+        # restore pipeline's original attributes
         self.ibase=ibase
         self.obase=obase
         self.output=output
+        self.pipelinerun=pipelinerun
         # set pipelinerunsplithalf to True
         self.pipelinerunsplithalf=True
     
@@ -100,25 +105,34 @@ class Pipeline:
         if (not self.pipelinerunsplithalf):
             self.runsplithalf()
         # compute seed connectivity maps for each split half
-        (r_sh1,t_sh1,p_sh1)=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[0]), \
-                                    fileutils.addniigzext(self.connectivityseedfile), \
-                                    self.splithalfoutputs[0]+'_seedconn.nii.gz', \
-                                    1) # p_thresh = 1 (i.e., do not threshold)
-        (r_sh2,t_sh2,p_sh2)=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[1]), \
-                                    fileutils.addniigzext(self.connectivityseedfile), \
-                                    self.splithalfoutputs[1]+'_seedconn.nii.gz', \
-                                    1) # p_thresh = 1 (i.e., do not threshold)
+        seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[0]), \
+                              fileutils.addniigzext(self.connectivityseedfile), \
+                              self.splithalfoutputs[0]+'_seedconn.nii.gz', \
+                              1) # p_thresh = 1 (i.e., do not threshold)
+        seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[1]), \
+                              fileutils.addniigzext(self.connectivityseedfile), \
+                              self.splithalfoutputs[1]+'_seedconn.nii.gz', \
+                              1) # p_thresh = 1 (i.e., do not threshold)
         # now compute the correlation between r_sh1 and r_sh2
-        # first reshape into 1D
-        r_sh1_1D=np.reshape(r_sh1,(1,np.prod(r_sh1.shape[0:3])))
-        r_sh2_1D=np.reshape(r_sh2,(1,np.prod(r_sh2.shape[0:3])))
-        # now compute Pearson correlation coefficient
-        self.splithalfseedconnreproducibility=np.corrcoef(r_sh1_1D,r_sh2_1D)[0][1]
-        
+        self.splithalfseedconnreproducibility=spmsim.pearsoncorr(self.splithalfoutputs[0]+'_seedconn_pearsonr.nii.gz', \
+                                                                 self.splithalfoutputs[1]+'_seedconn_pearsonr.nii.gz')
+
+    def calcseedconn(self):
+        if not self.pipelinerun:
+            self.run()
+        seedcorr.calcseedcorr(fileutils.addniigzext(self.output), \
+                              fileutils.addniigzext(self.connectivityseedfile), \
+                              self.output+'_seedconn.nii.gz', \
+                              1) # p_thresh = 1 (i.e., do not threshold)
+        self.seedconnoutput=self.output+'_seedconn_pearsonr'
             
-        
-        
-        
+    def getsteps(self):
+        s=''
+        for step in self.steps:
+            s=s+' > '+step.name
+        return(s)
+            
+
         
         
             

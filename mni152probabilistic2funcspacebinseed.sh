@@ -13,14 +13,13 @@ obase=$5 # output base path/name
 
 
 let refvol=$nvol/2 # use the middle volume as reference
-
 # extract brain mask from a temporal mean volume and apply to 4D data
 fslmaths ${funcim} -Tmean _temp_tmean # temporal mean
 bet2 _temp_tmean _temp_tmean  -f 0.3 -n -m # create a binary mask from the the mean image. (bet2 automatically adds a _mask suffix to the output file)
 fslmaths ${funcim} -mas _temp_tmean_mask _temp_bet # use the mask to brain extract the 4D functional data
 
 # calculate registration parameters
-fslroi _temp_bet _temp_bet_refvol refvol 1 # use the middle volume as reference
+fslroi _temp_bet _temp_bet_refvol $refvol 1 # use the middle volume as referenceFre
 flirt -in _temp_bet_refvol -ref ${structim} -out _temp_func2struct -omat _temp_func2struct.mat -dof 7
 #convert_xfm -inverse -omat ${obase}_struct2func.mat ${obase}_func2struct.mat
 flirt -ref /usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain -in ${structim} -out _temp_struct2mni -omat _temp_struct2mni.mat -dof 12 # on chegs the mni templates are located at /software/fsl/data/standard/MNI152lin_T1_2mm_brain

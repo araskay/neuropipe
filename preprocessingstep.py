@@ -43,22 +43,22 @@ class PreprocessingStep:
         elif (self.name == 'motcor'):
             # I. estimate min. displacement brain volume
             # first obtain a brain mask
-            process=subprocess.Popen(['3dAutomask', \
-                                      '-prefix',fileutils.removeniftiext(self.obase)+'_brainmask', \
+            process=subprocess.Popen(['3dAutomask', '-q', \
+                                      '-prefix',fileutils.removeniftiext(self.obase)+'_temp_brainmask', \
                                       fileutils.addniigzext(self.ibase)])
             (output,error)=process.communicate()
-            fileutils.afni2nifti(fileutils.removeniftiext(self.obase)+'_brainmask')
+            fileutils.afni2nifti(fileutils.removeniftiext(self.obase)+'_temp_brainmask')
             # now find min. displacement brain volume
             process=subprocess.Popen(['matlab', \
                                       '-nodisplay','-nosplash', \
                                       '-r', 'min_displace_brick('+ \
                                       '\''+fileutils.addniigzext(self.ibase)+'\',' + \
-                                      '\''+fileutils.removeniftiext(self.obase)+'_brainmask.nii.gz'+'\',' + \
-                                      '\''+fileutils.removeniftiext(self.obase)+'_mindisplacementInd'+'\'); '+ \
+                                      '\''+fileutils.removeniftiext(self.obase)+'_temp_brainmask.nii.gz'+'\',' + \
+                                      '\''+fileutils.removeniftiext(self.obase)+'_temp_mindisplacementInd'+'\'); '+ \
                                       'quit;'])
             (output,error)=process.communicate()
             # now coregister all volumes to the reference found above
-            f=open(fileutils.removeniftiext(self.obase)+'_mindisplacementInd_0ref_motbrick.txt','r')
+            f=open(fileutils.removeniftiext(self.obase)+'_temp_mindisplacementInd_0ref_motbrick.txt','r')
             # matlab scripts adds the _0ref_motbrick.txt part to the file name
             ind=f.read();
             ind=ind[0:-1] # remove \n
@@ -69,6 +69,8 @@ class PreprocessingStep:
                                       fileutils.addniigzext(self.ibase)])
             (output,error)=process.communicate()
             fileutils.afni2nifti(fileutils.removeniftiext(self.obase))
+            os.remove(fileutils.removeniftiext(self.obase)+'_temp_brainmask.nii.gz')
+            os.remove(fileutils.removeniftiext(self.obase)+'_temp_mindisplacementInd_0ref_motbrick.txt')
             
         elif (self.name == 'retroicor'):
             process=subprocess.Popen(['3dretroicor', \
@@ -80,24 +82,105 @@ class PreprocessingStep:
             (output,error)=process.communicate()
             fileutils.afni2nifti(fileutils.removeniftiext(self.obase))           
         
+        elif (self.name == '3dSkullStrip'):
+            process=subprocess.Popen(['3dSkullStrip',\
+                                      '-input',fileutils.addniigzext(self.ibase),\
+                                      '-prefix', fileutils.removeniftiext(self.obase)])
+            process.communicate()
+            fileutils.afni2nifti(fileutils.removeniftiext(self.obase))
+        
+        elif (self.name == 'bet'):
+            p=subprocess.Popen(['bet',self.ibase,self.obase]+self.params)
+            p.communicate()
+
+        elif (self.name == 'fslreorient2std'):
+            p=subprocess.Popen(['fslreorient2std',self.ibase,self.obase])
+            p.communicate()
+            
+        elif (self.name == 'brainExtractAFNI'):
+            # first use 3dAutomask to create a brain mask
+            process=subprocess.Popen(['3dAutomask', '-q', \
+                                      '-prefix',fileutils.removeniftiext(self.obase)+'_temp_brainmask', \
+                                      fileutils.addniigzext(self.ibase)])
+            (output,error)=process.communicate()
+            fileutils.afni2nifti(fileutils.removeniftiext(self.obase)+'_temp_brainmask')
+            # then use the mask to extract the 4D functional data
+            p=subprocess.Popen(['fslmaths',self.ibase,\
+                                '-mas',fileutils.removeniftiext(self.obase)+'_temp_brainmask',\
+                                fileutils.removeniftiext(self.obase)])
+            p.communicate()
+            os.remove(fileutils.removeniftiext(self.obase)+'_temp_brainmask.nii.gz')
+
+        elif (self.name == 'brainExtractFSL'):
+            # first extract brain mask from a temporal mean volume
+            p=subprocess.Popen(['fslmaths',self.ibase,'-Tmean',fileutils.removeniftiext(self.obase)+'_temp_tmean'])
+            p.communicate()
+            p=subprocess.Popen(['bet2',fileutils.removeniftiext(self.obase)+'_temp_tmean',\
+                                fileutils.removeniftiext(self.obase)+'_temp_tmean',\
+                                '-f','0.3','-n','-m']) # create a binary mask from the the mean image. (bet2 automatically adds a _mask suffix to the output file)
+            p.communicate()
+            # then use the mask to extract the 4D functional data
+            p=subprocess.Popen(['fslmaths',self.ibase,\
+                                '-mas',fileutils.removeniftiext(self.obase)+'_temp_tmean_mask',\
+                                self.obase])
+            p.communicate()
+            os.remove(fileutils.removeniftiext(self.obase)+'_temp_tmean.nii.gz')
+            os.remove(fileutils.removeniftiext(self.obase)+'_temp_tmean_mask.nii.gz')
+            
         else:
             sys.exit('Error: preprocessing step not defined')
             
     def removeofiles(self):
         if (self.name == 'mcflirt'):
             os.remove(fileutils.removeniftiext(self.obase)+'.par')
-            os.remove(fileutils.removeniftiext(self.obase)+'.nii.gz')
+            os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'seedconn'):
             os.remove(fileutils.removeniftiext(self.obase)+'_pearsonr.nii.gz')
             os.remove(fileutils.removeniftiext(self.obase)+'_tval.nii.gz')
         elif (self.name == 'ssmooth'):
-            os.remove(fileutils.removeniftiext(self.obase)+'.nii.gz')
+            os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'motcor'):
-            os.remove(fileutils.removeniftiext(self.obase)+'.nii.gz')
-            os.remove(fileutils.removeniftiext(self.obase)+'_brainmask.nii.gz')
-            os.remove(fileutils.removeniftiext(self.obase)+'_mindisplacementInd_0ref_motbrick.txt')
+            os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'retroicor'):
-            os.remove(fileutils.removeniftiext(self.obase)+'.nii.gz')
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == '3dSkullStrip'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'bet'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'fslreorient2std'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'brainExtractAFNI'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'brainExtractFSL'):
+            os.remove(fileutils.addniigzext(self.obase))
         else:
             sys.exit('Error: preprocessing step not defined')    
 
+
+def makesteps(pipelinefile,data):
+    steps=[]
+    f=open(pipelinefile)
+    line=f.readline()
+    while line != '':
+        s=line.split()
+        name=s[0]
+        params=s[1:]
+        if s[0]=='retroicor':
+            if data.card != '':
+                params.append('-card')
+                params.append(data.card)
+            if data.resp != '':
+                params.append('-resp')
+                params.append(data.resp)        
+        step=PreprocessingStep(name,params)
+        steps.append(step)
+        line=f.readline()
+    return(steps)
+
+def permutations(l):
+    if len(l) <= 1:
+        yield l
+    else:
+        for p in permutations(l[1:]):
+            for i in range(len(l)):
+                yield(p[:i]+l[0:1]+p[i:])

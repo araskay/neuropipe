@@ -1,9 +1,9 @@
 from preprocessingstep import PreprocessingStep
 
-mcflirt=PreprocessingStep('mcflirt','')
+p=PreprocessingStep('brainExtractAFNI',[])
 
-mcflirt.setibase('/home/mkayvanrad/code/pipeline/temp/mbepi')
-mcflirt.setobase('/home/mkayvanrad/code/pipeline/temp/mbepi_mc')
+p.setibase('/home/mkayvanrad/code/pipeline/temp/mbepi')
+p.setobase('/home/mkayvanrad/code/pipeline/temp/mbepi_beAFNI')
 
-mcflirt.run()
+p.run()
 
