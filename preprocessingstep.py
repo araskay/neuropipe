@@ -180,8 +180,24 @@ def makesteps(pipelinefile,data):
 
 def permutations(l):
     if len(l) <= 1:
-        yield l
+        yield(l)
     else:
         for p in permutations(l[1:]):
             for i in range(len(l)):
                 yield(p[:i]+l[0:1]+p[i:])
+
+def onoff(l):
+    if len(l) <= 1:
+        yield(l)
+        yield([])
+    else:
+        for p in onoff(l[1:]):
+            yield(l[0:1]+p)
+            yield(p)
+
+def concatstepslists(l1,l2):
+    # NOTE: inputs must be lists of lists NOT generators
+    for p1 in l1:
+        for p2 in l2:
+            yield(p1+p2)
+
