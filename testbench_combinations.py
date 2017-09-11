@@ -1,5 +1,5 @@
 import preprocessingstep as p
-l1=[1,2]
+l1=[]
 l2=[10]
 a=list(p.permutations(l1))
 #print(a)
