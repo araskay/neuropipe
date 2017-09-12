@@ -12,13 +12,16 @@ class Pipeline:
     def __init__(self,name,steps):
         self.name=name
         self.steps=steps
+        self.ibase=''
+        self.obase=''
+        self.data=None
         self.keepintermed=False
         self.output=''
         self.pipelinerun=False
         self.pipelinerunsplithalf=False
         self.splithalfoutputs=['','']
         self.splithalfseedconnreproducibility=None
-        self.connectivityseedfile=''
+        #self.connectivityseedfile=''
         self.seedconnoutput=''
     
     def setibase(self,ibase):
@@ -26,6 +29,9 @@ class Pipeline:
         
     def setobase(self,obase):
         self.obase=obase
+    
+    def setdata(self,data):
+        self.data=data
         
     def discardintermediates(self):
         self.keepintermed=False
@@ -33,29 +39,35 @@ class Pipeline:
     def keepintermediates(self):
         self.keepintermed=True
         
-    def setconnectivityseedfile(self,seedfile):
-        self.connectivityseedfile=seedfile
+    #def setconnectivityseedfile(self,seedfile):
+    #    self.connectivityseedfile=seedfile
     
     def run(self):
-        stepibase=self.ibase
-        stepobase=self.obase+'_'+self.name
-        for step in self.steps:
-            stepobase=stepobase+'_'+step.name
-            step.setibase(stepibase)
-            step.setobase(stepobase)
-            step.run()
-            stepibase=stepobase
-        self.output=stepobase
-        # discard intermediates if needed
-        if (not self.keepintermed):
+        if len(self.steps)>0:
             stepibase=self.ibase
             stepobase=self.obase+'_'+self.name
-            for step in self.steps[0:-1]:
+            for step in self.steps:
                 stepobase=stepobase+'_'+step.name
                 step.setibase(stepibase)
                 step.setobase(stepobase)
-                step.removeofiles()
+                step.setdata(self.data)
+                step.run()
                 stepibase=stepobase
+            self.output=stepobase
+            # discard intermediates if needed
+            if (not self.keepintermed):
+                stepibase=self.ibase
+                stepobase=self.obase+'_'+self.name
+                for step in self.steps[0:-1]:
+                    stepobase=stepobase+'_'+step.name
+                    step.setibase(stepibase)
+                    step.setobase(stepobase)
+                    step.removeofiles()
+                    stepibase=stepobase
+        else:
+            p=subprocess.Popen(['fslchfiletype','NIFTI_GZ',self.ibase,self.obase+'_'+self.name])
+            p.communicate()
+            self.output=self.obase+'_'+self.name
         self.pipelinerun=True
                 
         
@@ -99,18 +111,18 @@ class Pipeline:
     
     def calcsplithalfseedconnreproducibility(self):
         # make sure seed file is given
-        if (self.connectivityseedfile == ''):
+        if (self.data.connseed == ''):
             sys.exit('Error: Need to set a seed file before calling calcsplithalfseedconnreproducibility. Use Pipeline class method setconnectivityseedfile(<seedfilename>).')
         # if runsplithalf not called already, call it now
         if (not self.pipelinerunsplithalf):
             self.runsplithalf()
         # compute seed connectivity maps for each split half
         seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[0]), \
-                              fileutils.addniigzext(self.connectivityseedfile), \
+                              fileutils.addniigzext(self.data.connseed), \
                               self.splithalfoutputs[0]+'_seedconn.nii.gz', \
                               1) # p_thresh = 1 (i.e., do not threshold)
         seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[1]), \
-                              fileutils.addniigzext(self.connectivityseedfile), \
+                              fileutils.addniigzext(self.data.connseed), \
                               self.splithalfoutputs[1]+'_seedconn.nii.gz', \
                               1) # p_thresh = 1 (i.e., do not threshold)
         # now compute the correlation between r_sh1 and r_sh2
@@ -121,7 +133,7 @@ class Pipeline:
         if not self.pipelinerun:
             self.run()
         seedcorr.calcseedcorr(fileutils.addniigzext(self.output), \
-                              fileutils.addniigzext(self.connectivityseedfile), \
+                              fileutils.addniigzext(self.data.connseed), \
                               self.output+'_seedconn.nii.gz', \
                               1) # p_thresh = 1 (i.e., do not threshold)
         self.seedconnoutput=self.output+'_seedconn_pearsonr'

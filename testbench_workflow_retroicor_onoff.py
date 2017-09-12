@@ -38,6 +38,9 @@ for (opt,arg) in opts:
     elif opt in ('-p','--pipeline'):
         pipelinefile=arg
 
+pipelinefile='/home/mkayvanrad/code/pipeline/temp/pipeline.txt'
+pipelinefile2='/home/mkayvanrad/code/pipeline/temp/pipeline2.txt'
+        
 basePath='/home/mkayvanrad/data/healthyelderly'
 seedatlasfile='/home/mkayvanrad/data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz'
 atlasfile='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain'
@@ -58,6 +61,7 @@ for subj in sessions.keys():
         data.connseed=basePath+'/'+subj+'/'+sess+'/processed/pcc_harvard-oxford_'+seqname+'space.nii.gz'
         
         originalsteps=preprocessingstep.makesteps(pipelinefile,data)
+        originalsteps2=preprocessingstep.makesteps(pipelinefile2,data)
         
         # fixed workflow
         subject=workflow.Subject(subj)
@@ -79,22 +83,28 @@ for subj in sessions.keys():
         count=0
         for steps in preprocessingstep.permutations(originalsteps):
             count=count+1
-            pipe=Pipeline('pipe'+str(count),steps)
+            pipe=Pipeline('yesretroicor'+str(count),steps)
             pipe.setibase(fileutils.removeniftiext(data.bold))
             pipe.setobase(os.path.abspath(data.opath)+'/'+run.seqname)
             pipe.setconnectivityseedfile(data.connseed)
             run.addpipeline(pipe)
+        for steps in preprocessingstep.permutations(originalsteps2):
+            count=count+1
+            pipe=Pipeline('noretroicor'+str(count),steps)
+            pipe.setibase(fileutils.removeniftiext(data.bold))
+            pipe.setobase(os.path.abspath(data.opath)+'/'+run.seqname)
+            pipe.setconnectivityseedfile(data.connseed)
+            run.addpipeline(pipe)            
         session.addrun(run)
         subject.addsession(session)
         optimalwf.addsubject(subject)
 
 workflow.savesubjects(basePath+'/subjects1.txt',fixedwf.subjects)
-workflow.savesubjects(basePath+'/subjects2.txt',fixedwf.subjects)
         
 optimalwf.computebetweensubjectreproducibility(seqname)
 fixedwf.computebetweensubjectreproducibility(seqname)
 
-print(optimalwf.name,':')
+print(optimalwf.name,': Optimal Pipelines:')
 for betsubj in optimalwf.betweensubjectreproducibility:
     print(betsubj.subject1.ID,'_',betsubj.session1.ID, \
           'Optimal pipeline:',betsubj.run1.optimalpipeline.getsteps(), \

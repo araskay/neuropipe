@@ -12,6 +12,9 @@ class Data:
         self.resp=''
         self.opath=''
         self.connseed=''
+        self.motpar=''
+        self.brainmask=''
+        self.motglm=''
 
 class BetweenSubject:
     def __init__(self):
@@ -131,7 +134,8 @@ class Workflow:
                             betsubj.metric=r
                             self.betweensubjectreproducibility.append(betsubj)
                             avgr=avgr+r
-        avgr=avgr/count
+        if count>0:
+            avgr=avgr/count
         self.averagebetweensubjectreproducibility=avgr
                 
 def getsubjects(subjectfile):
