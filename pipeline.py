@@ -43,11 +43,16 @@ class Pipeline:
     #    self.connectivityseedfile=seedfile
     
     def run(self):
+        # first create output directory if necessary
+        (directory,namebase)=os.path.split(self.obase)
+        fileutils.createdir(directory)
         if len(self.steps)>0:
             stepibase=self.ibase
-            stepobase=self.obase+'_'+self.name
+            stepobase=self.obase
+            if len(self.name)>0:
+                stepobase+='_'+self.name
             for step in self.steps:
-                stepobase=stepobase+'_'+step.name
+                stepobase+='_'+step.name
                 step.setibase(stepibase)
                 step.setobase(stepobase)
                 step.setdata(self.data)
@@ -57,9 +62,11 @@ class Pipeline:
             # discard intermediates if needed
             if (not self.keepintermed):
                 stepibase=self.ibase
-                stepobase=self.obase+'_'+self.name
+                stepobase=self.obase
+                if len(self.name)>0:
+                    stepobase+='_'+self.name
                 for step in self.steps[0:-1]:
-                    stepobase=stepobase+'_'+step.name
+                    stepobase+='_'+step.name
                     step.setibase(stepibase)
                     step.setobase(stepobase)
                     step.removeofiles()

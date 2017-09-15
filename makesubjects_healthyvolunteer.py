@@ -9,26 +9,23 @@ import sys, getopt, os
 # sessions.keys() gives you all subject IDs
 # multiple sessions per subject are added to the lists on the right
 sessions=dict()
-#sessions['11912']=['20170201']
-#sessions['7397']=['20170213']
-#sessions['6051']=['20170222']
-sessions['13719']=['20170316']
-sessions['4592']=['20170328']
-sessions['10306']=['20170329']
-sessions['8971']=['20170413']
-sessions['12087']=['20170421']
-sessions['12475']=['20170501']
-sessions['10724']=['20170526']
-sessions['7334']=['20170605']
-sessions['14804']=['20170608']
-sessions['7982']=['20170612']
-sessions['12420']=['20170615']
-sessions['8060']=['20170628']
+sessions['7130']=['20140312']
+sessions['7934']=['20140207']
+sessions['9910']=['20140204']
+sessions['10577']=['20140325']
+sessions['10649']=['20140316']
+sessions['11164']=['20140316']
+sessions['11308']=['20140304']
+sessions['11494']=['20140311']
+sessions['11515']=['20140305']
+sessions['11570']=['20140310']
+sessions['11672']=['20140318']
 
-basePath='/home/mkayvanrad/data/healthyelderly'
+basePath='/home/mkayvanrad/data/healthyvolunteer'
 seedatlasfile='/home/mkayvanrad/data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz'
 atlasfile='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain'
 seqname='mbepi'
+attnstr='#####'
 
 subjects=[]
 
@@ -37,13 +34,15 @@ for subj in sessions.keys():
         fileutils.createdir(basePath+'/'+subj+'/'+sess+'/processed/')
         data=workflow.Data()
         data.bold=basePath+'/'+subj+'/'+sess+'/nii/mbepi.nii.gz'
-        data.structural=workflow.skullstrip_fsl(basePath+'/'+subj+'/'+sess+'/processed/',\
-                                                basePath+'/'+subj+'/'+sess+'/processed/')
+        if not os.path.exists(data.bold):
+            data.bold+=attentionstr
         data.card=basePath+'/'+subj+'/'+sess+'/physio/siemens/3fmri102b'+subj+'.puls.1D'
+        if not os.path.exists(data.card):
+            data.card+=attentionstr
         data.resp=basePath+'/'+subj+'/'+sess+'/physio/biopac/run3.resp.1D'
+        if not os.path.exists(data.resp):
+            data.resp+=attentionstr
         data.opath=basePath+'/'+subj+'/'+sess+'/processed'+'/'+seqname
-        #data.connseed=workflow.makeconnseed(data,seedatlasfile,atlasfile,basePath+'/'+subj+'/'+sess+'/processed/pcc_harvard-oxford_'+seqname+'space')
-        data.connseed=basePath+'/'+subj+'/'+sess+'/processed/pcc_harvard-oxford_'+seqname+'space.nii.gz'
         subject=workflow.Subject(subj)
         session=workflow.Session(sess)
         run=workflow.Run(seqname,data)

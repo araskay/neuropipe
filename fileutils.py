@@ -1,6 +1,13 @@
 import os
 import subprocess
 
+def removext(filename):
+    noext=os.path.splitext(filename)[0]
+    if noext==filename:
+        return(noext)
+    else:
+        return(removext(noext))
+
 def addniigzext(filename):
     if (filename[-4:len(filename)] == '.nii'):
         #print('Input is a file with .nii extension. Cannot add .nii.gz extension')
@@ -29,3 +36,10 @@ def afni2nifti(filename):
     # remove afni files- it is important since most AFNI functions do not overwrite existing files
     os.remove(filename+'+orig.HEAD')
     os.remove(filename+'+orig.BRIK')    
+    
+def createdir(dirpath):
+    try:
+        os.makedirs(dirpath)
+    except:
+        print('Directory exists. Moving on.')
+    

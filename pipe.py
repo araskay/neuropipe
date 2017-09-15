@@ -12,11 +12,12 @@ addsteps=True
 runpipesteps=[] # this is a list
 optimalpipesteps=[] # this is a list of lists
 fixedpipesteps=[] # this is a list
+showpipes=False
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed='])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes'])
 except getopt.GetoptError:
     print('usage: testbench_workflow.py -p <pipeline text file> -s <subjects file>')
     sys.exit()
@@ -54,6 +55,8 @@ for (opt,arg) in opts:
         addsteps=True
     elif opt in ('--combine'):
         addsteps=False
+    elif opt in ('--showpipes'):
+        showpipes=True
         
 # run workflow
 if len(runpipesteps)>0:
@@ -107,16 +110,18 @@ if len(fixedpipesteps)>0:
                 #pipe.setconnectivityseedfile(run.data.connseed)
                 run.addpipeline(pipe)
         fixedwf.addsubject(subj)
-# now process
-if len(runpipesteps)>0:
-    runwf.process()
 
-if len(optimalpipesteps)>0:
-    seqname=fixedwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
-    optimalwf.computebetweensubjectreproducibility(seqname)
-if len(fixedpipesteps)>0:
-    seqname=fixedwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
-    fixedwf.computebetweensubjectreproducibility(seqname)
+# now process
+if not showpipes:
+    if len(runpipesteps)>0:
+        runwf.process()
+
+    if len(optimalpipesteps)>0:
+        seqname=optimalwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
+        optimalwf.computebetweensubjectreproducibility(seqname)
+    if len(fixedpipesteps)>0:
+        seqname=fixedwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
+        fixedwf.computebetweensubjectreproducibility(seqname)
 
 # print all pipelines run
 if len(runpipesteps)>0:

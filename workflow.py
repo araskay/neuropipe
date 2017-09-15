@@ -15,6 +15,8 @@ class Data:
         self.motpar=''
         self.brainmask=''
         self.motglm=''
+        self.siemensphysio=''
+        self.biopacphysio=''
 
 class BetweenSubject:
     def __init__(self):
@@ -153,6 +155,11 @@ def getsubjects(subjectfile):
         sequence=''
         structural=''
         connseed=''
+        motpar=''
+        brainmask=''
+        motglm=''
+        siemensphysio=''
+        biopacphysio=''        
         try:
             (opts,args) = getopt.getopt(l,'',['subjectID=',\
                                               'sessionID=',\
@@ -162,9 +169,14 @@ def getsubjects(subjectfile):
                                               'resp=',\
                                               'opath=',\
                                               'sequence=',\
-                                              'connseed='])
+                                              'connseed=',\
+                                              'motpar=',\
+                                              'brainmask=',\
+                                              'motglm=',\
+                                              'siemensphysio=',\
+                                              'biopacphysio='])
         except getopt.GetoptError:
-            sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file (e.g., subjects.txt). Valid identifiers are the following:\n--subjectID\n--sessionID\n--bold\n--structural\n--card\n--resp\n--opath\n--sequence\n--connseed\nAlso please note that identifiers require double dash (--)')
+            sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file (e.g., subjects.txt). Also please note that identifiers require double dash (--)')
         for (opt,arg) in opts:
             if opt in ('--subjectID'):
                 subjectID=arg
@@ -184,6 +196,16 @@ def getsubjects(subjectfile):
                 sequence=arg
             elif opt in ('--connseed'):
                 connseed=arg
+            elif opt in ('--motpar'):
+                motpar=arg
+            elif opt in ('--brainmask'):
+                brainmask=arg
+            elif opt in ('--motglm'):
+                motglm=arg
+            elif opt in ('--siemensphysio'):
+                siemensphysio=arg
+            elif opt in ('--biopacphysio'):
+                biopacphysio=arg
         data=Data()
         data.bold=bold
         data.structural=structural
@@ -191,6 +213,11 @@ def getsubjects(subjectfile):
         data.resp=resp
         data.opath=opath
         data.connseed=connseed
+        data.motpar=motpar
+        data.brainmask=brainmask
+        data.motglm=motglm
+        data.siemensphysio=siemensphysio
+        data.biopacphysio=biopacphysio
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if s.ID==subjectID]
         if len(matchsubj)>0:
@@ -217,49 +244,69 @@ def makeconnseed(data,seedatlasfile,atlasfile,ofile):
     nvol=img.shape[3]
     refvol=nvol/2 # use the middle volume as reference
     # extract brain mask from a temporal mean volume and apply to 4D data
-    (ipath,ifilename)=os.path.split(data.bold)
-    obase=os.path.abspath(data.opath)+'/'+fileutils.removeniftiext(ifilename)
-    p=subprocess.Popen(['fslmaths',data.bold,'-Tmean',obase+'_temp_tmean']) # temporal mean
+    obase=data.opath
+    p=subprocess.Popen(['fslmaths',data.bold,'-Tmean',obase+'__tmean']) # temporal mean
     p.communicate()
-    p=subprocess.Popen(['bet2',obase+'_temp_tmean',obase+'_temp_tmean','-f','0.3','-n','-m']) # create a binary mask from the the mean image. (bet2 automatically adds a _mask suffix to the output file)
+    p=subprocess.Popen(['bet2',obase+'__tmean',obase+'__tmean','-f','0.3','-n','-m']) # create a binary mask from the the mean image. (bet2 automatically adds a _mask suffix to the output file)
     p.communicate()
-    p=subprocess.Popen(['fslmaths',data.bold,'-mas',obase+'_temp_tmean_mask',obase+'_temp_bet']) # use the mask to brain extract the 4D functional data
+    p=subprocess.Popen(['fslmaths',data.bold,'-mas',obase+'__tmean_mask',obase+'__bet']) # use the mask to brain extract the 4D functional data
     p.communicate()
     # calculate registration parameters
-    p=subprocess.Popen(['fslroi',obase+'_temp_bet',obase+'_temp_bet_refvol',str(refvol),'1']) # use the middle volume as reference
+    p=subprocess.Popen(['fslroi',obase+'__bet',obase+'__bet_refvol',str(refvol),'1']) # use the middle volume as reference
     p.communicate()
-    p=subprocess.Popen(['flirt','-in',obase+'_temp_bet_refvol','-ref',data.structural,\
-                        '-out',obase+'_temp_func2struct','-omat',obase+'_temp_func2struct.mat', '-dof','7'])
+    p=subprocess.Popen(['flirt','-in',obase+'__bet_refvol','-ref',data.structural,\
+                        '-out',obase+'__func2struct','-omat',obase+'__func2struct.mat', '-dof','7'])
     p.communicate()
     p=subprocess.Popen(['flirt', '-ref', atlasfile, '-in', data.structural,\
-                        '-out', obase+'_temp_struct2mni', '-omat', obase+'_temp_struct2mni.mat', '-dof', '12'])
+                        '-out', obase+'__struct2mni', '-omat', obase+'__struct2mni.mat', '-dof', '12'])
     p.communicate()
-    p=subprocess.Popen(['convert_xfm', '-omat', obase+'_temp_func2mni.mat',\
-                        '-concat', obase+'_temp_struct2mni.mat', obase+'_temp_func2struct.mat'])
+    p=subprocess.Popen(['convert_xfm', '-omat', obase+'__func2mni.mat',\
+                        '-concat', obase+'__struct2mni.mat', obase+'__func2struct.mat'])
     p.communicate()
-    p=subprocess.Popen(['convert_xfm', '-inverse', '-omat', obase+'_temp_mni2func.mat', obase+'_temp_func2mni.mat'])
+    p=subprocess.Popen(['convert_xfm', '-inverse', '-omat', obase+'__mni2func.mat', obase+'__func2mni.mat'])
     p.communicate()
     # now use the transformation matrix to transfrom the atlas to subject-specific functional space
     p=subprocess.Popen(['flirt', '-in', seedatlasfile,\
-                        '-applyxfm', '-init', obase+'_temp_mni2func.mat',\
+                        '-applyxfm', '-init', obase+'__mni2func.mat',\
                         '-out', ofile,\
-                        '-paddingsize', '0.0', '-interp', 'trilinear', '-ref', obase+'_temp_bet_refvol'])
+                        '-paddingsize', '0.0', '-interp', 'trilinear', '-ref', obase+'__bet_refvol'])
     p.communicate()
     # threshold at 50% and binarize
     p=subprocess.Popen(['fslmaths', ofile, '-thr', '50', '-bin', ofile])
     p.communicate()
     # remove temp files
-    os.remove(fileutils.addniigzext(obase+'_temp_tmean'))
-    os.remove(fileutils.addniigzext(obase+'_temp_tmean_mask'))
-    os.remove(fileutils.addniigzext(obase+'_temp_bet'))
-    os.remove(fileutils.addniigzext(obase+'_temp_bet_refvol'))
-    os.remove(fileutils.addniigzext(obase+'_temp_func2struct'))   
-    os.remove(obase+'_temp_func2struct.mat')
-    os.remove(fileutils.addniigzext(obase+'_temp_struct2mni'))
-    os.remove(obase+'_temp_struct2mni.mat')
-    os.remove(obase+'_temp_func2mni.mat')
-    os.remove(obase+'_temp_mni2func.mat')
+    os.remove(fileutils.addniigzext(obase+'__tmean'))
+    os.remove(fileutils.addniigzext(obase+'__tmean_mask'))
+    os.remove(fileutils.addniigzext(obase+'__bet'))
+    os.remove(fileutils.addniigzext(obase+'__bet_refvol'))
+    os.remove(fileutils.addniigzext(obase+'__func2struct'))   
+    os.remove(obase+'__func2struct.mat')
+    os.remove(fileutils.addniigzext(obase+'__struct2mni'))
+    os.remove(obase+'__struct2mni.mat')
+    os.remove(obase+'__func2mni.mat')
+    os.remove(obase+'__mni2func.mat')
     return(fileutils.addniigzext(ofile)) # also return the path to the seed file
+
+def skullstrip_fsl(ifile,obase):
+    #(ipath,ifilename)=os.path.split(ifile,ofile)
+    #obase=os.path.abspath(data.opath)+'/'+fileutils.removeniftiext(ifilename)    
+    p=subprocess.Popen(['fslreorient2std',ifile,fileutils.removeniftiext(obase)+'_reorient'])
+    p.communicate()
+    p=subprocess.Popen(['bet',fileutils.removeniftiext(obase)+'_reorient',\
+                        fileutils.removeniftiext(obase)+'_reorient_skullstrip'])
+    p.communicate()
+    return(fileutils.addniigzext(fileutils.removeniftiext(obase)+'_reorient_skullstrip')) # also return the path to the brain extracted file
+
+def skullstrip_afni(ifile,obase):
+    #(ipath,ifilename)=os.path.split(ifile,ofile)
+    #obase=os.path.abspath(data.opath)+'/'+fileutils.removeniftiext(ifilename)    
+    p=subprocess.Popen(['fslreorient2std',ifile,fileutils.removeniftiext(obase)+'_reorient'])
+    p.communicate()
+    p=subprocess.Popen(['3dSkullStrip','-input',fileutils.removeniftiext(obase)+'_reorient.nii.gz',\
+                        '-prefix',fileutils.removeniftiext(obase)+'_reorient_skullstrip'])
+    p.communicate()
+    fileutils.afni2nifti(fileutils.removeniftiext(obase)+'_reorient_skullstrip')
+    return(fileutils.addniigzext(fileutils.removeniftiext(obase)+'_reorient_skullstrip')) # also return the path to the brain extracted file
 
 def savesubjects(filename,subjects):
     f=open(filename, 'w')
@@ -274,7 +321,12 @@ def savesubjects(filename,subjects):
                         '--card \''+run.data.card+'\' '+\
                         '--resp \''+run.data.resp+'\' '+\
                         '--opath \''+run.data.opath+'\' '+\
-                        '--connseed \''+run.data.connseed+'\''+'\n')
+                        '--connseed \''+run.data.connseed+'\' '+\
+                        '--motpar \''+run.data.motpar+'\' '+\
+                        '--brainmask \''+run.data.brainmask+'\' '+\
+                        '--motglm \''+run.data.motglm+'\' '+\
+                        '--siemensphysio \''+run.data.siemensphysio+'\' '+\
+                        '--biopacphysio \''+run.data.biopacphysio+'\''+'\n')
     f.close()
     
                         

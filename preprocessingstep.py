@@ -166,9 +166,7 @@ class PreprocessingStep:
             else:
                 os.remove(fileutils.removeniftiext(self.obase)+'__motglm.nii.gz')
             
-        else:
-            sys.exit('Error: preprocessing step not defined')
-            
+         
     def removeofiles(self):
         if (self.name == 'mcflirt'):
             os.remove(fileutils.addniigzext(self.obase))

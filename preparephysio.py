@@ -1,0 +1,46 @@
+import workflow, getopt,sys,fileutils, subprocess,os
+
+ifile=''
+ofile=''
+
+# parse command-line arguments
+try:
+    (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',\
+                                ['help','input=', 'output='])
+except getopt.GetoptError:
+    print('usage: makeconnseed.py -i <input subject file> -o <output subject file>')
+    sys.exit()
+for (opt,arg) in opts:
+    if opt in ('-h', '--help'):
+        print('usage: makeconnseed.py -i <input subject file> -o <output subject file>')
+        sys.exit()
+    elif opt in ('-i','--input'):
+        ifile=arg
+    elif opt in ('-o','--output'):
+        ofile=arg
+
+if ifile=='' or ofile=='':
+    sys.exit('Please provide both input subject file and output subject file')
+        
+subjects=workflow.getsubjects(ifile)
+
+for subj in subjects:
+    for sess in subj.sessions:
+        for run in sess.runs:
+            p=subprocess.Popen(['prepphysio',run.data.siemensphysio])
+            p.communicate()
+            (directory,namebase)=os.path.split(run.data.siemensphysio)
+            os.rename(namebase+'.resp.1D',directory+'/'+namebase+'.resp.1D')
+            os.rename(namebase+'.puls.1D',directory+'/'+namebase+'.puls.1D')
+            run.data.card=directory+'/'+namebase+'.puls.1D'
+            
+            (d,n)=os.path.split(run.data.biopacphysio)
+            p=subprocess.Popen(['matlab', \
+                                '-nodisplay','-nosplash', '-r',\
+                                'respbiopac2resp1d('+'\''+run.data.biopacphysio+'\','+ \
+                                '\''+d+'/'+fileutils.removext(n)+'.resp.1D'+'\'); '+ \
+                                      'quit;'])
+            p.communicate()
+            run.data.resp=d+'/'+fileutils.removext(n)+'.resp.1D'
+            
+workflow.savesubjects(ofile,subjects)
