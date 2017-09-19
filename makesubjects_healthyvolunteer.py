@@ -21,11 +21,11 @@ sessions['11515']=['20140305']
 sessions['11570']=['20140310']
 sessions['11672']=['20140318']
 
-basePath='/home/mkayvanrad/data/healthyvolunteer'
-seedatlasfile='/home/mkayvanrad/data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz'
-atlasfile='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain'
+basePath='/data/klymene/chen_lab/mkayvanrad/data/healthyvolunteer'
+#seedatlasfile='/home/mkayvanrad/data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz'
+#atlasfile='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain'
 seqname='mbepi'
-attnstr='#####'
+attentionstr='#####'
 
 subjects=[]
 
@@ -33,15 +33,23 @@ for subj in sessions.keys():
     for sess in sessions[subj]:
         fileutils.createdir(basePath+'/'+subj+'/'+sess+'/processed/')
         data=workflow.Data()
-        data.bold=basePath+'/'+subj+'/'+sess+'/nii/mbepi.nii.gz'
+
+        data.bold=basePath+'/'+subj+'/'+sess+'/nii/restingboldWIP770AshortTR.nii.gz'
         if not os.path.exists(data.bold):
             data.bold+=attentionstr
-        data.card=basePath+'/'+subj+'/'+sess+'/physio/siemens/3fmri102b'+subj+'.puls.1D'
-        if not os.path.exists(data.card):
-            data.card+=attentionstr
-        data.resp=basePath+'/'+subj+'/'+sess+'/physio/biopac/run3.resp.1D'
-        if not os.path.exists(data.resp):
-            data.resp+=attentionstr
+
+        data.structural=basePath+'/'+subj+'/'+sess+'/nii/SagT1MPRAGE.nii.gz'
+        if not os.path.exists(data.structural):
+            data.structural+=attentionstr
+
+        data.siemensphysio=basePath+'/'+subj+'/'+sess+'/physio/2fmri102a'+subj
+        if not os.path.exists(data.siemensphysio+'.ext'):
+            data.siemensphysio+=attentionstr
+
+        data.biopacphysio=basePath+'/'+subj+'/'+sess+'/physio/Biopac/'+subj+'_'+sess+'_02.mat'
+        if not os.path.exists(data.biopacphysio):
+            data.biopacphysio+=attentionstr
+
         data.opath=basePath+'/'+subj+'/'+sess+'/processed'+'/'+seqname
         subject=workflow.Subject(subj)
         session=workflow.Session(sess)

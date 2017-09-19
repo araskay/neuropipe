@@ -42,6 +42,8 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
             t_1D[i]=r_1D[i]*np.sqrt((len(meants)-2)/(1-r_1D[i]*r_1D[i]))
             if (p_1D[i] > p_thresh):
                 r_1D[i]=0
+                t_1D[i]=0
+                p_1D[i]=0
                 
     # reshape to 3D
     r=np.reshape(r_1D,(img.shape[0],img.shape[1],img.shape[2]))

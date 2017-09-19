@@ -1,4 +1,4 @@
-import os
+import os, shutil
 import subprocess
 
 def removext(filename):
@@ -37,9 +37,14 @@ def afni2nifti(filename):
     os.remove(filename+'+orig.HEAD')
     os.remove(filename+'+orig.BRIK')    
     
+def mgztonifti(filename):
+    p=subprocess.Popen(['mri_convert',filename,removext(filename)+'.nii.gz'])
+    p.communicate()
+    os.remove(filename)
+    
+    
 def createdir(dirpath):
     try:
         os.makedirs(dirpath)
     except:
         print('Directory exists. Moving on.')
-    

@@ -17,3 +17,6 @@ def pearsoncorr(spm1file,spm2file):
 
     # now compute Pearson correlation coefficient
     return(np.corrcoef(spm1_1D,spm2_1D)[0][1])
+
+def jaccard(spm1file,spm2file):
+    return()

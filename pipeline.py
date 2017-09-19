@@ -6,7 +6,7 @@ import seedcorr
 import fileutils
 import subprocess # used to run bash commands
 import os
-import spmsim
+import spmsim, preprocessingstep
 
 class Pipeline:
     def __init__(self,name,steps):
@@ -23,6 +23,8 @@ class Pipeline:
         self.splithalfseedconnreproducibility=None
         #self.connectivityseedfile=''
         self.seedconnoutput=''
+        self.seedconnoutputmni152=''
+        self.envvars=None
     
     def setibase(self,ibase):
         self.ibase=ibase
@@ -32,7 +34,10 @@ class Pipeline:
     
     def setdata(self,data):
         self.data=data
-        
+    
+    def setenvvars(self,envvars):
+        self.envvars=envvars
+    
     def discardintermediates(self):
         self.keepintermed=False
         
@@ -136,14 +141,14 @@ class Pipeline:
         self.splithalfseedconnreproducibility=spmsim.pearsoncorr(self.splithalfoutputs[0]+'_seedconn_pearsonr.nii.gz', \
                                                                  self.splithalfoutputs[1]+'_seedconn_pearsonr.nii.gz')
 
-    def calcseedconn(self):
+    def calcseedconn(self,p_thresh):
         if not self.pipelinerun:
             self.run()
         seedcorr.calcseedcorr(fileutils.addniigzext(self.output), \
                               fileutils.addniigzext(self.data.connseed), \
-                              self.output+'_seedconn.nii.gz', \
-                              1) # p_thresh = 1 (i.e., do not threshold)
-        self.seedconnoutput=self.output+'_seedconn_pearsonr'
+                              self.output+'_seedconn_thr'+str(p_thresh)+'.nii.gz', \
+                              p_thresh)
+        self.seedconnoutput=self.output+'_seedconn_thr'+str(p_thresh)+'_pearsonr'
             
     def getsteps(self):
         s=''
@@ -151,8 +156,21 @@ class Pipeline:
             s=s+' > '+step.name
         return(s)
             
-
-        
+    def seedconn2mni(self):
+        # first get transformation parameters on the output of the pipeline
+        p=preprocessingstep.PreprocessingStep('tomni152',[])
+        p.setenvvars(self.envvars)
+        p.setdata(self.data)
+        p.setibase(self.output)
+        p.setobase(fileutils.removext(self.output)+'_2mni152')
+        p.run()
+        # then use the parameters to transform the SPM
+        p=subprocess.Popen(['flirt','-in',self.seedconnoutput,\
+                            '-ref',self.envvars.mni152,\
+                            '-applyxfm','-init',self.data.tomni152,\
+                            '-out',fileutils.removext(self.seedconnoutput)+'_2mni152'])
+        p.communicate()        
+        self.seedconnoutputmni152=fileutils.removext(self.seedconnoutput)+'_2mni152.nii.gz'
         
             
 

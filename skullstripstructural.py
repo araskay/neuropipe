@@ -1,4 +1,4 @@
-import workflow, getopt,sys,fileutils
+import workflow, getopt,sys,fileutils,shutil,os, subprocess
 
 ifile=''
 ofile=''
@@ -27,7 +27,15 @@ subjects=workflow.getsubjects(ifile)
 for subj in subjects:
     for sess in subj.sessions:
         for run in sess.runs:
-            run.data.structural=workflow.skullstrip_fsl(run.data.structural,\
-                                                        fileutils.removext(run.data.structural))
+            (opath,oname)=os.path.split(run.data.structural)
+            fileutils.createdir(opath)
+            #p=subprocess.Popen(['recon-all','-sd',opath,'-subjid','__recon-all','-i',run.data.structural,'-autorecon1'])
+            #p.communicate()
+            p=subprocess.Popen(['mri_convert',opath+'/__recon-all/mri/brainmask.mgz',\
+                                opath+'/'+fileutils.removext(oname)+'_brainmask.nii.gz'])
+            p.communicate()
+            run.data.structural=opath+'/'+fileutils.removext(oname)+'_brainmask.nii.gz'
+            #shutil.rmtree(opath+'/__recon-all')
+            
             
 workflow.savesubjects(ofile,subjects)

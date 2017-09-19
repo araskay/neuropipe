@@ -11,6 +11,7 @@ class PreprocessingStep:
         self.ibase=''
         self.obase=''
         self.data=None
+        self.envvars=None
         
     def setibase(self,ibase):
         self.ibase=ibase
@@ -20,6 +21,9 @@ class PreprocessingStep:
     
     def setdata(self,data):
         self.data=data
+        
+    def setenvvars(self,envvars):
+        self.envvars=envvars
                 
     def run(self):
         ## fsl mcflirt
@@ -165,7 +169,40 @@ class PreprocessingStep:
                 self.data.motglm=fileutils.removeniftiext(self.obase)+'__motglm'
             else:
                 os.remove(fileutils.removeniftiext(self.obase)+'__motglm.nii.gz')
-            
+        
+        elif (self.name == 'tomni152'):
+            if self.envvars.mni152=='':
+                sys.exit('In tomni152: MNI152 environment variable not set. Exiting!')
+            if self.data.structural == '':
+                sys.exity('In tomni152: Structural data not given. Cannot proceed without. Exiting!')
+            p=subprocess.Popen(['flirt','-in',self.ibase,\
+                                '-ref',self.data.structural,\
+                                '-out',fileutils.removext(self.obase)+'__func2struct',\
+                                '-omat',fileutils.removext(self.obase)+'__func2struct.mat']+self.params)
+            p.communicate()
+            p=subprocess.Popen(['flirt','-in',self.data.structural,\
+                                '-ref',self.envvars.mni152,\
+                                '-out',fileutils.removext(self.obase)+'__struct2mni152',\
+                                '-omat',fileutils.removext(self.obase)+'__struct2mni152.mat']+self.params)
+            p.communicate()
+            p=subprocess.Popen(['convert_xfm','-omat',fileutils.removext(self.obase)+'.mat',\
+                                '-concat',fileutils.removext(self.obase)+'__struct2mni152.mat',
+                                fileutils.removext(self.obase)+'__func2struct.mat'])
+            p.communicate()
+            p=subprocess.Popen(['flirt','-in',self.ibase,\
+                                '-ref',self.envvars.mni152,\
+                                '-applyxfm','-init',fileutils.removext(self.obase)+'.mat',\
+                                '-out',self.obase])
+            p.communicate()     
+            self.data.tomni152=fileutils.removext(self.obase)+'.mat'
+            # remove temporary files
+            os.remove(fileutils.removext(self.obase)+'__func2struct.nii.gz')
+            os.remove(fileutils.removext(self.obase)+'__func2struct.mat')
+            os.remove(fileutils.removext(self.obase)+'__struct2mni152.nii.gz')
+            os.remove(fileutils.removext(self.obase)+'__struct2mni152.mat')
+        
+        else:
+            sys.exit('Error: preprocessing step not defined')      
          
     def removeofiles(self):
         if (self.name == 'mcflirt'):
@@ -192,6 +229,8 @@ class PreprocessingStep:
         elif (self.name == '3dFourier'):
             os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'motreg'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'tomni152'):
             os.remove(fileutils.addniigzext(self.obase))
         else:
             sys.exit('Error: preprocessing step not defined')    

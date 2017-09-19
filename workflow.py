@@ -2,7 +2,12 @@ import sys
 import spmsim
 import fileutils
 import getopt,shlex
-import os,subprocess,nibabel
+import os,subprocess,nibabel, copy
+from preprocessingstep import PreprocessingStep
+
+class EnvVars:
+    def __init__(self):
+        self.mni152=''
 
 class Data:
     def __init__(self):
@@ -17,6 +22,8 @@ class Data:
         self.motglm=''
         self.siemensphysio=''
         self.biopacphysio=''
+        self.tostruct=''
+        self.tomni152=''
 
 class BetweenSubject:
     def __init__(self):
@@ -80,7 +87,7 @@ class Workflow:
         self.optimalpipelinesfound=False
         self.betweensubjectreproducibility=[]
         self.averagebetweensubjectreproducibility=None
-      
+    
     def addsubject(self,subject):
         self.subjects.append(subject)
     
@@ -120,11 +127,13 @@ class Workflow:
                         if len(run1)>0 and len(run2)>0:
                             count = count + 1
                             run1=run1[0] # assume there is only one run that matches
-                            run1.optimalpipeline.calcseedconn()                            
+                            run1.optimalpipeline.calcseedconn(1)# use p_thresh=1  
+                            run1.optimalpipeline.seedconn2mni()                        
                             run2=run2[0] # same here
-                            run2.optimalpipeline.calcseedconn()
-                            r=spmsim.pearsoncorr(fileutils.addniigzext(run1.optimalpipeline.seedconnoutput), \
-                                                 fileutils.addniigzext(run2.optimalpipeline.seedconnoutput))
+                            run2.optimalpipeline.calcseedconn(1) # same here
+                            run2.optimalpipeline.seedconn2mni()
+                            r=spmsim.pearsoncorr(run1.optimalpipeline.seedconnoutputmni152,\
+                                                 run2.optimalpipeline.seedconnoutputmni152)
                             # save the result as a BetweenSubject struct
                             betsubj=BetweenSubject()
                             betsubj.subject1=subj1
@@ -139,7 +148,69 @@ class Workflow:
         if count>0:
             avgr=avgr/count
         self.averagebetweensubjectreproducibility=avgr
-                
+  
+        
+    def saveallpipes(self,filename):
+        f=open(filename,'w')
+        f.write(self.name+' All pipelines:\n')
+        for subj in self.subjects:
+            for sess in subj.sessions:
+                for run in sess.runs:
+                    f.write(subj.ID+'_'+sess.ID+': '+run.seqname+':\n')
+                    for pipe in run.pipelines:
+                        f.write(pipe.name+': '+pipe.getsteps()+'\n'+\
+                                '     S-H Reproducibility: '+pipe.splithalfseedconnreproducibility+'\n')
+        f.close()
+
+    def saveoptimalpipes(self,filename):
+        f=open(filename,'w')
+        f.write(self.name+' Optimal pipelines:\n')
+        for subj in self.subjects:
+            for sess in subj.sessions:
+                for run in sess.runs:
+                    f.write(subj.ID+'_'+sess.ID+': '+run.seqname+':\n'+\
+                            '     '+pipe.name+': '+pipe.getsteps()+'\n'+\
+                            '          S-H Reproducibility: '+pipe.splithalfseedconnreproducibility+'\n')
+        f.close()
+      
+    def printoptimalpipes(self):
+        print('-----')
+        print(self.name,'Otimal pipelines:')
+        for subj in self.subjects:
+            for sess in subj.sessions:
+                for run in sess.runs:
+                    print(subj.ID,'_',sess.ID,'_',run.seqname, \
+                          'Optimal pipeline:',run.optimalpipeline.getsteps(), \
+                          'S-H Reproducibility:',run.optimalpipeline.splithalfseedconnreproducibility)        
+    
+    def savebetweensubjectreproducibility(self,filename):
+        f=open(filename,'w')
+        f.write(self.name+' Between subject reproducibility:\n')
+        for betsubj in self.betweensubjectreproducibility:
+
+            f.write(betsubj.subject1.ID+'_'+betsubj.session1.ID+ \
+                  'Optimal pipeline: '+betsubj.run1.optimalpipeline.getsteps()+ \
+                  'S-H Reproducibility: '+betsubj.run1.optimalpipeline.splithalfseedconnreproducibility+'\n')
+            f.write(betsubj.subject2.ID+'_'+betsubj.session2.ID+ \
+                  'Optimal pipeline: '+betsubj.run2.optimalpipeline.getsteps()+ \
+                  'S-H Reproducibility: '+betsubj.run2.optimalpipeline.splithalfseedconnreproducibility+'\n')
+            f.write('Between subject reproducibility: '+betsubj.subject1.ID+'&'+betsubj.subject2.ID+': '+betsubj.metric+'\n\n')
+    
+    def printbetweensubjectreproducibility(self):
+        print('-----')
+        print(self.name,'Between subject reproducibility:')
+        for betsubj in self.betweensubjectreproducibility:
+
+            print(betsubj.subject1.ID,'_',betsubj.session1.ID, \
+                  'Optimal pipeline:',betsubj.run1.optimalpipeline.getsteps(), \
+                  'S-H Reproducibility:',betsubj.run1.optimalpipeline.splithalfseedconnreproducibility)
+            print(betsubj.subject2.ID,'_',betsubj.session2.ID, \
+                  'Optimal pipeline:',betsubj.run2.optimalpipeline.getsteps(), \
+                  'S-H Reproducibility:',betsubj.run2.optimalpipeline.splithalfseedconnreproducibility)
+            print('Between subject reproducibility: ',betsubj.subject1.ID,'&',betsubj.subject2.ID,': ',betsubj.metric)
+        print('Avg between subj reproducibility: ',self.averagebetweensubjectreproducibility)        
+        
+        
 def getsubjects(subjectfile):
     subjects=[]
     f=open(subjectfile)
@@ -288,8 +359,6 @@ def makeconnseed(data,seedatlasfile,atlasfile,ofile):
     return(fileutils.addniigzext(ofile)) # also return the path to the seed file
 
 def skullstrip_fsl(ifile,obase):
-    #(ipath,ifilename)=os.path.split(ifile,ofile)
-    #obase=os.path.abspath(data.opath)+'/'+fileutils.removeniftiext(ifilename)    
     p=subprocess.Popen(['fslreorient2std',ifile,fileutils.removeniftiext(obase)+'_reorient'])
     p.communicate()
     p=subprocess.Popen(['bet',fileutils.removeniftiext(obase)+'_reorient',\
@@ -298,8 +367,6 @@ def skullstrip_fsl(ifile,obase):
     return(fileutils.addniigzext(fileutils.removeniftiext(obase)+'_reorient_skullstrip')) # also return the path to the brain extracted file
 
 def skullstrip_afni(ifile,obase):
-    #(ipath,ifilename)=os.path.split(ifile,ofile)
-    #obase=os.path.abspath(data.opath)+'/'+fileutils.removeniftiext(ifilename)    
     p=subprocess.Popen(['fslreorient2std',ifile,fileutils.removeniftiext(obase)+'_reorient'])
     p.communicate()
     p=subprocess.Popen(['3dSkullStrip','-input',fileutils.removeniftiext(obase)+'_reorient.nii.gz',\
@@ -329,4 +396,5 @@ def savesubjects(filename,subjects):
                         '--biopacphysio \''+run.data.biopacphysio+'\''+'\n')
     f.close()
     
+
                         

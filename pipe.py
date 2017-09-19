@@ -14,6 +14,8 @@ optimalpipesteps=[] # this is a list of lists
 fixedpipesteps=[] # this is a list
 showpipes=False
 
+mni152='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain' # this can be got as an input
+
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
@@ -57,6 +59,10 @@ for (opt,arg) in opts:
         addsteps=False
     elif opt in ('--showpipes'):
         showpipes=True
+
+        
+envvars=workflow.EnvVars()
+envvars.mni152=mni152
         
 # run workflow
 if len(runpipesteps)>0:
@@ -70,8 +76,8 @@ if len(runpipesteps)>0:
                 pipe=Pipeline('runpipe',runpipesteps)
                 pipe.setibase(run.data.bold)
                 pipe.setobase(run.data.opath)
-                pipe.setdata(run.data) # when running pipeline do not deepcopy so that results, e.g., motpar, can be recorded
-                #pipe.setconnectivityseedfile(run.data.connseed)
+                pipe.setdata(run.data) # when running pipeline do not deepcopy so that results, e.g., motpar, can be recorded if needed
+                pipe.setenvvars(envvars)
                 run.addpipeline(pipe)
         runwf.addsubject(subj)
 
@@ -91,7 +97,7 @@ if len(optimalpipesteps)>0:
                     pipe.setibase(run.data.bold)
                     pipe.setobase(run.data.opath)
                     pipe.setdata(copy.deepcopy(run.data))
-                    #pipe.setconnectivityseedfile(run.data.connseed)
+                    pipe.setenvvars(envvars)
                     run.addpipeline(pipe)
         optimalwf.addsubject(subj)
 # fixed workflow
@@ -107,7 +113,7 @@ if len(fixedpipesteps)>0:
                 pipe.setibase(run.data.bold)
                 pipe.setobase(run.data.opath)
                 pipe.setdata(copy.deepcopy(run.data))
-                #pipe.setconnectivityseedfile(run.data.connseed)
+                pipe.setenvvars(envvars)
                 run.addpipeline(pipe)
         fixedwf.addsubject(subj)
 
@@ -127,7 +133,7 @@ if not showpipes:
 if len(runpipesteps)>0:
     print('-----')
     print('-----')
-    print('Runned pipelines:')
+    print('Pipeline runned:')
     for subj in [runwf.subjects[0]]:
         for sess in [subj.sessions[0]]:
             for run in [sess.runs[0]]:
