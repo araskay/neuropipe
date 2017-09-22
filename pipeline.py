@@ -21,6 +21,7 @@ class Pipeline:
         self.pipelinerunsplithalf=False
         self.splithalfoutputs=['','']
         self.splithalfseedconnreproducibility=None
+        self.splithalfseedconnoverlap=None
         #self.connectivityseedfile=''
         self.seedconnoutput=''
         self.seedconnoutputmni152=''
@@ -61,6 +62,7 @@ class Pipeline:
                 step.setibase(stepibase)
                 step.setobase(stepobase)
                 step.setdata(self.data)
+                step.setenvvars(self.envvars)
                 step.run()
                 stepibase=stepobase
             self.output=stepobase
@@ -140,7 +142,18 @@ class Pipeline:
         # now compute the correlation between r_sh1 and r_sh2
         self.splithalfseedconnreproducibility=spmsim.pearsoncorr(self.splithalfoutputs[0]+'_seedconn_pearsonr.nii.gz', \
                                                                  self.splithalfoutputs[1]+'_seedconn_pearsonr.nii.gz')
-
+        ## split-half overlap
+        # compute THRESHOLDED seed connectivity maps for each split half
+        seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[0]), \
+                              fileutils.addniigzext(self.data.connseed), \
+                              self.splithalfoutputs[0]+'_seedconn_thr.nii.gz', \
+                              0.05) # p_thresh = 0.05
+        seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[1]), \
+                              fileutils.addniigzext(self.data.connseed), \
+                              self.splithalfoutputs[1]+'_seedconn_thr.nii.gz', \
+                              0.05) # p_thresh = 0.05       
+        self.splithalfseedconnoverlap=spmsim.jaccardind(self.splithalfoutputs[0]+'_seedconn_thr_pearsonr.nii.gz', \
+                                                                 self.splithalfoutputs[1]+'_seedconn_thr_pearsonr.nii.gz')
     def calcseedconn(self,p_thresh):
         if not self.pipelinerun:
             self.run()
@@ -149,20 +162,30 @@ class Pipeline:
                               self.output+'_seedconn_thr'+str(p_thresh)+'.nii.gz', \
                               p_thresh)
         self.seedconnoutput=self.output+'_seedconn_thr'+str(p_thresh)+'_pearsonr'
-            
+        
     def getsteps(self):
         s=''
         for step in self.steps:
             s=s+' > '+step.name
         return(s)
-            
+    
+    def printpipe(self):
+        print(self.name,self.getsteps())
+        print('S-H reproducibility:',self.splithalfseedconnreproducibility)
+        print('S-H overlap:',self.splithalfseedconnoverlap)
+        
     def seedconn2mni(self):
+        if self.seedconnoutput=='':
+            sys.exit('Error in seedconn2mni: Seed connectivity not computed. Need to call calcseedconn first')
         # first get transformation parameters on the output of the pipeline
-        p=preprocessingstep.PreprocessingStep('tomni152',[])
+        steps=[preprocessingstep.PreprocessingStep('tmean',[]),\
+               preprocessingstep.PreprocessingStep('tomni152',[])]
+        #steps=[preprocessingstep.PreprocessingStep('tomni152',[])]
+        p=Pipeline('',steps)
         p.setenvvars(self.envvars)
         p.setdata(self.data)
         p.setibase(self.output)
-        p.setobase(fileutils.removext(self.output)+'_2mni152')
+        p.setobase(fileutils.removext(self.output))
         p.run()
         # then use the parameters to transform the SPM
         p=subprocess.Popen(['flirt','-in',self.seedconnoutput,\
@@ -171,7 +194,7 @@ class Pipeline:
                             '-out',fileutils.removext(self.seedconnoutput)+'_2mni152'])
         p.communicate()        
         self.seedconnoutputmni152=fileutils.removext(self.seedconnoutput)+'_2mni152.nii.gz'
-        
+
             
 
             

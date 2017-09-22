@@ -61,6 +61,5 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     # also return r, t, p as the function output
     return (r,t,p)
     
-    
-    
+
             

@@ -4,6 +4,7 @@ import fileutils
 import getopt,shlex
 import os,subprocess,nibabel, copy
 from preprocessingstep import PreprocessingStep
+import numpy as np
 
 class EnvVars:
     def __init__(self):
@@ -25,15 +26,23 @@ class Data:
         self.tostruct=''
         self.tomni152=''
 
-class BetweenSubject:
+class BetweenSubjectMetrics:
     def __init__(self):
-        self.subject1=None
+        self.reproducibility=0
+        self.overlap=0
+        self.reproducibility_r=0
+        self.overlap_r=0
+        self.reproducibility_j=0
+        self.overlap_j=0
+        self.reproducibility_rj=0
+        self.overlap_rj=0
+        '''self.subject1=None
         self.session1=None
         self.run1=None
         self.subject2=None
         self.session2=None
         self.run2=None
-        self.metric=None
+        self.metric=None'''
     
 class Run:
     def __init__(self,seqname,data):
@@ -41,6 +50,9 @@ class Run:
         self.data=data
         self.pipelines=[]
         self.optimalpipeline=None
+        self.optimalpipeline_r=None
+        self.optimalpipeline_j=None
+        self.optimalpipeline_rj=None
         
     def setpipelines(self,pipelines):
         self.pipelines=pipelines
@@ -58,10 +70,20 @@ class Run:
         if (self.pipelines == []):
             sys.exit('Error: No pipelines set for the run. Set pipelines before calling findoptimalpipeline()')
         self.optimalpipeline=self.pipelines[0]
+        self.optimalpipeline_r=self.pipelines[0]
+        self.optimalpipeline_j=self.pipelines[0]
+        self.optimalpipeline_rj=self.pipelines[0]
         for pipe in self.pipelines:
             pipe.calcsplithalfseedconnreproducibility()
             if (1-abs(pipe.splithalfseedconnreproducibility)) < (1-abs(self.optimalpipeline.splithalfseedconnreproducibility)):
                 self.optimalpipeline=pipe
+            if (1-abs(pipe.splithalfseedconnreproducibility)) < (1-abs(self.optimalpipeline_r.splithalfseedconnreproducibility)):
+                self.optimalpipeline_r=pipe
+            if (1-abs(pipe.splithalfseedconnoverlap)) < (1-abs(self.optimalpipeline_j.splithalfseedconnoverlap)):
+                self.optimalpipeline_j=pipe
+            if ((1-abs(pipe.splithalfseedconnreproducibility))**2 + (1-abs(pipe.splithalfseedconnoverlap))**2) < \
+            ((1-abs(self.optimalpipeline_rj.splithalfseedconnreproducibility))**2 + (1-abs(self.optimalpipeline_rj.splithalfseedconnoverlap))**2):
+                self.optimalpipeline_rj=pipe
  
 class Session:
     def __init__(self,ID):
@@ -85,11 +107,19 @@ class Workflow:
         self.name=name
         self.subjects=[]
         self.optimalpipelinesfound=False
-        self.betweensubjectreproducibility=[]
-        self.averagebetweensubjectreproducibility=None
+        '''self.betweensubjectreproducibility=[]
+        self.averagebetweensubjectreproducibility=None'''
+        self.betweensubject=None
     
     def addsubject(self,subject):
         self.subjects.append(subject)
+    
+    def initbetweensubject(self):
+        self.betweensubject=np.empty((len(self.subjects),len(self.subjects)),dtype=object)
+        for i in np.arange(self.betweensubject.shape[0]):
+            for j in np.arange(self.betweensubject.shape[1]):
+                metrics=BetweenSubjectMetrics()
+                self.betweensubject[i,j]=metrics
     
     def process(self):
         if (self.subjects == []):
@@ -110,15 +140,19 @@ class Workflow:
         self.optimalpipelinesfound=True
         
     def computebetweensubjectreproducibility(self,seqName):
-        # compute average between subject reproducibility for the given sessionID and seqName
+        # compute between subject reproducibility for the given seqName
         if not self.optimalpipelinesfound:
             self.findoptimalpipelines()
         count=0
         avgr=0
+        if not self.betweensubject:
+            self.initbetweensubject()
         for i in range(0,len(self.subjects)):
             for j in range(i+1,len(self.subjects)):
+                print('DOING SUBJECTS',i,j)
                 subj1=self.subjects[i]
                 subj2=self.subjects[j]
+                ## implement averaging over sesssions
                 for sess1 in subj1.sessions:
                     for sess2 in subj2.sessions:
                         # find the runs that match seqName
@@ -127,15 +161,76 @@ class Workflow:
                         if len(run1)>0 and len(run2)>0:
                             count = count + 1
                             run1=run1[0] # assume there is only one run that matches
-                            run1.optimalpipeline.calcseedconn(1)# use p_thresh=1  
-                            run1.optimalpipeline.seedconn2mni()                        
                             run2=run2[0] # same here
+                            '''run1.optimalpipeline.calcseedconn(1)# use p_thresh=1  
+                            run1.optimalpipeline.seedconn2mni()                        
                             run2.optimalpipeline.calcseedconn(1) # same here
                             run2.optimalpipeline.seedconn2mni()
                             r=spmsim.pearsoncorr(run1.optimalpipeline.seedconnoutputmni152,\
-                                                 run2.optimalpipeline.seedconnoutputmni152)
+                                                 run2.optimalpipeline.seedconnoutputmni152)'''
+                            run1.optimalpipeline_r.calcseedconn(1)# use p_thresh=1
+                            run1.optimalpipeline_r.seedconn2mni() 
+                            run2.optimalpipeline_r.calcseedconn(1) # same here
+                            run2.optimalpipeline_r.seedconn2mni()
+                            r_r=spmsim.pearsoncorr(run1.optimalpipeline_r.seedconnoutputmni152,\
+                                                 run2.optimalpipeline_r.seedconnoutputmni152)
+                            run1.optimalpipeline_j.calcseedconn(1)# use p_thresh=1  
+                            run1.optimalpipeline_j.seedconn2mni()                        
+                            run2.optimalpipeline_j.calcseedconn(1) # same here
+                            run2.optimalpipeline_j.seedconn2mni()
+                            r_j=spmsim.pearsoncorr(run1.optimalpipeline_j.seedconnoutputmni152,\
+                                                 run2.optimalpipeline_j.seedconnoutputmni152)
+                            run1.optimalpipeline_rj.calcseedconn(1)# use p_thresh=1
+                            run1.optimalpipeline_rj.seedconn2mni()                        
+                            run2.optimalpipeline_rj.calcseedconn(1) # same here
+                            run2.optimalpipeline_rj.seedconn2mni()
+                            r_rj=spmsim.pearsoncorr(run1.optimalpipeline_rj.seedconnoutputmni152,\
+                                                 run2.optimalpipeline_rj.seedconnoutputmni152)
+                            ## overlap
+                            '''run1.optimalpipeline.calcseedconn(0.05)# use p_thresh=0.05 
+                            run1.optimalpipeline.seedconn2mni()
+                            run2.optimalpipeline.calcseedconn(0.05) # same here
+                            run2.optimalpipeline.seedconn2mni()
+                            jind=spmsim.jaccardind(run1.optimalpipeline.seedconnoutputmni152,\
+                                                 run2.optimalpipeline.seedconnoutputmni152)'''
+                            run1.optimalpipeline_r.calcseedconn(0.05)# use p_thresh=0.05 
+                            run1.optimalpipeline_r.seedconn2mni()
+                            run2.optimalpipeline_r.calcseedconn(0.05) # same here
+                            run2.optimalpipeline_r.seedconn2mni()
+                            jind_r=spmsim.jaccardind(run1.optimalpipeline_r.seedconnoutputmni152,\
+                                                 run2.optimalpipeline_r.seedconnoutputmni152)
+                            run1.optimalpipeline_j.calcseedconn(0.05)# use p_thresh=0.05 
+                            run1.optimalpipeline_j.seedconn2mni()
+                            run2.optimalpipeline_j.calcseedconn(0.05) # same here
+                            run2.optimalpipeline_j.seedconn2mni()
+                            jind_j=spmsim.jaccardind(run1.optimalpipeline_j.seedconnoutputmni152,\
+                                                 run2.optimalpipeline_j.seedconnoutputmni152)
+                            run1.optimalpipeline_rj.calcseedconn(0.05)# use p_thresh=0.05 
+                            run1.optimalpipeline_rj.seedconn2mni()
+                            run2.optimalpipeline_rj.calcseedconn(0.05) # same here
+                            run2.optimalpipeline_rj.seedconn2mni()
+                            jind_rj=spmsim.jaccardind(run1.optimalpipeline_rj.seedconnoutputmni152,\
+                                                 run2.optimalpipeline_rj.seedconnoutputmni152)
                             # save the result as a BetweenSubject struct
-                            betsubj=BetweenSubject()
+                            '''self.betweensubject[i,j].reproducibility=r
+                            self.betweensubject[i,j].overlap=jind'''
+                            self.betweensubject[i,j].reproducibility_r=r_r
+                            self.betweensubject[i,j].overlap_r=jind_r
+                            self.betweensubject[i,j].reproducibility_j=r_j
+                            self.betweensubject[i,j].overlap_j=jind_j
+                            self.betweensubject[i,j].reproducibility_rj=r_rj
+                            self.betweensubject[i,j].overlap_rj=jind_rj
+                            # populate the lower triangle symmetrically
+                            '''self.betweensubject[j,i].reproducibility=r
+                            self.betweensubject[j,i].overlap=jind'''
+                            self.betweensubject[j,i].reproducibility_r=r_r
+                            self.betweensubject[j,i].overlap_r=jind_r
+                            self.betweensubject[j,i].reproducibility_j=r_j
+                            self.betweensubject[j,i].overlap_j=jind_j
+                            self.betweensubject[j,i].reproducibility_rj=r_rj
+                            self.betweensubject[j,i].overlap_rj=jind_rj                            
+                            
+                            '''betsubj=BetweenSubject()
                             betsubj.subject1=subj1
                             betsubj.subject2=subj2
                             betsubj.session1=sess1
@@ -147,33 +242,51 @@ class Workflow:
                             avgr=avgr+r
         if count>0:
             avgr=avgr/count
-        self.averagebetweensubjectreproducibility=avgr
+        self.averagebetweensubjectreproducibility=avgr'''
   
         
     def saveallpipes(self,filename):
+        # save all pipelines in csv format
         f=open(filename,'w')
-        f.write(self.name+' All pipelines:\n')
+        f.write('Subject_Sesssion_Run,PipeName,PipeSteps,SHReproducibility,SHOverlap\n')
         for subj in self.subjects:
             for sess in subj.sessions:
                 for run in sess.runs:
-                    f.write(subj.ID+'_'+sess.ID+': '+run.seqname+':\n')
                     for pipe in run.pipelines:
-                        f.write(pipe.name+': '+pipe.getsteps()+'\n'+\
-                                '     S-H Reproducibility: '+pipe.splithalfseedconnreproducibility+'\n')
+                        f.write(subj.ID+'_'+sess.ID+'_'+run.seqname+','+\
+                                pipe.name+','+pipe.getsteps()+','+\
+                                str(pipe.splithalfseedconnreproducibility)+','+\
+                                str(pipe.splithalfseedconnoverlap)+'\n')
         f.close()
 
     def saveoptimalpipes(self,filename):
+        # save optimal pipelines in csv format
         f=open(filename,'w')
-        f.write(self.name+' Optimal pipelines:\n')
+        f.write('Subject_Sesssion_Run,OptMetric,PipeName,PipeSteps,SHReproducibility,SHOverlap\n')
         for subj in self.subjects:
             for sess in subj.sessions:
                 for run in sess.runs:
-                    f.write(subj.ID+'_'+sess.ID+': '+run.seqname+':\n'+\
-                            '     '+pipe.name+': '+pipe.getsteps()+'\n'+\
-                            '          S-H Reproducibility: '+pipe.splithalfseedconnreproducibility+'\n')
+                    pipe=run.optimalpipeline_r
+                    f.write(subj.ID+'_'+sess.ID+'_'+run.seqname+','+\
+                            'r'+','+\
+                            pipe.name+','+pipe.getsteps()+','+\
+                            str(pipe.splithalfseedconnreproducibility)+','+\
+                            str(pipe.splithalfseedconnoverlap)+'\n')
+                    pipe=run.optimalpipeline_j
+                    f.write(subj.ID+'_'+sess.ID+'_'+run.seqname+','+\
+                            'j'+','+\
+                            pipe.name+','+pipe.getsteps()+','+\
+                            str(pipe.splithalfseedconnreproducibility)+','+\
+                            str(pipe.splithalfseedconnoverlap)+'\n')
+                    pipe=run.optimalpipeline_rj
+                    f.write(subj.ID+'_'+sess.ID+'_'+run.seqname+','+\
+                            'rj'+','+\
+                            pipe.name+','+pipe.getsteps()+','+\
+                            str(pipe.splithalfseedconnreproducibility)+','+\
+                            str(pipe.splithalfseedconnoverlap)+'\n')                    
         f.close()
       
-    def printoptimalpipes(self):
+    '''def printoptimalpipes(self):
         print('-----')
         print(self.name,'Otimal pipelines:')
         for subj in self.subjects:
@@ -181,25 +294,117 @@ class Workflow:
                 for run in sess.runs:
                     print(subj.ID,'_',sess.ID,'_',run.seqname, \
                           'Optimal pipeline:',run.optimalpipeline.getsteps(), \
-                          'S-H Reproducibility:',run.optimalpipeline.splithalfseedconnreproducibility)        
+                          'S-H Reproducibility:',run.optimalpipeline.splithalfseedconnreproducibility)'''        
     
-    def savebetweensubjectreproducibility(self,filename):
+    def savebetweensubjectreproducibility_r(self,filename):
         f=open(filename,'w')
-        f.write(self.name+' Between subject reproducibility:\n')
-        for betsubj in self.betweensubjectreproducibility:
-
-            f.write(betsubj.subject1.ID+'_'+betsubj.session1.ID+ \
-                  'Optimal pipeline: '+betsubj.run1.optimalpipeline.getsteps()+ \
-                  'S-H Reproducibility: '+betsubj.run1.optimalpipeline.splithalfseedconnreproducibility+'\n')
-            f.write(betsubj.subject2.ID+'_'+betsubj.session2.ID+ \
-                  'Optimal pipeline: '+betsubj.run2.optimalpipeline.getsteps()+ \
-                  'S-H Reproducibility: '+betsubj.run2.optimalpipeline.splithalfseedconnreproducibility+'\n')
-            f.write('Between subject reproducibility: '+betsubj.subject1.ID+'&'+betsubj.subject2.ID+': '+betsubj.metric+'\n\n')
+        f.write(',')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+        f.write('\n')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+            for j in range(0,len(self.subjects)):
+                f.write(str(self.betweensubject[i,j].reproducibility_r)+',')
+            f.write('\n')
+        f.close()
+        
+    def savebetweensubjectreproducibility_j(self,filename):
+        f=open(filename,'w')
+        f.write(',')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+        f.write('\n')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+            for j in range(0,len(self.subjects)):
+                f.write(str(self.betweensubject[i,j].reproducibility_j)+',')
+            f.write('\n')
+        f.close()
+        
+    def savebetweensubjectreproducibility_rj(self,filename):
+        f=open(filename,'w')
+        f.write(',')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+        f.write('\n')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+            for j in range(0,len(self.subjects)):
+                f.write(str(self.betweensubject[i,j].reproducibility_rj)+',')
+            f.write('\n')
+        f.close()
+        
+    def savebetweensubjectoverlap_r(self,filename):
+        f=open(filename,'w')
+        f.write(',')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+        f.write('\n')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+            for j in range(0,len(self.subjects)):
+                f.write(str(self.betweensubject[i,j].overlap_r)+',')
+            f.write('\n')
+        f.close()        
     
+    def savebetweensubjectoverlap_j(self,filename):
+        f=open(filename,'w')
+        f.write(',')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+        f.write('\n')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+            for j in range(0,len(self.subjects)):
+                f.write(str(self.betweensubject[i,j].overlap_j)+',')
+            f.write('\n')
+        f.close()
+        
+    def savebetweensubjectoverlap_rj(self,filename):
+        f=open(filename,'w')
+        f.write(',')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+        f.write('\n')
+        for i in range(0,len(self.subjects)):
+            f.write(self.subjects[i].ID+',')
+            for j in range(0,len(self.subjects)):
+                f.write(str(self.betweensubject[i,j].overlap_rj)+',')
+            f.write('\n')
+        f.close()
+
     def printbetweensubjectreproducibility(self):
         print('-----')
+        print('-----')
         print(self.name,'Between subject reproducibility:')
-        for betsubj in self.betweensubjectreproducibility:
+        for i in range(0,len(self.subjects)):
+            for j in range(i+1,len(self.subjects)):
+                print(self.subjects[i].ID,'_',self.subjects[i].sessions[0].ID)
+                print('Optimal r pipeline:')
+                self.subjects[i].sessions[0].runs[0].optimalpipeline_r.printpipe()
+                print('Optimal j pipeline:')
+                self.subjects[i].sessions[0].runs[0].optimalpipeline_j.printpipe()
+                print('Optimal rj pipeline:')
+                self.subjects[i].sessions[0].runs[0].optimalpipeline_rj.printpipe()
+                
+                print(self.subjects[j].ID,'_',self.subjects[j].sessions[0].ID)
+                print('Optimal r pipeline:')
+                self.subjects[j].sessions[0].runs[0].optimalpipeline_r.printpipe()
+                print('Optimal j pipeline:')
+                self.subjects[j].sessions[0].runs[0].optimalpipeline_j.printpipe()
+                print('Optimal rj pipeline:')
+                self.subjects[j].sessions[0].runs[0].optimalpipeline_rj.printpipe()
+                
+                print('Between subject reproducibility (r-pipe): ',self.betweensubject[i,j].reproducibility_r)                
+                print('Between subject overlap (r-pipe): ',self.betweensubject[i,j].overlap_r)
+                print('Between subject reproducibility (j-pipe): ',self.betweensubject[i,j].reproducibility_j)                
+                print('Between subject overlap (j-pipe): ',self.betweensubject[i,j].overlap_j)
+                print('Between subject reproducibility (rj-pipe): ',self.betweensubject[i,j].reproducibility_rj)                
+                print('Between subject overlap (rj-pipe): ',self.betweensubject[i,j].overlap_rj)
+                print('-----')
+        
+        '''for betsubj in self.betweensubjectreproducibility:
 
             print(betsubj.subject1.ID,'_',betsubj.session1.ID, \
                   'Optimal pipeline:',betsubj.run1.optimalpipeline.getsteps(), \
@@ -208,7 +413,7 @@ class Workflow:
                   'Optimal pipeline:',betsubj.run2.optimalpipeline.getsteps(), \
                   'S-H Reproducibility:',betsubj.run2.optimalpipeline.splithalfseedconnreproducibility)
             print('Between subject reproducibility: ',betsubj.subject1.ID,'&',betsubj.subject2.ID,': ',betsubj.metric)
-        print('Avg between subj reproducibility: ',self.averagebetweensubjectreproducibility)        
+        print('Avg between subj reproducibility: ',self.averagebetweensubjectreproducibility)'''  
         
         
 def getsubjects(subjectfile):
@@ -307,7 +512,7 @@ def getsubjects(subjectfile):
         l=shlex.split(line)
     return(subjects)
 
-                
+# this is to be moved to and intergrated into makeconnseed.py                
 def makeconnseed(data,seedatlasfile,atlasfile,ofile):
     # data is a Data object
     # seedatlasfile contains a probabilistic seed ROI on MNI space (e.g., data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz)
@@ -358,7 +563,7 @@ def makeconnseed(data,seedatlasfile,atlasfile,ofile):
     os.remove(obase+'__mni2func.mat')
     return(fileutils.addniigzext(ofile)) # also return the path to the seed file
 
-def skullstrip_fsl(ifile,obase):
+'''def skullstrip_fsl(ifile,obase):
     p=subprocess.Popen(['fslreorient2std',ifile,fileutils.removeniftiext(obase)+'_reorient'])
     p.communicate()
     p=subprocess.Popen(['bet',fileutils.removeniftiext(obase)+'_reorient',\
@@ -373,7 +578,7 @@ def skullstrip_afni(ifile,obase):
                         '-prefix',fileutils.removeniftiext(obase)+'_reorient_skullstrip'])
     p.communicate()
     fileutils.afni2nifti(fileutils.removeniftiext(obase)+'_reorient_skullstrip')
-    return(fileutils.addniigzext(fileutils.removeniftiext(obase)+'_reorient_skullstrip')) # also return the path to the brain extracted file
+    return(fileutils.addniigzext(fileutils.removeniftiext(obase)+'_reorient_skullstrip')) # also return the path to the brain extracted file'''
 
 def savesubjects(filename,subjects):
     f=open(filename, 'w')

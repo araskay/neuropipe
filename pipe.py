@@ -13,13 +13,14 @@ runpipesteps=[] # this is a list
 optimalpipesteps=[] # this is a list of lists
 fixedpipesteps=[] # this is a list
 showpipes=False
+resout=''
 
-mni152='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain' # this can be got as an input
+#mni152='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain' # this can be got as an input
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes'])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','mni152=','resout='])
 except getopt.GetoptError:
     print('usage: testbench_workflow.py -p <pipeline text file> -s <subjects file>')
     sys.exit()
@@ -59,7 +60,14 @@ for (opt,arg) in opts:
         addsteps=False
     elif opt in ('--showpipes'):
         showpipes=True
+    elif opt in ('--mni152'):
+        mni152=arg
+    elif opt in ('--resout'):
+        resout=arg
 
+# just for myself. remove for distribution.        
+if resout=='':
+    sys.exit('Give resout you idiot!!')
         
 envvars=workflow.EnvVars()
 envvars.mni152=mni152
@@ -117,79 +125,73 @@ if len(fixedpipesteps)>0:
                 run.addpipeline(pipe)
         fixedwf.addsubject(subj)
 
-# now process
-if not showpipes:
+
+if showpipes:
+    # print all pipelines run
     if len(runpipesteps)>0:
-        runwf.process()
-
-    if len(optimalpipesteps)>0:
-        seqname=optimalwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
-        optimalwf.computebetweensubjectreproducibility(seqname)
+        print('-----')
+        print('-----')
+        print('Pipeline runned:')
+        for subj in [runwf.subjects[0]]:
+            for sess in [subj.sessions[0]]:
+                for run in [sess.runs[0]]:
+                    for pipe in run.pipelines:
+                        #print(subj.ID,'_',sess.ID,'_',run.seqname, pipe.getsteps())
+                        print(run.seqname, pipe.getsteps())    
+    # print fixed pipelines
     if len(fixedpipesteps)>0:
-        seqname=fixedwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
-        fixedwf.computebetweensubjectreproducibility(seqname)
-
-# print all pipelines run
+        print('-----')
+        print('-----')    
+        print('Fixed pipelines:')
+        for subj in [fixedwf.subjects[0]]:
+            for sess in [subj.sessions[0]]:
+                for run in [sess.runs[0]]:
+                    for pipe in run.pipelines:
+                        #print(subj.ID,'_',sess.ID,'_',run.seqname, pipe.getsteps())
+                        print(run.seqname, pipe.getsteps())    
+    # print optimized pipelines
+    if len(optimalpipesteps)>0:
+        print('-----')
+        print('-----')    
+        print('Otimized pipelines:')
+        for subj in [optimalwf.subjects[0]]:
+            for sess in [subj.sessions[0]]:
+                for run in [sess.runs[0]]:
+                    for pipe in run.pipelines:
+                        #print(subj.ID,'_',sess.ID,'_',run.seqname, pipe.getsteps())
+                        print(run.seqname, pipe.getsteps())
+    sys.exit()
+    
+# now process    
 if len(runpipesteps)>0:
-    print('-----')
-    print('-----')
-    print('Pipeline runned:')
-    for subj in [runwf.subjects[0]]:
-        for sess in [subj.sessions[0]]:
-            for run in [sess.runs[0]]:
-                for pipe in run.pipelines:
-                    #print(subj.ID,'_',sess.ID,'_',run.seqname, pipe.getsteps())
-                    print(run.seqname, pipe.getsteps())
-if len(fixedpipesteps)>0:
-    print('-----')
-    print('-----')    
-    print('Fixed pipelines:')
-    for subj in [fixedwf.subjects[0]]:
-        for sess in [subj.sessions[0]]:
-            for run in [sess.runs[0]]:
-                for pipe in run.pipelines:
-                    #print(subj.ID,'_',sess.ID,'_',run.seqname, pipe.getsteps())
-                    print(run.seqname, pipe.getsteps())
-    print('-----')
-    for betsubj in fixedwf.betweensubjectreproducibility:
-        print(betsubj.subject1.ID,'_',betsubj.session1.ID, \
-              'Optimal pipeline:',betsubj.run1.optimalpipeline.getsteps(), \
-              'S-H Reproducibility:',betsubj.run1.optimalpipeline.splithalfseedconnreproducibility)
-        print(betsubj.subject2.ID,'_',betsubj.session2.ID, \
-              'Optimal pipeline:',betsubj.run2.optimalpipeline.getsteps(), \
-              'S-H Reproducibility:',betsubj.run2.optimalpipeline.splithalfseedconnreproducibility)
-        print('Between subject reproducibility: ',betsubj.subject1.ID,'&',betsubj.subject2.ID,': ',betsubj.metric)
-    print('Avg between subj reproducibility: ',fixedwf.averagebetweensubjectreproducibility)                    
+    runwf.process()
 if len(optimalpipesteps)>0:
-    print('-----')
-    print('-----')    
-    print('Otimized pipelines:')
-    for subj in [optimalwf.subjects[0]]:
-        for sess in [subj.sessions[0]]:
-            for run in [sess.runs[0]]:
-                for pipe in run.pipelines:
-                    #print(subj.ID,'_',sess.ID,'_',run.seqname, pipe.getsteps())
-                    print(run.seqname, pipe.getsteps())
-    print('-----')
-    print('Otimal pipelines:')
-    for subj in optimalwf.subjects:
-        for sess in subj.sessions:
-            for run in sess.runs:
-                print(subj.ID,'_',sess.ID,'_',run.seqname, \
-                      'Optimal pipeline:',run.optimalpipeline.getsteps(), \
-                      'S-H Reproducibility:',run.optimalpipeline.splithalfseedconnreproducibility)                
-    print('-----')
-    print('Between subject reproducibility:')
-    for betsubj in optimalwf.betweensubjectreproducibility:
+    seqname=optimalwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
+    optimalwf.computebetweensubjectreproducibility(seqname)
+if len(fixedpipesteps)>0:
+    seqname=fixedwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
+    fixedwf.computebetweensubjectreproducibility(seqname)
 
-        print(betsubj.subject1.ID,'_',betsubj.session1.ID, \
-              'Optimal pipeline:',betsubj.run1.optimalpipeline.getsteps(), \
-              'S-H Reproducibility:',betsubj.run1.optimalpipeline.splithalfseedconnreproducibility)
-        print(betsubj.subject2.ID,'_',betsubj.session2.ID, \
-              'Optimal pipeline:',betsubj.run2.optimalpipeline.getsteps(), \
-              'S-H Reproducibility:',betsubj.run2.optimalpipeline.splithalfseedconnreproducibility)
-        print('Between subject reproducibility: ',betsubj.subject1.ID,'&',betsubj.subject2.ID,': ',betsubj.metric)
-    print('Avg between subj reproducibility: ',optimalwf.averagebetweensubjectreproducibility)
+# save the results
+if len(optimalpipesteps)>0:
+    optimalwf.saveallpipes(resout+'_optimalwf_allpipes.csv')
+    optimalwf.saveoptimalpipes(resout+'_optimalwf_optimalpipes.csv')
+    optimalwf.savebetweensubjectreproducibility_r(resout+'_optimalwf_betsubjrep_r.csv')
+    optimalwf.savebetweensubjectreproducibility_j(resout+'_optimalwf_betsubjrep_j.csv')
+    optimalwf.savebetweensubjectreproducibility_rj(resout+'_optimalwf_betsubjrep_rj.csv')
+    optimalwf.savebetweensubjectoverlap_r(resout+'_optimalwf_betsubjolap_r.csv')
+    optimalwf.savebetweensubjectoverlap_j(resout+'_optimalwf_betsubjolap_j.csv')
+    optimalwf.savebetweensubjectoverlap_rj(resout+'_optimalwf_betsubjolap_rj.csv')
+    
+if len(fixedpipesteps)>0:
+    fixedwf.saveallpipes(resout+'_fixedwf_allpipes.csv')
+    fixedwf.saveoptimalpipes(resout+'_fixedwf_optimalpipes.csv')
+    fixedwf.savebetweensubjectreproducibility_r(resout+'_fixedwf_betsubjrep_r.csv')
+    fixedwf.savebetweensubjectreproducibility_j(resout+'_fixedwf_betsubjrep_j.csv')
+    fixedwf.savebetweensubjectreproducibility_rj(resout+'_fixedwf_betsubjrep_rj.csv')
+    fixedwf.savebetweensubjectoverlap_r(resout+'_fixedwf_betsubjolap_r.csv')
+    fixedwf.savebetweensubjectoverlap_j(resout+'_fixedwf_betsubjolap_j.csv')
+    fixedwf.savebetweensubjectoverlap_rf(resout+'_fixedwf_betsubjolap_rj.csv')
 
 
 

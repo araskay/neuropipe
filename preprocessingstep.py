@@ -201,6 +201,10 @@ class PreprocessingStep:
             os.remove(fileutils.removext(self.obase)+'__struct2mni152.nii.gz')
             os.remove(fileutils.removext(self.obase)+'__struct2mni152.mat')
         
+        elif self.name=='tmean':
+            p=subprocess.Popen(['fslmaths',self.ibase,'-Tmean',self.obase])
+            p.communicate()
+        
         else:
             sys.exit('Error: preprocessing step not defined')      
          
@@ -231,6 +235,8 @@ class PreprocessingStep:
         elif (self.name == 'motreg'):
             os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'tomni152'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'tmean'):
             os.remove(fileutils.addniigzext(self.obase))
         else:
             sys.exit('Error: preprocessing step not defined')    
