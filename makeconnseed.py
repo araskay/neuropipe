@@ -23,10 +23,10 @@ for (opt,arg) in opts:
         ofile=arg
     elif opt in ('-s','--seed'):
         seedatlasfile=arg
-elif opt in ('-t','--template'):
+    elif opt in ('-t','--template'):
         atlasfile=arg
 
-if ifile=='' or ofile=='' or seedatlasfile='' or atlasfile=='':
+if ifile=='' or ofile=='' or seedatlasfile=='' or atlasfile=='':
     sys.exit('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file>')
         
 subjects=workflow.getsubjects(ifile)
