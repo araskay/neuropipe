@@ -3,27 +3,31 @@ import workflow, getopt,sys
 ifile=''
 ofile=''
 
-seedatlasfile='/home/mkayvanrad/data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz'
-atlasfile='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain'
+seedatlasfile=''
+atlasfile=''
 
 # parse command-line arguments
 try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',\
-                                ['help','input=', 'output='])
+    (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:s:t:',\
+                                ['help','input=', 'output=', 'seed=' , 'template='])
 except getopt.GetoptError:
-    print('usage: makeconnseed.py -i <input subject file> -o <output subject file>')
+    print('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file>')
     sys.exit()
 for (opt,arg) in opts:
     if opt in ('-h', '--help'):
-        print('usage: makeconnseed.py -i <input subject file> -o <output subject file>')
+        print('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file>')
         sys.exit()
     elif opt in ('-i','--input'):
         ifile=arg
     elif opt in ('-o','--output'):
         ofile=arg
+    elif opt in ('-s','--seed'):
+        seedatlasfile=arg
+elif opt in ('-t','--template'):
+        atlasfile=arg
 
-if ifile=='' or ofile=='':
-    sys.exit('Please provide both input subject file and output subject file')
+if ifile=='' or ofile=='' or seedatlasfile='' or atlasfile=='':
+    sys.exit('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file>')
         
 subjects=workflow.getsubjects(ifile)
 
