@@ -149,7 +149,6 @@ class Workflow:
             self.initbetweensubject()
         for i in range(0,len(self.subjects)):
             for j in range(i+1,len(self.subjects)):
-                print('DOING SUBJECTS',i,j)
                 subj1=self.subjects[i]
                 subj2=self.subjects[j]
                 ## implement averaging over sesssions

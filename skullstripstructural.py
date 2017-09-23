@@ -3,11 +3,12 @@ import workflow, getopt,sys,fileutils,shutil,os, subprocess
 ifile=''
 ofile=''
 skiprecon=False
+keeprecon=False
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',\
-                                ['help','input=', 'output=', 'skiprecon'])
+                                ['help','input=', 'output=', 'skiprecon', 'keeprecon'])
 except getopt.GetoptError:
     print('usage: makeconnseed.py -i <input subject file> -o <output subject file>')
     sys.exit()
@@ -39,7 +40,8 @@ for subj in subjects:
                                 opath+'/'+fileutils.removext(oname)+'_brainmask.nii.gz'])
             p.communicate()
             run.data.structural=opath+'/'+fileutils.removext(oname)+'_brainmask.nii.gz'
-            #shutil.rmtree(opath+'/__recon-all')
+            if not keeprecon:
+                shutil.rmtree(opath+'/__recon-all')
             
             
 workflow.savesubjects(ofile,subjects)
