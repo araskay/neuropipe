@@ -161,55 +161,46 @@ class Workflow:
                             count = count + 1
                             run1=run1[0] # assume there is only one run that matches
                             run2=run2[0] # same here
-                            '''run1.optimalpipeline.calcseedconn(1)# use p_thresh=1  
-                            run1.optimalpipeline.seedconn2mni()                        
-                            run2.optimalpipeline.calcseedconn(1) # same here
-                            run2.optimalpipeline.seedconn2mni()
-                            r=spmsim.pearsoncorr(run1.optimalpipeline.seedconnoutputmni152,\
-                                                 run2.optimalpipeline.seedconnoutputmni152)'''
-                            run1.optimalpipeline_r.calcseedconn(1)# use p_thresh=1
-                            run1.optimalpipeline_r.seedconn2mni() 
-                            run2.optimalpipeline_r.calcseedconn(1) # same here
-                            run2.optimalpipeline_r.seedconn2mni()
+                            
+                            if run1.optimalpipeline_r.seedconnoutput=='':
+                                run1.optimalpipeline_r.calcseedconn(0.05)# use p_thresh=1
+                            if run1.optimalpipeline_r.seedconnoutputmni152=='':
+                                run1.optimalpipeline_r.seedconn2mni()
+                            if run2.optimalpipeline_r.seedconnoutput=='':
+                                run2.optimalpipeline_r.calcseedconn(0.05) # same here
+                            if run2.optimalpipeline_r.seedconnoutputmni152=='':
+                                run2.optimalpipeline_r.seedconn2mni()
                             r_r=spmsim.pearsoncorr(run1.optimalpipeline_r.seedconnoutputmni152,\
-                                                 run2.optimalpipeline_r.seedconnoutputmni152)
-                            run1.optimalpipeline_j.calcseedconn(1)# use p_thresh=1  
-                            run1.optimalpipeline_j.seedconn2mni()                        
-                            run2.optimalpipeline_j.calcseedconn(1) # same here
-                            run2.optimalpipeline_j.seedconn2mni()
+                                                   run2.optimalpipeline_r.seedconnoutputmni152)
+                            jind_r=spmsim.jaccardind(run1.optimalpipeline_r.seedconn_threshoutputmni152,\
+                                                     run2.optimalpipeline_r.seedconn_threshoutputmni152)
+
+                            if run1.optimalpipeline_j.seedconnoutput=='':
+                                run1.optimalpipeline_j.calcseedconn(0.05)# use p_thresh=1
+                            if run1.optimalpipeline_j.seedconnoutputmni152=='':
+                                run1.optimalpipeline_j.seedconn2mni()
+                            if run2.optimalpipeline_j.seedconnoutput=='':
+                                run2.optimalpipeline_j.calcseedconn(0.05) # same here
+                            if run2.optimalpipeline_j.seedconnoutputmni152=='':
+                                run2.optimalpipeline_j.seedconn2mni()
                             r_j=spmsim.pearsoncorr(run1.optimalpipeline_j.seedconnoutputmni152,\
-                                                 run2.optimalpipeline_j.seedconnoutputmni152)
-                            run1.optimalpipeline_rj.calcseedconn(1)# use p_thresh=1
-                            run1.optimalpipeline_rj.seedconn2mni()                        
-                            run2.optimalpipeline_rj.calcseedconn(1) # same here
-                            run2.optimalpipeline_rj.seedconn2mni()
+                                                   run2.optimalpipeline_j.seedconnoutputmni152)
+                            jind_j=spmsim.jaccardind(run1.optimalpipeline_j.seedconn_threshoutputmni152,\
+                                                     run2.optimalpipeline_j.seedconn_threshoutputmni152)
+
+                            if run1.optimalpipeline_rj.seedconnoutput=='':
+                                run1.optimalpipeline_rj.calcseedconn(0.05)# use p_thresh=1
+                            if run1.optimalpipeline_rj.seedconnoutputmni152=='':
+                                run1.optimalpipeline_rj.seedconn2mni()
+                            if run2.optimalpipeline_rj.seedconnoutput=='':
+                                run2.optimalpipeline_rj.calcseedconn(0.05) # same here
+                            if run2.optimalpipeline_rj.seedconnoutputmni152=='':
+                                run2.optimalpipeline_rj.seedconn2mni()
                             r_rj=spmsim.pearsoncorr(run1.optimalpipeline_rj.seedconnoutputmni152,\
-                                                 run2.optimalpipeline_rj.seedconnoutputmni152)
-                            ## overlap
-                            '''run1.optimalpipeline.calcseedconn(0.05)# use p_thresh=0.05 
-                            run1.optimalpipeline.seedconn2mni()
-                            run2.optimalpipeline.calcseedconn(0.05) # same here
-                            run2.optimalpipeline.seedconn2mni()
-                            jind=spmsim.jaccardind(run1.optimalpipeline.seedconnoutputmni152,\
-                                                 run2.optimalpipeline.seedconnoutputmni152)'''
-                            run1.optimalpipeline_r.calcseedconn(0.05)# use p_thresh=0.05 
-                            run1.optimalpipeline_r.seedconn2mni()
-                            run2.optimalpipeline_r.calcseedconn(0.05) # same here
-                            run2.optimalpipeline_r.seedconn2mni()
-                            jind_r=spmsim.jaccardind(run1.optimalpipeline_r.seedconnoutputmni152,\
-                                                 run2.optimalpipeline_r.seedconnoutputmni152)
-                            run1.optimalpipeline_j.calcseedconn(0.05)# use p_thresh=0.05 
-                            run1.optimalpipeline_j.seedconn2mni()
-                            run2.optimalpipeline_j.calcseedconn(0.05) # same here
-                            run2.optimalpipeline_j.seedconn2mni()
-                            jind_j=spmsim.jaccardind(run1.optimalpipeline_j.seedconnoutputmni152,\
-                                                 run2.optimalpipeline_j.seedconnoutputmni152)
-                            run1.optimalpipeline_rj.calcseedconn(0.05)# use p_thresh=0.05 
-                            run1.optimalpipeline_rj.seedconn2mni()
-                            run2.optimalpipeline_rj.calcseedconn(0.05) # same here
-                            run2.optimalpipeline_rj.seedconn2mni()
-                            jind_rj=spmsim.jaccardind(run1.optimalpipeline_rj.seedconnoutputmni152,\
-                                                 run2.optimalpipeline_rj.seedconnoutputmni152)
+                                                    run2.optimalpipeline_rj.seedconnoutputmni152)
+                            jind_rj=spmsim.jaccardind(run1.optimalpipeline_rj.seedconn_threshoutputmni152,\
+                                                      run2.optimalpipeline_rj.seedconn_threshoutputmni152)
+                                                      
                             # save the result as a BetweenSubject struct
                             '''self.betweensubject[i,j].reproducibility=r
                             self.betweensubject[i,j].overlap=jind'''

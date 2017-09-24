@@ -24,7 +24,9 @@ class Pipeline:
         self.splithalfseedconnoverlap=None
         #self.connectivityseedfile=''
         self.seedconnoutput=''
+        self.seedconn_threshoutput=''
         self.seedconnoutputmni152=''
+        self.seedconn_threshoutputmni152=''
         self.envvars=None
     
     def setibase(self,ibase):
@@ -157,12 +159,20 @@ class Pipeline:
     def calcseedconn(self,p_thresh):
         if not self.pipelinerun:
             self.run()
+        # do not threshold
         seedcorr.calcseedcorr(fileutils.addniigzext(self.output), \
                               fileutils.addniigzext(self.data.connseed), \
-                              self.output+'_seedconn_thr'+str(p_thresh)+'.nii.gz', \
-                              p_thresh)
-        self.seedconnoutput=self.output+'_seedconn_thr'+str(p_thresh)+'_pearsonr'
+                              self.output+'_seedconn', \
+                              1)
+        self.seedconnoutput=self.output+'_seedconn_pearsonr'
         
+        # threshold at p_thresh
+        seedcorr.calcseedcorr(fileutils.addniigzext(self.output), \
+                              fileutils.addniigzext(self.data.connseed), \
+                              self.output+'_seedconn_thresh', \
+                              p_thresh)
+        self.seedconn_threshoutput=self.output+'_seedconn_thresh_pearsonr'
+    
     def getsteps(self):
         s=''
         for step in self.steps:
@@ -175,7 +185,7 @@ class Pipeline:
         print('S-H overlap:',self.splithalfseedconnoverlap)
         
     def seedconn2mni(self):
-        if self.seedconnoutput=='':
+        if self.seedconnoutput=='' or self.seedconn_threshoutput=='':
             sys.exit('Error in seedconn2mni: Seed connectivity not computed. Need to call calcseedconn first')
         # first get transformation parameters on the output of the pipeline
         steps=[preprocessingstep.PreprocessingStep('tmean',[]),\
@@ -188,16 +198,23 @@ class Pipeline:
         p.setobase(fileutils.removext(self.output))
         p.run()
         # then use the parameters to transform the SPM
+        # first the unthresholded SPM
         p=subprocess.Popen(['flirt','-in',self.seedconnoutput,\
                             '-ref',self.envvars.mni152,\
                             '-applyxfm','-init',self.data.tomni152,\
                             '-out',fileutils.removext(self.seedconnoutput)+'_2mni152'])
         p.communicate()        
         self.seedconnoutputmni152=fileutils.removext(self.seedconnoutput)+'_2mni152.nii.gz'
+        # then the thresholded SPM
+        p=subprocess.Popen(['flirt','-in',self.seedconn_threshoutput,\
+                            '-ref',self.envvars.mni152,\
+                            '-applyxfm','-init',self.data.tomni152,\
+                            '-out',fileutils.removext(self.seedconn_threshoutput)+'_2mni152'])
+        p.communicate()
+        self.seedconn_threshoutputmni152=fileutils.removext(self.seedconn_threshoutput)+'_2mni152.nii.gz'
 
-            
 
-            
-            
-            
+
+
+
 
