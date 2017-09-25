@@ -172,6 +172,8 @@ class Pipeline:
                               self.output+'_seedconn_thresh', \
                               p_thresh)
         self.seedconn_threshoutput=self.output+'_seedconn_thresh_pearsonr'
+        self.seedconnoutputmni152=''
+        self.seedconn_threshoutputmni152=''
     
     def getsteps(self):
         s=''

@@ -1,3 +1,19 @@
+def printhelp():
+    print('USAGE:')
+    print('pipe.py  --subjects <subjects file> --pipeline <pipeline file> --perm <pipeline file> --onoff <pipeline file> --const <pipeline file> --add --combine --fixed <pipeline file> --showpipes --template <template file> --resout <base name>')
+    print('ARGUMENTS:')
+    print('--subjects  : specify subjects file (required)')
+    print('--pipeline  specify a pipeline file to be run on all subjects without optimization and/or calculation of between subject metrics')
+    print('--perm      : specify a pipeline file to be used to form permutations section of the optimized pipeline')
+    print('--onoff     : specify a pipeline file to be used to form on/off section of the optimized pipeline')
+    print('--const     : specify a pipeline file to be used to form constant section of the optimized pipeline')
+    print('--combine  : flag specifying that all new (permutation/on-off/constant) steps are combined with the previous ones from this point on (Default) (See example below)')
+    print('--add       : flag specifying that all new (permutation/on-off/constant) steps are added to the previous pipelines from this point on (Default is ‘combine’) (See example below)')
+    print('--fixed     : specify a fixed pipeline for the calculation of between subject metrics')
+    print('--showpipes : show all pipelines to be run/optimized/validated without running. Only use to see a list of pipelines to be run/optimized. This will NOT run/optimize the pipelines. Remove the flag to run/optimize.')
+    print('--template  : template file to be used for between subject calculations, e.g., MNI template. Required with --perm, --onoff, --const, --fixed, unless using --showpipes.')
+    print('--resout    : base path/name to save results in csv format. Extension (‘.csv’) and suffixed are added to the base name. Default is ‘’.')
+
 import workflow
 from pipeline import Pipeline
 from preprocessingstep import PreprocessingStep
@@ -8,25 +24,26 @@ import copy
 
 subjectsfiles=[]
 combs=[]
-addsteps=True
+addsteps=False
 runpipesteps=[] # this is a list
 optimalpipesteps=[] # this is a list of lists
 fixedpipesteps=[] # this is a list
 showpipes=False
 resout=''
+mni152=''
 
 #mni152='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain' # this can be got as an input
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','mni152=','resout='])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','template=','resout='])
 except getopt.GetoptError:
-    print('usage: testbench_workflow.py -p <pipeline text file> -s <subjects file>')
+    printhelp()
     sys.exit()
 for (opt,arg) in opts:
     if opt in ('-h', '--help'):
-        print('usage: testbench_workflow.py -p <pipeline text file> -s <subjects file>')
+        printhelp()
         sys.exit()
     elif opt in ('-p','--pipeline'):
         runpipesteps+=preprocessingstep.makesteps(arg)
@@ -60,14 +77,13 @@ for (opt,arg) in opts:
         addsteps=False
     elif opt in ('--showpipes'):
         showpipes=True
-    elif opt in ('--mni152'):
+    elif opt in ('--template'):
         mni152=arg
     elif opt in ('--resout'):
         resout=arg
 
-# just for myself. remove for distribution.        
-if resout=='':
-    sys.exit('Give resout you idiot!!')
+if subjectsfiles==[]:
+    print('Please specify subjects file. Get help using -h or --help.')
         
 envvars=workflow.EnvVars()
 envvars.mni152=mni152
@@ -131,7 +147,7 @@ if showpipes:
     if len(runpipesteps)>0:
         print('-----')
         print('-----')
-        print('Pipeline runned:')
+        print('Pipeline run:')
         for subj in [runwf.subjects[0]]:
             for sess in [subj.sessions[0]]:
                 for run in [sess.runs[0]]:
@@ -192,6 +208,7 @@ if len(fixedpipesteps)>0:
     fixedwf.savebetweensubjectoverlap_r(resout+'_fixedwf_betsubjolap_r.csv')
     fixedwf.savebetweensubjectoverlap_j(resout+'_fixedwf_betsubjolap_j.csv')
     fixedwf.savebetweensubjectoverlap_rf(resout+'_fixedwf_betsubjolap_rj.csv')
+
 
 
 
