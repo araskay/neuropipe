@@ -169,7 +169,7 @@ if showpipes:
     if len(optimalpipesteps)>0:
         print('-----')
         print('-----')    
-        print('Otimized pipelines:')
+        print('Optimized pipelines:')
         for subj in [optimalwf.subjects[0]]:
             for sess in [subj.sessions[0]]:
                 for run in [sess.runs[0]]:
@@ -207,7 +207,7 @@ if len(fixedpipesteps)>0:
     fixedwf.savebetweensubjectreproducibility_rj(resout+'_fixedwf_betsubjrep_rj.csv')
     fixedwf.savebetweensubjectoverlap_r(resout+'_fixedwf_betsubjolap_r.csv')
     fixedwf.savebetweensubjectoverlap_j(resout+'_fixedwf_betsubjolap_j.csv')
-    fixedwf.savebetweensubjectoverlap_rf(resout+'_fixedwf_betsubjolap_rj.csv')
+    fixedwf.savebetweensubjectoverlap_rj(resout+'_fixedwf_betsubjolap_rj.csv')
 
 
 

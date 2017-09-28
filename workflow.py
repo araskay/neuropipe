@@ -75,14 +75,14 @@ class Run:
         self.optimalpipeline_rj=self.pipelines[0]
         for pipe in self.pipelines:
             pipe.calcsplithalfseedconnreproducibility()
-            if (1-abs(pipe.splithalfseedconnreproducibility)) < (1-abs(self.optimalpipeline.splithalfseedconnreproducibility)):
+            if (1-pipe.splithalfseedconnreproducibility) < (1-self.optimalpipeline.splithalfseedconnreproducibility):
                 self.optimalpipeline=pipe
-            if (1-abs(pipe.splithalfseedconnreproducibility)) < (1-abs(self.optimalpipeline_r.splithalfseedconnreproducibility)):
+            if (1-pipe.splithalfseedconnreproducibility) < (1-abs(self.optimalpipeline_r.splithalfseedconnreproducibility)):
                 self.optimalpipeline_r=pipe
-            if (1-abs(pipe.splithalfseedconnoverlap)) < (1-abs(self.optimalpipeline_j.splithalfseedconnoverlap)):
+            if (1-pipe.splithalfseedconnoverlap) < (1-self.optimalpipeline_j.splithalfseedconnoverlap):
                 self.optimalpipeline_j=pipe
-            if ((1-abs(pipe.splithalfseedconnreproducibility))**2 + (1-abs(pipe.splithalfseedconnoverlap))**2) < \
-            ((1-abs(self.optimalpipeline_rj.splithalfseedconnreproducibility))**2 + (1-abs(self.optimalpipeline_rj.splithalfseedconnoverlap))**2):
+            if ((1-pipe.splithalfseedconnreproducibility)**2 + (1-pipe.splithalfseedconnoverlap)**2) < \
+            ((1-self.optimalpipeline_rj.splithalfseedconnreproducibility)**2 + (1-self.optimalpipeline_rj.splithalfseedconnoverlap)**2):
                 self.optimalpipeline_rj=pipe
  
 class Session:
