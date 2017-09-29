@@ -44,6 +44,20 @@ class Data:
         self.boldwm=''        
         self.func2struct=''
         self.struct2func=''
+    
+    def parcellate_mprage(self):
+        if self.structural == '':
+            sys.exity('In parcellate_mprage: Structural data not given. Cannot proceed without. Exiting!')            
+        p=subprocess.Popen(['fast','-t','1','-n','3','--segments',\
+                            '-o',fileutils.removext(self.structural),\
+                            self.structural])
+        p.communicate()
+        self.structuralcsfpve=fileutils.removext(self.structural)+'_pve_0.nii.gz'
+        self.structuralgmpve=fileutils.removext(self.structural)+'_pve_1.nii.gz'
+        self.structuralwmpve=fileutils.removext(self.structural)+'_pve_2.nii.gz'
+        self.structuralcsfseg=fileutils.removext(self.structural)+'_seg_0.nii.gz'
+        self.structuralgmseg=fileutils.removext(self.structural)+'_seg_1.nii.gz'
+        self.structuralwmseg=fileutils.removext(self.structural)+'_seg_2.nii.gz'         
 
 class BetweenSubjectMetrics:
     def __init__(self):

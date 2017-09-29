@@ -216,20 +216,6 @@ class Pipeline:
         p.communicate()
         self.seedconn_threshoutputmni152=fileutils.removext(self.seedconn_threshoutput)+'_2mni152.nii.gz'
 
-    def parcellate_mprage(self):
-        if self.data.structural == '':
-            sys.exity('In parcellate_mprage: Structural data not given. Cannot proceed without. Exiting!')            
-        p=subprocess.Popen(['fast','-t','1','-n','3','--segments',\
-                            '-o',fileutils.removext(self.data.structural),\
-                            self.data.structural])
-        p.communicate()
-        self.data.structuralcsfpve=fileutils.removext(self.data.structural)+'_pve_0.nii.gz'
-        self.data.structuralgmpve=fileutils.removext(self.data.structural)+'_pve_1.nii.gz'
-        self.data.structuralwmpve=fileutils.removext(self.data.structural)+'_pve_2.nii.gz'
-        self.data.structuralcsfseg=fileutils.removext(self.data.structural)+'_seg_0.nii.gz'
-        self.data.structuralgmseg=fileutils.removext(self.data.structural)+'_seg_1.nii.gz'
-        self.data.structuralwmseg=fileutils.removext(self.data.structural)+'_seg_2.nii.gz'        
-        
     def outputtostruct(self):
         if self.data.structural == '':
             sys.exit('In func2struct: Structural data not given. Cannot proceed without. Exiting!')
@@ -248,7 +234,7 @@ class Pipeline:
         if not self.pipelinerun:
             self.run()
         if self.data.structuralcsfseg=='' or self.data.structuralgmseg=='' or self.data.structuralwmseg=='':
-            self.parcellate_mprage()
+            self.data.parcellate_mprage()
         if self.data.struct2func=='':
             self.outputtostruct()
         
