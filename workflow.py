@@ -23,8 +23,27 @@ class Data:
         self.motglm=''
         self.siemensphysio=''
         self.biopacphysio=''
-        self.tostruct=''
+        #self.tostruct=''
         self.tomni152=''
+        self.sliceorder=''
+        self.slicetiming=''
+        self.structuralcsfpve=''
+        self.structuralgmpve=''
+        self.structuralwmpve=''
+        self.structuralcsfseg=''
+        self.structuralgmseg=''
+        self.structuralwmseg=''
+        self.boldcsfpve=''
+        self.boldgmpve=''
+        self.boldwmpve=''
+        self.boldcsfseg=''
+        self.boldgmseg=''
+        self.boldwmseg=''
+        self.boldcsf=''
+        self.boldgm=''
+        self.boldwm=''        
+        self.func2struct=''
+        self.struct2func=''
 
 class BetweenSubjectMetrics:
     def __init__(self):
@@ -65,6 +84,12 @@ class Run:
             sys.exit('Error: No pipelines set for the run. Set pipelines before calling process()')
         for pipe in self.pipelines:
             pipe.run()
+            
+    def parcellate(self):
+        if (self.pipelines == []):
+            sys.exit('Error: No pipelines set for the run. Set pipelines before calling process()')
+        for pipe in self.pipelines:
+            pipe.parcellate()
       
     def findoptimalpipeline(self):
         if (self.pipelines == []):
@@ -110,10 +135,11 @@ class Workflow:
         '''self.betweensubjectreproducibility=[]
         self.averagebetweensubjectreproducibility=None'''
         self.betweensubject=None
+        self.parcellate=False
     
     def addsubject(self,subject):
         self.subjects.append(subject)
-    
+        
     def initbetweensubject(self):
         self.betweensubject=np.empty((len(self.subjects),len(self.subjects)),dtype=object)
         for i in np.arange(self.betweensubject.shape[0]):
@@ -128,7 +154,8 @@ class Workflow:
             for sess in subj.sessions:
                 for run in sess.runs:
                     run.process()
-                    
+                    if self.parcellate:
+                        run.parcellate()
         
     def findoptimalpipelines(self):
         if (self.subjects == []):
@@ -137,6 +164,13 @@ class Workflow:
             for sess in subj.sessions:
                 for run in sess.runs:
                     run.findoptimalpipeline()
+                    if self.parcellate:
+                        if not run.optimalpipeline_r.parcellated:
+                            run.optimalpipeline_r.parcellate()
+                        if not run.optimalpipeline_j.parcellated:
+                            run.optimalpipeline_j.parcellate()
+                        if not run.optimalpipeline_rj.parcellated:
+                            run.optimalpipeline_rj.parcellate()
         self.optimalpipelinesfound=True
         
     def computebetweensubjectreproducibility(self,seqName):
@@ -425,7 +459,9 @@ def getsubjects(subjectfile):
         brainmask=''
         motglm=''
         siemensphysio=''
-        biopacphysio=''        
+        biopacphysio=''
+        slicetiming=''
+        sliceorder=''
         try:
             (opts,args) = getopt.getopt(l,'',['subjectID=',\
                                               'sessionID=',\
@@ -440,7 +476,9 @@ def getsubjects(subjectfile):
                                               'brainmask=',\
                                               'motglm=',\
                                               'siemensphysio=',\
-                                              'biopacphysio='])
+                                              'biopacphysio=',\
+                                              'slicetiming=',\
+                                              'sliceorder='])
         except getopt.GetoptError:
             sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file (e.g., subjects.txt). Also please note that identifiers require double dash (--)')
         for (opt,arg) in opts:
@@ -472,6 +510,10 @@ def getsubjects(subjectfile):
                 siemensphysio=arg
             elif opt in ('--biopacphysio'):
                 biopacphysio=arg
+            elif opt in ('--slicetiming'):
+                slicetiming=arg
+            elif opt in ('--sliceorder'):
+                sliceorder=arg
         data=Data()
         data.bold=bold
         data.structural=structural
@@ -484,6 +526,8 @@ def getsubjects(subjectfile):
         data.motglm=motglm
         data.siemensphysio=siemensphysio
         data.biopacphysio=biopacphysio
+        data.slicetiming=slicetiming
+        data.sliceorder=sliceorder
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if s.ID==subjectID]
         if len(matchsubj)>0:
@@ -588,7 +632,10 @@ def savesubjects(filename,subjects):
                         '--brainmask \''+run.data.brainmask+'\' '+\
                         '--motglm \''+run.data.motglm+'\' '+\
                         '--siemensphysio \''+run.data.siemensphysio+'\' '+\
-                        '--biopacphysio \''+run.data.biopacphysio+'\''+'\n')
+                        '--biopacphysio \''+run.data.biopacphysio+'\' '+\
+                        '--slicetiming \''+run.data.slicetiming+'\' '+\
+                        '--sliceorder \''+run.data.sliceorder+'\' '+\
+                        '\n')
     f.close()
     
 

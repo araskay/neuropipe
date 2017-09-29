@@ -2,17 +2,18 @@ def printhelp():
     print('USAGE:')
     print('pipe.py  --subjects <subjects file> --pipeline <pipeline file> --perm <pipeline file> --onoff <pipeline file> --const <pipeline file> --add --combine --fixed <pipeline file> --showpipes --template <template file> --resout <base name>')
     print('ARGUMENTS:')
-    print('--subjects  : specify subjects file (required)')
-    print('--pipeline  specify a pipeline file to be run on all subjects without optimization and/or calculation of between subject metrics')
-    print('--perm      : specify a pipeline file to be used to form permutations section of the optimized pipeline')
-    print('--onoff     : specify a pipeline file to be used to form on/off section of the optimized pipeline')
-    print('--const     : specify a pipeline file to be used to form constant section of the optimized pipeline')
-    print('--combine  : flag specifying that all new (permutation/on-off/constant) steps are combined with the previous ones from this point on (Default) (See example below)')
-    print('--add       : flag specifying that all new (permutation/on-off/constant) steps are added to the previous pipelines from this point on (Default is ‘combine’) (See example below)')
-    print('--fixed     : specify a fixed pipeline for the calculation of between subject metrics')
-    print('--showpipes : show all pipelines to be run/optimized/validated without running. Only use to see a list of pipelines to be run/optimized. This will NOT run/optimize the pipelines. Remove the flag to run/optimize.')
-    print('--template  : template file to be used for between subject calculations, e.g., MNI template. Required with --perm, --onoff, --const, --fixed, unless using --showpipes.')
-    print('--resout    : base path/name to save results in csv format. Extension (‘.csv’) and suffixed are added to the base name. Default is ‘’.')
+    print('--subjects   : specify subjects file (required)')
+    print('--pipeline   : specify a pipeline file to be run on all subjects without optimization and/or calculation of between subject metrics')
+    print('--perm       : specify a pipeline file to be used to form permutations section of the optimized pipeline')
+    print('--onoff      : specify a pipeline file to be used to form on/off section of the optimized pipeline')
+    print('--const      : specify a pipeline file to be used to form constant section of the optimized pipeline')
+    print('--combine    : flag specifying that all new (permutation/on-off/constant) steps are combined with the previous ones from this point on (Default) (See example below)')
+    print('--add        : flag specifying that all new (permutation/on-off/constant) steps are added to the previous pipelines from this point on (Default is ‘combine’) (See example below)')
+    print('--fixed      : specify a fixed pipeline for the calculation of between subject metrics')
+    print('--showpipes  : show all pipelines to be run/optimized/validated without running. Only use to see a list of pipelines to be run/optimized. This will NOT run/optimize the pipelines. Remove the flag to run/optimize.')
+    print('--template   : template file to be used for between subject calculations, e.g., MNI template. Required with --perm, --onoff, --const, --fixed, unless using --showpipes.')
+    print('--resout     : base path/name to save results in csv format. Extension (‘.csv’) and suffixed are added to the base name. Default is ‘’.')
+    print('--parcellate : parcellate the output of the run/optimal/fixed pipeline(s). This also computes mean time series over CSF, GM, and WM for the outputs.')
 
 import workflow
 from pipeline import Pipeline
@@ -31,13 +32,14 @@ fixedpipesteps=[] # this is a list
 showpipes=False
 resout=''
 mni152=''
+parcellate=False
 
 #mni152='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain' # this can be got as an input
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','template=','resout='])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','template=','resout=','parcellate'])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -81,6 +83,8 @@ for (opt,arg) in opts:
         mni152=arg
     elif opt in ('--resout'):
         resout=arg
+    elif opt in ('--parcellate'):
+        parcellate=True
 
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
@@ -104,6 +108,8 @@ if len(runpipesteps)>0:
                 pipe.setenvvars(envvars)
                 run.addpipeline(pipe)
         runwf.addsubject(subj)
+    if parcellate:
+        runwf.parcellate=True
 
 # optimal workflow
 if len(optimalpipesteps)>0:
@@ -124,6 +130,9 @@ if len(optimalpipesteps)>0:
                     pipe.setenvvars(envvars)
                     run.addpipeline(pipe)
         optimalwf.addsubject(subj)
+    if parcellate:
+        optimalwf.parcellate=True
+        
 # fixed workflow
 if len(fixedpipesteps)>0:
     fixedwf=workflow.Workflow('Fixed Pipe')
@@ -140,7 +149,8 @@ if len(fixedpipesteps)>0:
                 pipe.setenvvars(envvars)
                 run.addpipeline(pipe)
         fixedwf.addsubject(subj)
-
+    if parcellate:
+        fixedwf.parcellate=True
 
 if showpipes:
     # print all pipelines run

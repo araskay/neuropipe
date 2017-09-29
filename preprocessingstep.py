@@ -3,6 +3,7 @@ import sys
 import seedcorr
 import fileutils
 import os
+import nibabel
 
 class PreprocessingStep:
     def __init__(self,name,params):
@@ -205,6 +206,33 @@ class PreprocessingStep:
             p=subprocess.Popen(['fslmaths',self.ibase,'-Tmean',self.obase])
             p.communicate()
         
+        elif self.name=='slicetimer':
+            # get the TR from the data
+            img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
+            hdr=img_nib.header
+            tr=str(hdr.get_zooms()[3])
+            if len(self.data.sliceorder)>0:
+                p=subprocess.Popen(['slicetimer','--out',self.obase,'--repeat',tr,'--ocustom',self.data.sliceorder,'--in',self.ibase])
+                p.communicate()                
+            elif len(self.data.slicetiming)>0:
+                p=subprocess.Popen(['slicetimer','-i',self.ibase,'-o',self.obase,'-r',tr,'--tcustom',self.data.slicetiming])
+                p.communicate()
+            else:
+                sys.exit('Please provide slice order for slice timing correction.')
+
+        elif self.name=='stcor':
+            # get the TR from the data
+            img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
+            hdr=img_nib.header
+            tr=str(hdr.get_zooms()[3]*1000)
+            if len(self.data.slicetiming)>0:
+                p=subprocess.Popen(['3dTshift','-TR',tr,'-tpattern','@'+self.data.slicetiming,\
+                                    '-prefix',fileutils.removext(self.obase), fileutils.addniigzext(self.ibase)])
+                p.communicate()
+                fileutils.afni2nifti(fileutils.removeniftiext(self.obase))
+            else:
+                sys.exit('Please provide slice timing offsets for slice timing correction.')                
+                
         else:
             sys.exit('Error: preprocessing step not defined')      
          
@@ -237,6 +265,8 @@ class PreprocessingStep:
         elif (self.name == 'tomni152'):
             os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'tmean'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'slicetimer'):
             os.remove(fileutils.addniigzext(self.obase))
         else:
             sys.exit('Error: preprocessing step not defined')    

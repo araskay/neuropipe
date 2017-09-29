@@ -28,6 +28,7 @@ class Pipeline:
         self.seedconnoutputmni152=''
         self.seedconn_threshoutputmni152=''
         self.envvars=None
+        self.parcellated=False
     
     def setibase(self,ibase):
         self.ibase=ibase
@@ -215,8 +216,111 @@ class Pipeline:
         p.communicate()
         self.seedconn_threshoutputmni152=fileutils.removext(self.seedconn_threshoutput)+'_2mni152.nii.gz'
 
+    def parcellate_mprage(self):
+        if self.data.structural == '':
+            sys.exity('In parcellate_mprage: Structural data not given. Cannot proceed without. Exiting!')            
+        p=subprocess.Popen(['fast','-t','1','-n','3','--segments',\
+                            '-o',fileutils.removext(self.data.structural),\
+                            self.data.structural])
+        p.communicate()
+        self.data.structuralcsfpve=fileutils.removext(self.data.structural)+'_pve_0.nii.gz'
+        self.data.structuralgmpve=fileutils.removext(self.data.structural)+'_pve_1.nii.gz'
+        self.data.structuralwmpve=fileutils.removext(self.data.structural)+'_pve_2.nii.gz'
+        self.data.structuralcsfseg=fileutils.removext(self.data.structural)+'_seg_0.nii.gz'
+        self.data.structuralgmseg=fileutils.removext(self.data.structural)+'_seg_1.nii.gz'
+        self.data.structuralwmseg=fileutils.removext(self.data.structural)+'_seg_2.nii.gz'        
+        
+    def outputtostruct(self):
+        if self.data.structural == '':
+            sys.exit('In func2struct: Structural data not given. Cannot proceed without. Exiting!')
+        p=subprocess.Popen(['flirt','-in',self.output,\
+                            '-ref',self.data.structural,\
+                            '-out',fileutils.removext(self.output)+'_func2struct',\
+                            '-omat',fileutils.removext(self.output)+'_func2struct.mat']) 
+        p.communicate()
+        p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.output)+'_struct2func.mat',\
+                            fileutils.removext(self.output)+'_func2struct.mat'])
+        p.communicate()
+        self.data.func2struct=fileutils.removext(self.output)+'_func2struct.mat'
+        self.data.struct2func=fileutils.removext(self.output)+'_struct2func.mat'        
 
+    def parcellate(self):
+        if not self.pipelinerun:
+            self.run()
+        if self.data.structuralcsfseg=='' or self.data.structuralgmseg=='' or self.data.structuralwmseg=='':
+            self.parcellate_mprage()
+        if self.data.struct2func=='':
+            self.outputtostruct()
+        
+        p=subprocess.Popen(['flirt','-in',self.data.structuralcsfseg,\
+                            '-ref',self.output,\
+                            '-applyxfm','-init',self.data.struct2func,\
+                            '-out',fileutils.removext(self.output)+'_seg_csf'])
+        p.communicate()           
+        p=subprocess.Popen(['flirt','-in',self.data.structuralgmseg,\
+                            '-ref',self.output,\
+                            '-applyxfm','-init',self.data.struct2func,\
+                            '-out',fileutils.removext(self.output)+'_seg_gm'])
+        p.communicate() 
+        p=subprocess.Popen(['flirt','-in',self.data.structuralwmseg,\
+                            '-ref',self.output,\
+                            '-applyxfm','-init',self.data.struct2func,\
+                            '-out',fileutils.removext(self.output)+'_seg_wm'])
+        p.communicate()         
 
+        self.data.boldcsfseg=fileutils.removext(self.output)+'_seg_csf.nii.gz'
+        self.data.boldgmseg=fileutils.removext(self.output)+'_seg_gm.nii.gz'
+        self.data.boldwmseg=fileutils.removext(self.output)+'_seg_wm.nii.gz'        
+        
+        p=subprocess.Popen(['flirt','-in',self.data.structuralcsfpve,\
+                            '-ref',self.output,\
+                            '-applyxfm','-init',self.data.struct2func,\
+                            '-out',fileutils.removext(self.output)+'_pve_csf'])
+        p.communicate()           
+        p=subprocess.Popen(['flirt','-in',self.data.structuralgmpve,\
+                            '-ref',self.output,\
+                            '-applyxfm','-init',self.data.struct2func,\
+                            '-out',fileutils.removext(self.output)+'_pve_gm'])
+        p.communicate() 
+        p=subprocess.Popen(['flirt','-in',self.data.structuralwmpve,\
+                            '-ref',self.output,\
+                            '-applyxfm','-init',self.data.struct2func,\
+                            '-out',fileutils.removext(self.output)+'_pve_wm'])
+        p.communicate()        
+        
+        self.data.boldcsfpve=fileutils.removext(self.output)+'_pve_csf.nii.gz'
+        self.data.boldgmpve=fileutils.removext(self.output)+'_pve_gm.nii.gz'
+        self.data.boldwmpve=fileutils.removext(self.output)+'_pve_wm.nii.gz'
+        
+        # threshold
+        p=subprocess.Popen(['fslmaths',self.data.boldcsfpve,'-thr','0.7',fileutils.removext(self.output)+'_pve_csf_thr.nii.gz'])
+        p.communicate()
+        p=subprocess.Popen(['fslmaths',self.data.boldgmpve,'-thr','0.7',fileutils.removext(self.output)+'_pve_gm_thr.nii.gz'])
+        p.communicate()
+        p=subprocess.Popen(['fslmaths',self.data.boldwmpve,'-thr','0.9',fileutils.removext(self.output)+'_pve_wm_thr.nii.gz'])
+        p.communicate()
+        
+        self.data.boldcsf=fileutils.removext(self.output)+'_pve_csf_thr.nii.gz'
+        self.data.boldgm=fileutils.removext(self.output)+'_pve_gm_thr.nii.gz'
+        self.data.boldwm=fileutils.removext(self.output)+'_pve_wm_thr.nii.gz'
+        
+        # while here, also compute meant time series
+        p=subprocess.Popen(['fslmeants','-i',self.output,\
+                            '-o',fileutils.removext(self.output)+'_meants_csf.txt',\
+                            '-m',self.data.boldcsf])
+        p.communicate()
+        p=subprocess.Popen(['fslmeants','-i',self.output,\
+                            '-o',fileutils.removext(self.output)+'_meants_gm.txt',\
+                            '-m',self.data.boldgm])
+        p.communicate()
+        p=subprocess.Popen(['fslmeants','-i',self.output,\
+                            '-o',fileutils.removext(self.output)+'_meants_wm.txt',\
+                            '-m',self.data.boldwm])
+        p.communicate()        
+        
 
-
-
+        self.data.meantscsf=fileutils.removext(self.output)+'_meants_csf.txt'
+        self.data.meantsgm=fileutils.removext(self.output)+'_meants_gm.txt'
+        self.data.meantswm=fileutils.removext(self.output)+'_meants_wm.txt'        
+    
+        self.parcellated=True
