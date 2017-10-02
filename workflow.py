@@ -6,6 +6,8 @@ import os,subprocess,nibabel, copy
 from preprocessingstep import PreprocessingStep
 import numpy as np
 
+pthresh=0.05 # significance level for thresholding seed connectivity maps
+
 class EnvVars:
     def __init__(self):
         self.mni152=''
@@ -44,7 +46,15 @@ class Data:
         self.boldwm=''        
         self.func2struct=''
         self.struct2func=''
-    
+        self.meantscsf=''
+        self.meantsgm=''
+        self.meantswm=''
+        self.meantsnet=''
+        self.imeantscsf=''
+        self.imeantsgm=''
+        self.imeantswm=''
+        self.imeantsnet=''
+        
     def parcellate_mprage(self):
         if self.structural == '':
             sys.exity('In parcellate_mprage: Structural data not given. Cannot proceed without. Exiting!')            
@@ -104,7 +114,19 @@ class Run:
             sys.exit('Error: No pipelines set for the run. Set pipelines before calling process()')
         for pipe in self.pipelines:
             pipe.parcellate()
-      
+
+    def meants(self):
+        if (self.pipelines == []):
+            sys.exit('Error: No pipelines set for the run. Set pipelines before calling process()')
+        for pipe in self.pipelines:
+            pipe.meants()
+
+    def seedconn(self):
+        if (self.pipelines == []):
+            sys.exit('Error: No pipelines set for the run. Set pipelines before calling process()')
+        for pipe in self.pipelines:
+            pipe.calcseedconn(pthresh)
+            
     def findoptimalpipeline(self):
         if (self.pipelines == []):
             sys.exit('Error: No pipelines set for the run. Set pipelines before calling findoptimalpipeline()')
@@ -116,7 +138,7 @@ class Run:
             pipe.calcsplithalfseedconnreproducibility()
             if (1-pipe.splithalfseedconnreproducibility) < (1-self.optimalpipeline.splithalfseedconnreproducibility):
                 self.optimalpipeline=pipe
-            if (1-pipe.splithalfseedconnreproducibility) < (1-abs(self.optimalpipeline_r.splithalfseedconnreproducibility)):
+            if (1-pipe.splithalfseedconnreproducibility) < (1-self.optimalpipeline_r.splithalfseedconnreproducibility):
                 self.optimalpipeline_r=pipe
             if (1-pipe.splithalfseedconnoverlap) < (1-self.optimalpipeline_j.splithalfseedconnoverlap):
                 self.optimalpipeline_j=pipe
@@ -161,15 +183,20 @@ class Workflow:
                 metrics=BetweenSubjectMetrics()
                 self.betweensubject[i,j]=metrics
     
-    def process(self):
+    def run(self):
         if (self.subjects == []):
             sys.exit('Error: no subjects to process')
         for subj in self.subjects:
             for sess in subj.sessions:
                 for run in sess.runs:
                     run.process()
+                    if self.seedconn:
+                        run.seedconn()
                     if self.parcellate:
                         run.parcellate()
+                    if self.meants:
+                        run.meants()
+                    
         
     def findoptimalpipelines(self):
         if (self.subjects == []):
@@ -185,6 +212,20 @@ class Workflow:
                             run.optimalpipeline_j.parcellate()
                         if not run.optimalpipeline_rj.parcellated:
                             run.optimalpipeline_rj.parcellate()
+                    if self.seedconn:
+                        if not run.optimalpipeline_r.seedconncomputed:
+                            run.optimalpipeline_r.calcseedconn(pthresh)
+                        if not run.optimalpipeline_j.seedconncomputed:
+                            run.optimalpipeline_j.calcseedconn(pthresh)
+                        if not run.optimalpipeline_rj.seedconncomputed:
+                            run.optimalpipeline_rj.calcseedconn(pthresh)
+                    if self.meants:
+                        if not run.optimalpipeline_r.meantscomputed:
+                            run.optimalpipeline_r.meants()
+                        if not run.optimalpipeline_j.meantscomputed:
+                            run.optimalpipeline_j.meants()
+                        if not run.optimalpipeline_rj.meantscomputed:
+                            run.optimalpipeline_rj.meants()                            
         self.optimalpipelinesfound=True
         
     def computebetweensubjectreproducibility(self,seqName):
@@ -211,11 +252,11 @@ class Workflow:
                             run2=run2[0] # same here
                             
                             if run1.optimalpipeline_r.seedconnoutput=='':
-                                run1.optimalpipeline_r.calcseedconn(0.05)# use p_thresh=1
+                                run1.optimalpipeline_r.calcseedconn(pthresh)
                             if run1.optimalpipeline_r.seedconnoutputmni152=='':
                                 run1.optimalpipeline_r.seedconn2mni()
                             if run2.optimalpipeline_r.seedconnoutput=='':
-                                run2.optimalpipeline_r.calcseedconn(0.05) # same here
+                                run2.optimalpipeline_r.calcseedconn(pthresh)
                             if run2.optimalpipeline_r.seedconnoutputmni152=='':
                                 run2.optimalpipeline_r.seedconn2mni()
                             r_r=spmsim.pearsoncorr(run1.optimalpipeline_r.seedconnoutputmni152,\
@@ -224,11 +265,11 @@ class Workflow:
                                                      run2.optimalpipeline_r.seedconn_threshoutputmni152)
 
                             if run1.optimalpipeline_j.seedconnoutput=='':
-                                run1.optimalpipeline_j.calcseedconn(0.05)# use p_thresh=1
+                                run1.optimalpipeline_j.calcseedconn(pthresh)
                             if run1.optimalpipeline_j.seedconnoutputmni152=='':
                                 run1.optimalpipeline_j.seedconn2mni()
                             if run2.optimalpipeline_j.seedconnoutput=='':
-                                run2.optimalpipeline_j.calcseedconn(0.05) # same here
+                                run2.optimalpipeline_j.calcseedconn(pthresh)
                             if run2.optimalpipeline_j.seedconnoutputmni152=='':
                                 run2.optimalpipeline_j.seedconn2mni()
                             r_j=spmsim.pearsoncorr(run1.optimalpipeline_j.seedconnoutputmni152,\
@@ -237,11 +278,11 @@ class Workflow:
                                                      run2.optimalpipeline_j.seedconn_threshoutputmni152)
 
                             if run1.optimalpipeline_rj.seedconnoutput=='':
-                                run1.optimalpipeline_rj.calcseedconn(0.05)# use p_thresh=1
+                                run1.optimalpipeline_rj.calcseedconn(pthresh)
                             if run1.optimalpipeline_rj.seedconnoutputmni152=='':
                                 run1.optimalpipeline_rj.seedconn2mni()
                             if run2.optimalpipeline_rj.seedconnoutput=='':
-                                run2.optimalpipeline_rj.calcseedconn(0.05) # same here
+                                run2.optimalpipeline_rj.calcseedconn(pthresh)
                             if run2.optimalpipeline_rj.seedconnoutputmni152=='':
                                 run2.optimalpipeline_rj.seedconn2mni()
                             r_rj=spmsim.pearsoncorr(run1.optimalpipeline_rj.seedconnoutputmni152,\

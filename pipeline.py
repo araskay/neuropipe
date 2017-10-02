@@ -29,6 +29,8 @@ class Pipeline:
         self.seedconn_threshoutputmni152=''
         self.envvars=None
         self.parcellated=False
+        self.seedconncomputed=False
+        self.meantscomputed=False
     
     def setibase(self,ibase):
         self.ibase=ibase
@@ -175,6 +177,8 @@ class Pipeline:
         self.seedconn_threshoutput=self.output+'_seedconn_thresh_pearsonr'
         self.seedconnoutputmni152=''
         self.seedconn_threshoutputmni152=''
+        
+        self.seedconncomputed=True
     
     def getsteps(self):
         s=''
@@ -216,9 +220,9 @@ class Pipeline:
         p.communicate()
         self.seedconn_threshoutputmni152=fileutils.removext(self.seedconn_threshoutput)+'_2mni152.nii.gz'
 
-    def outputtostruct(self):
+    def output2structural(self):
         if self.data.structural == '':
-            sys.exit('In func2struct: Structural data not given. Cannot proceed without. Exiting!')
+            sys.exit('In output2structural: Structural data not given. Cannot proceed without. Exiting!')
         p=subprocess.Popen(['flirt','-in',self.output,\
                             '-ref',self.data.structural,\
                             '-out',fileutils.removext(self.output)+'_func2struct',\
@@ -236,7 +240,7 @@ class Pipeline:
         if self.data.structuralcsfseg=='' or self.data.structuralgmseg=='' or self.data.structuralwmseg=='':
             self.data.parcellate_mprage()
         if self.data.struct2func=='':
-            self.outputtostruct()
+            self.output2structural()
         
         p=subprocess.Popen(['flirt','-in',self.data.structuralcsfseg,\
                             '-ref',self.output,\
@@ -290,7 +294,13 @@ class Pipeline:
         self.data.boldgm=fileutils.removext(self.output)+'_pve_gm_thr.nii.gz'
         self.data.boldwm=fileutils.removext(self.output)+'_pve_wm_thr.nii.gz'
         
-        # while here, also compute meant time series
+        self.parcellated=True
+        
+        
+    def meants(self):
+        if self.data.boldcsf=='' or self.data.boldgm=='' or self.data.boldwm=='':
+            self.parcellate()
+        # compute meant time series for the pipeline output
         p=subprocess.Popen(['fslmeants','-i',self.output,\
                             '-o',fileutils.removext(self.output)+'_meants_csf.txt',\
                             '-m',self.data.boldcsf])
@@ -303,10 +313,41 @@ class Pipeline:
                             '-o',fileutils.removext(self.output)+'_meants_wm.txt',\
                             '-m',self.data.boldwm])
         p.communicate()        
-        
 
         self.data.meantscsf=fileutils.removext(self.output)+'_meants_csf.txt'
         self.data.meantsgm=fileutils.removext(self.output)+'_meants_gm.txt'
-        self.data.meantswm=fileutils.removext(self.output)+'_meants_wm.txt'        
-    
-        self.parcellated=True
+        self.data.meantswm=fileutils.removext(self.output)+'_meants_wm.txt'         
+        
+        # while here, also compute meant time series for the pipeline input
+        p=subprocess.Popen(['fslmeants','-i',self.ibase,\
+                            '-o',fileutils.removext(self.ibase)+'_meants_csf.txt',\
+                            '-m',self.data.boldcsf])
+        p.communicate()
+        p=subprocess.Popen(['fslmeants','-i',self.ibase,\
+                            '-o',fileutils.removext(self.ibase)+'_meants_gm.txt',\
+                            '-m',self.data.boldgm])
+        p.communicate()
+        p=subprocess.Popen(['fslmeants','-i',self.ibase,\
+                            '-o',fileutils.removext(self.ibase)+'_meants_wm.txt',\
+                            '-m',self.data.boldwm])
+        p.communicate()        
+
+        self.data.imeantscsf=fileutils.removext(self.ibase)+'_meants_csf.txt'
+        self.data.imeantsgm=fileutils.removext(self.ibase)+'_meants_gm.txt'
+        self.data.imeantswm=fileutils.removext(self.ibase)+'_meants_wm.txt'        
+        
+        if len(self.seedconn_threshoutput)>0:
+            p=subprocess.Popen(['fslmeants','-i',self.output,\
+                                '-o',fileutils.removext(self.output)+'_meants_net.txt',\
+                                '-m',self.seedconn_threshoutput])
+            p.communicate()             
+
+            p=subprocess.Popen(['fslmeants','-i',self.ibase,\
+                                '-o',fileutils.removext(self.ibase)+'_meants_net.txt',\
+                                '-m',self.seedconn_threshoutput])
+            p.communicate()            
+            
+            self.data.meantsnet=fileutils.removext(self.output)+'_meants_net.txt'
+            self.data.imeantsnet=fileutils.removext(self.ibase)+'_meants_net.txt'
+            
+        self.meantscomputed=True

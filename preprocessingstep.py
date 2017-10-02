@@ -211,14 +211,9 @@ class PreprocessingStep:
             img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
             hdr=img_nib.header
             tr=str(hdr.get_zooms()[3])
-            if len(self.data.sliceorder)>0:
-                p=subprocess.Popen(['slicetimer','--out',self.obase,'--repeat',tr,'--ocustom',self.data.sliceorder,'--in',self.ibase])
-                p.communicate()                
-            elif len(self.data.slicetiming)>0:
-                p=subprocess.Popen(['slicetimer','-i',self.ibase,'-o',self.obase,'-r',tr,'--tcustom',self.data.slicetiming])
-                p.communicate()
-            else:
-                sys.exit('Please provide slice order for slice timing correction.')
+            p=subprocess.Popen(['slicetimer','-i',self.ibase,'-o',self.obase,'-r',tr]+self.params)
+            p.communicate()                
+
 
         elif self.name=='stcor':
             # get the TR from the data

@@ -2,18 +2,21 @@ def printhelp():
     print('USAGE:')
     print('pipe.py  --subjects <subjects file> --pipeline <pipeline file> --perm <pipeline file> --onoff <pipeline file> --const <pipeline file> --add --combine --fixed <pipeline file> --showpipes --template <template file> --resout <base name>')
     print('ARGUMENTS:')
-    print('--subjects   : specify subjects file (required)')
-    print('--pipeline   : specify a pipeline file to be run on all subjects without optimization and/or calculation of between subject metrics')
-    print('--perm       : specify a pipeline file to be used to form permutations section of the optimized pipeline')
-    print('--onoff      : specify a pipeline file to be used to form on/off section of the optimized pipeline')
-    print('--const      : specify a pipeline file to be used to form constant section of the optimized pipeline')
-    print('--combine    : flag specifying that all new (permutation/on-off/constant) steps are combined with the previous ones from this point on (Default) (See example below)')
-    print('--add        : flag specifying that all new (permutation/on-off/constant) steps are added to the previous pipelines from this point on (Default is ‘combine’) (See example below)')
-    print('--fixed      : specify a fixed pipeline for the calculation of between subject metrics')
-    print('--showpipes  : show all pipelines to be run/optimized/validated without running. Only use to see a list of pipelines to be run/optimized. This will NOT run/optimize the pipelines. Remove the flag to run/optimize.')
-    print('--template   : template file to be used for between subject calculations, e.g., MNI template. Required with --perm, --onoff, --const, --fixed, unless using --showpipes.')
-    print('--resout     : base path/name to save results in csv format. Extension (‘.csv’) and suffixed are added to the base name. Default is ‘’.')
-    print('--parcellate : parcellate the output of the run/optimal/fixed pipeline(s). This also computes mean time series over CSF, GM, and WM for the outputs.')
+    print('--subjects <subj file>  : specify subjects file (required)')
+    print('--pipeline <pipe file>  : specify a pipeline file to be run on all subjects without optimization and/or calculation of between subject metrics')
+    print('--perm <pipe file>      : specify a pipeline file to be used to form permutations section of the optimized pipeline')
+    print('--onoff <pipe file>     : specify a pipeline file to be used to form on/off section of the optimized pipeline')
+    print('--const <pipe file>     : specify a pipeline file to be used to form constant section of the optimized pipeline')
+    print('--combine               : flag specifying that all new (permutation/on-off/constant) steps are combined with the previous ones from this point on (Default) (See example below)')
+    print('--add                   : flag specifying that all new (permutation/on-off/constant) steps are added to the previous pipelines from this point on (Default is ‘combine’) (See example below)')
+    print('--fixed <pipe file>     : specify a fixed pipeline for the calculation of between subject metrics')
+    print('--showpipes             : show all pipelines to be run/optimized/validated without running. Only use to see a list of pipelines to be run/optimized. This will NOT run/optimize the pipelines. Remove the flag to run/optimize.')
+    print('--template <temp file>  : template file to be used for between subject calculations, e.g., MNI template. Required with --perm, --onoff, --const, --fixed, unless using --showpipes.')
+    print('--resout <base name>    : base path/name to save results in csv format. Extension (‘.csv’) and suffixed are added to the base name. Default is ‘’.')
+    print('--parcellate            : parcellate the output of the run/optimal/fixed pipeline(s).')
+    print('--meants                : compute mean time series over CSF, GM, and WM for the pipeline output. This automatically parcellates the output. If used with --seedconn, meant time series over the network is also computed.')
+    print('--seedconn              : compute seed-connectivity network on the pipeline output. Need to provide a seed file in subjects file.')
+    print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 import workflow
 from pipeline import Pipeline
@@ -33,13 +36,15 @@ showpipes=False
 resout=''
 mni152=''
 parcellate=False
+meants=False
+seedconn=False
 
 #mni152='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain' # this can be got as an input
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','template=','resout=','parcellate'])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','template=','resout=','parcellate','meants','seedconn'])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -85,6 +90,10 @@ for (opt,arg) in opts:
         resout=arg
     elif opt in ('--parcellate'):
         parcellate=True
+    elif opt in ('--meants'):
+        meants=True
+    elif opt in ('--seedconn'):
+        seedconn=True        
 
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
@@ -110,7 +119,11 @@ if len(runpipesteps)>0:
         runwf.addsubject(subj)
     if parcellate:
         runwf.parcellate=True
-
+    if seedconn:
+        runwf.seedconn=True
+    if meants:
+        runwf.meants=True
+        
 # optimal workflow
 if len(optimalpipesteps)>0:
     optimalwf=workflow.Workflow('Optimal Pipe')
@@ -132,6 +145,10 @@ if len(optimalpipesteps)>0:
         optimalwf.addsubject(subj)
     if parcellate:
         optimalwf.parcellate=True
+    if seedconn:
+        optimalwf.seedconn=True
+    if meants:
+        optimalwf.meants=True
         
 # fixed workflow
 if len(fixedpipesteps)>0:
@@ -151,6 +168,10 @@ if len(fixedpipesteps)>0:
         fixedwf.addsubject(subj)
     if parcellate:
         fixedwf.parcellate=True
+    if seedconn:
+        fixedwf.seedconn=True
+    if meants:
+        fixedwf.meants=True
 
 if showpipes:
     # print all pipelines run
@@ -190,7 +211,7 @@ if showpipes:
     
 # now process    
 if len(runpipesteps)>0:
-    runwf.process()
+    runwf.run()
 if len(optimalpipesteps)>0:
     seqname=optimalwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
     optimalwf.computebetweensubjectreproducibility(seqname)
