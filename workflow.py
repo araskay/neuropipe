@@ -602,7 +602,53 @@ def getsubjects(subjectfile):
     return(subjects)
 
 # this is to be moved to and intergrated into makeconnseed.py                
-def makeconnseed(data,seedatlasfile,atlasfile,ofile):
+def makeconnseed(data,seedatlasfile,atlasfile,ofile,binary):
+    # data is a Data object
+    # seedatlasfile contains a probabilistic seed ROI on MNI space (e.g., data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz)
+    img=nibabel.load(data.bold)
+    nvol=img.shape[3]
+    refvol=nvol/2 # use the middle volume as reference
+    # extract brain mask from a temporal mean volume and apply to 4D data
+    obase=data.opath
+    p=subprocess.Popen(['fslmaths',data.bold,'-Tmean',obase+'__tmean']) # temporal mean
+    p.communicate()
+    p=subprocess.Popen(['bet2',obase+'__tmean',obase+'__tmean','-f','0.3','-n','-m']) # create a binary mask from the the mean image. (bet2 automatically adds a _mask suffix to the output file)
+    p.communicate()
+    p=subprocess.Popen(['fslmaths',data.bold,'-mas',obase+'__tmean_mask',obase+'__bet']) # use the mask to brain extract the 4D functional data
+    p.communicate()
+    # calculate registration parameters
+    p=subprocess.Popen(['fslroi',obase+'__bet',obase+'__bet_refvol',str(refvol),'1']) # use the middle volume as reference
+    p.communicate()
+    p=subprocess.Popen(['flirt','-in',data.bold,'-ref',data.structural,\
+                        '-out',fileutils.removext(data.bold)+'__func2struct',\
+                        '-omat',fileutils.removext(data.bold)+'__func2struct.mat'])
+    p.communicate()
+    p=subprocess.Popen(['flirt', '-ref', atlasfile, '-in', data.structural,\
+                        '-out', fileutils.removext(data.structural)+'__struct2mni',\
+                        '-omat', fileutils.removext(data.structural)+'__struct2mni.mat'])
+    p.communicate()
+    p=subprocess.Popen(['convert_xfm', '-omat', fileutils.removext(data.bold)+'__func2mni.mat',\
+                        '-concat', fileutils.removext(data.structural)+'__struct2mni.mat',\
+                        fileutils.removext(data.bold)+'__func2struct.mat'])
+    p.communicate()
+    p=subprocess.Popen(['convert_xfm', '-inverse', '-omat', fileutils.removext(data.bold)+'__mni2func.mat',\
+                        fileutils.removext(data.bold)+'__func2mni.mat'])
+    p.communicate()
+    # now use the transformation matrix to transfrom the atlas to subject-specific functional space
+    p=subprocess.Popen(['flirt', '-in', seedatlasfile,\
+                        '-applyxfm', '-init', fileutils.removext(data.bold)+'__mni2func.mat',\
+                        '-out', ofile,\
+                        '-paddingsize', '0.0', '-interp', 'trilinear', '-ref', data.bold])
+    p.communicate()
+    if not binary:
+        # threshold at 50% and binarize
+        p=subprocess.Popen(['fslmaths', ofile, '-thr', '50', '-bin', ofile])
+        p.communicate()
+    # remove temp files
+    return(fileutils.addniigzext(ofile)) # also return the path to the seed file
+
+'''# this is to be moved to and intergrated into makeconnseed.py                
+def makeconnseed(data,seedatlasfile,atlasfile,ofile,binary):
     # data is a Data object
     # seedatlasfile contains a probabilistic seed ROI on MNI space (e.g., data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz)
     img=nibabel.load(data.bold)
@@ -636,9 +682,10 @@ def makeconnseed(data,seedatlasfile,atlasfile,ofile):
                         '-out', ofile,\
                         '-paddingsize', '0.0', '-interp', 'trilinear', '-ref', obase+'__bet_refvol'])
     p.communicate()
-    # threshold at 50% and binarize
-    p=subprocess.Popen(['fslmaths', ofile, '-thr', '50', '-bin', ofile])
-    p.communicate()
+    if not binary:
+        # threshold at 50% and binarize
+        p=subprocess.Popen(['fslmaths', ofile, '-thr', '50', '-bin', ofile])
+        p.communicate()
     # remove temp files
     os.remove(fileutils.addniigzext(obase+'__tmean'))
     os.remove(fileutils.addniigzext(obase+'__tmean_mask'))
@@ -650,7 +697,7 @@ def makeconnseed(data,seedatlasfile,atlasfile,ofile):
     os.remove(obase+'__struct2mni.mat')
     os.remove(obase+'__func2mni.mat')
     os.remove(obase+'__mni2func.mat')
-    return(fileutils.addniigzext(ofile)) # also return the path to the seed file
+    return(fileutils.addniigzext(ofile)) # also return the path to the seed file'''
 
 '''def skullstrip_fsl(ifile,obase):
     p=subprocess.Popen(['fslreorient2std',ifile,fileutils.removeniftiext(obase)+'_reorient'])

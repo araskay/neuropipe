@@ -38,6 +38,7 @@ mni152=''
 parcellate=False
 meants=False
 seedconn=False
+runpipename=''
 
 #mni152='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain' # this can be got as an input
 
@@ -54,6 +55,9 @@ for (opt,arg) in opts:
         sys.exit()
     elif opt in ('-p','--pipeline'):
         runpipesteps+=preprocessingstep.makesteps(arg)
+        (directory,namebase)=os.path.split(arg)
+        namebase=fileutils.removext(namebase)
+        runpipename+=namebase
     elif opt in ('--fixed'):
         fixedpipesteps+=preprocessingstep.makesteps(arg)
     elif opt in ('--perm'):
@@ -110,7 +114,7 @@ if len(runpipesteps)>0:
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
-                pipe=Pipeline('runpipe',runpipesteps)
+                pipe=Pipeline(runpipename,runpipesteps)
                 pipe.setibase(run.data.bold)
                 pipe.setobase(run.data.opath)
                 pipe.setdata(run.data) # when running pipeline do not deepcopy so that results, e.g., motpar, can be recorded if needed
