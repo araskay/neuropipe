@@ -601,7 +601,7 @@ def getsubjects(subjectfile):
         l=shlex.split(line)
     return(subjects)
 
-# this is to be moved to and intergrated into makeconnseed.py                
+'''# this is to be moved to and intergrated into makeconnseed.py                
 def makeconnseed(data,seedatlasfile,atlasfile,ofile,binary):
     # data is a Data object
     # seedatlasfile contains a probabilistic seed ROI on MNI space (e.g., data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz)
@@ -645,7 +645,7 @@ def makeconnseed(data,seedatlasfile,atlasfile,ofile,binary):
         p=subprocess.Popen(['fslmaths', ofile, '-thr', '50', '-bin', ofile])
         p.communicate()
     # remove temp files
-    return(fileutils.addniigzext(ofile)) # also return the path to the seed file
+    return(fileutils.addniigzext(ofile)) # also return the path to the seed file'''
 
 '''# this is to be moved to and intergrated into makeconnseed.py                
 def makeconnseed(data,seedatlasfile,atlasfile,ofile,binary):

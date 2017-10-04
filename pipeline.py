@@ -91,6 +91,9 @@ class Pipeline:
                 
         
     def runsplithalf(self):
+        # first create output directory if necessary
+        (directory,namebase)=os.path.split(self.obase)
+        fileutils.createdir(directory)        
         # get and save pipeline attributes to restore at the end
         ibase=self.ibase
         obase=self.obase
