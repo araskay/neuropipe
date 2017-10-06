@@ -29,18 +29,21 @@ class Data:
         self.tomni152=''
         self.sliceorder=''
         self.slicetiming=''
-        self.structuralcsfpve=''
-        self.structuralgmpve=''
-        self.structuralwmpve=''
-        self.structuralcsfseg=''
-        self.structuralgmseg=''
-        self.structuralwmseg=''
-        self.boldcsfpve=''
-        self.boldgmpve=''
-        self.boldwmpve=''
-        self.boldcsfseg=''
-        self.boldgmseg=''
-        self.boldwmseg=''
+        #self.structuralcsfpve=''
+        #self.structuralgmpve=''
+        #self.structuralwmpve=''
+        #self.structuralcsfseg=''
+        #self.structuralgmseg=''
+        #self.structuralwmseg=''
+        self.structuralcsf=''
+        self.structuralgm=''
+        self.structuralwm=''
+        #self.boldcsfpve=''
+        #self.boldgmpve=''
+        #self.boldwmpve=''
+        #self.boldcsfseg=''
+        #self.boldgmseg=''
+        #self.boldwmseg=''
         self.boldcsf=''
         self.boldgm=''
         self.boldwm=''        
@@ -54,20 +57,42 @@ class Data:
         self.imeantsgm=''
         self.imeantswm=''
         self.imeantsnet=''
-        
+        self.aseg=''
+    
+    # this is not recommended anymore- use parcellate_structural
     def parcellate_mprage(self):
         if self.structural == '':
-            sys.exity('In parcellate_mprage: Structural data not given. Cannot proceed without. Exiting!')            
+            sys.exit('In parcellate_mprage: Structural data not given. Cannot proceed without. Exiting!')            
         p=subprocess.Popen(['fast','-t','1','-n','3','--segments',\
                             '-o',fileutils.removext(self.structural),\
                             self.structural])
         p.communicate()
-        self.structuralcsfpve=fileutils.removext(self.structural)+'_pve_0.nii.gz'
-        self.structuralgmpve=fileutils.removext(self.structural)+'_pve_1.nii.gz'
-        self.structuralwmpve=fileutils.removext(self.structural)+'_pve_2.nii.gz'
-        self.structuralcsfseg=fileutils.removext(self.structural)+'_seg_0.nii.gz'
-        self.structuralgmseg=fileutils.removext(self.structural)+'_seg_1.nii.gz'
-        self.structuralwmseg=fileutils.removext(self.structural)+'_seg_2.nii.gz'         
+        #self.structuralcsfpve=fileutils.removext(self.structural)+'_pve_0.nii.gz'
+        #self.structuralgmpve=fileutils.removext(self.structural)+'_pve_1.nii.gz'
+        #self.structuralwmpve=fileutils.removext(self.structural)+'_pve_2.nii.gz'
+        self.structuralcsf=fileutils.removext(self.structural)+'_seg_0.nii.gz'
+        self.structuralgm=fileutils.removext(self.structural)+'_seg_1.nii.gz'
+        self.structuralwm=fileutils.removext(self.structural)+'_seg_2.nii.gz' 
+       
+    def parcellate_structural(self):
+        if self.structural == '':
+            sys.exit('In parcellate_structural: Structural image not given. Cannot proceed without. Exiting!') 
+        if self.aseg == '':
+            print('In parcellate_structural: aseg not given. Cannot proceed without. Stepping back to FSL FAST segmentation.')
+            self.parcellate_mprage()
+        else:
+            p=subprocess.Popen(['mri_binarize','--i',self.aseg,'--o',fileutils.removext(self.structural)+'_csf.nii.gz','--ventricles'])
+            p.communicate()
+            p=subprocess.Popen(['mri_binarize','--i',self.aseg,'--o',fileutils.removext(self.structural)+'_wm.nii.gz','--ctx-wm'])
+            p.communicate()
+            p=subprocess.Popen(['mri_binarize','--i',self.aseg,'--o',fileutils.removext(self.structural)+'_gm.nii.gz','--gm'])
+            p.communicate()
+            self.structuralcsf=fileutils.removext(self.structural)+'_csf.nii.gz'
+            self.structuralwm=fileutils.removext(self.structural)+'_wm.nii.gz'
+            self.structuralgm=fileutils.removext(self.structural)+'_gm.nii.gz'
+            
+            
+            
 
 class BetweenSubjectMetrics:
     def __init__(self):
@@ -251,44 +276,44 @@ class Workflow:
                             run1=run1[0] # assume there is only one run that matches
                             run2=run2[0] # same here
                             
-                            if run1.optimalpipeline_r.seedconnoutput=='':
+                            if run1.optimalpipeline_r.seedconnz=='':
                                 run1.optimalpipeline_r.calcseedconn(pthresh)
-                            if run1.optimalpipeline_r.seedconnoutputmni152=='':
+                            if run1.optimalpipeline_r.seedconnzmni152=='':
                                 run1.optimalpipeline_r.seedconn2mni()
-                            if run2.optimalpipeline_r.seedconnoutput=='':
+                            if run2.optimalpipeline_r.seedconnz=='':
                                 run2.optimalpipeline_r.calcseedconn(pthresh)
-                            if run2.optimalpipeline_r.seedconnoutputmni152=='':
+                            if run2.optimalpipeline_r.seedconnzmni152=='':
                                 run2.optimalpipeline_r.seedconn2mni()
-                            r_r=spmsim.pearsoncorr(run1.optimalpipeline_r.seedconnoutputmni152,\
-                                                   run2.optimalpipeline_r.seedconnoutputmni152)
-                            jind_r=spmsim.jaccardind(run1.optimalpipeline_r.seedconn_threshoutputmni152,\
-                                                     run2.optimalpipeline_r.seedconn_threshoutputmni152)
+                            r_r=spmsim.pearsoncorr(run1.optimalpipeline_r.seedconnzmni152,\
+                                                   run2.optimalpipeline_r.seedconnzmni152)
+                            jind_r=spmsim.jaccardind(run1.optimalpipeline_r.seedconnzthreshmni152,\
+                                                     run2.optimalpipeline_r.seedconnzthreshmni152)
 
-                            if run1.optimalpipeline_j.seedconnoutput=='':
+                            if run1.optimalpipeline_j.seedconnz=='':
                                 run1.optimalpipeline_j.calcseedconn(pthresh)
-                            if run1.optimalpipeline_j.seedconnoutputmni152=='':
+                            if run1.optimalpipeline_j.seedconnzmni152=='':
                                 run1.optimalpipeline_j.seedconn2mni()
-                            if run2.optimalpipeline_j.seedconnoutput=='':
+                            if run2.optimalpipeline_j.seedconnz=='':
                                 run2.optimalpipeline_j.calcseedconn(pthresh)
-                            if run2.optimalpipeline_j.seedconnoutputmni152=='':
+                            if run2.optimalpipeline_j.seedconnzmni152=='':
                                 run2.optimalpipeline_j.seedconn2mni()
-                            r_j=spmsim.pearsoncorr(run1.optimalpipeline_j.seedconnoutputmni152,\
-                                                   run2.optimalpipeline_j.seedconnoutputmni152)
-                            jind_j=spmsim.jaccardind(run1.optimalpipeline_j.seedconn_threshoutputmni152,\
-                                                     run2.optimalpipeline_j.seedconn_threshoutputmni152)
+                            r_j=spmsim.pearsoncorr(run1.optimalpipeline_j.seedconnzmni152,\
+                                                   run2.optimalpipeline_j.seedconnzmni152)
+                            jind_j=spmsim.jaccardind(run1.optimalpipeline_j.seedconnzthreshmni152,\
+                                                     run2.optimalpipeline_j.seedconnzthreshmni152)
 
-                            if run1.optimalpipeline_rj.seedconnoutput=='':
+                            if run1.optimalpipeline_rj.seedconnz=='':
                                 run1.optimalpipeline_rj.calcseedconn(pthresh)
-                            if run1.optimalpipeline_rj.seedconnoutputmni152=='':
+                            if run1.optimalpipeline_rj.seedconnzmni152=='':
                                 run1.optimalpipeline_rj.seedconn2mni()
-                            if run2.optimalpipeline_rj.seedconnoutput=='':
+                            if run2.optimalpipeline_rj.seedconnz=='':
                                 run2.optimalpipeline_rj.calcseedconn(pthresh)
-                            if run2.optimalpipeline_rj.seedconnoutputmni152=='':
+                            if run2.optimalpipeline_rj.seedconnzmni152=='':
                                 run2.optimalpipeline_rj.seedconn2mni()
-                            r_rj=spmsim.pearsoncorr(run1.optimalpipeline_rj.seedconnoutputmni152,\
-                                                    run2.optimalpipeline_rj.seedconnoutputmni152)
-                            jind_rj=spmsim.jaccardind(run1.optimalpipeline_rj.seedconn_threshoutputmni152,\
-                                                      run2.optimalpipeline_rj.seedconn_threshoutputmni152)
+                            r_rj=spmsim.pearsoncorr(run1.optimalpipeline_rj.seedconnzmni152,\
+                                                    run2.optimalpipeline_rj.seedconnzmni152)
+                            jind_rj=spmsim.jaccardind(run1.optimalpipeline_rj.seedconnzthreshmni152,\
+                                                      run2.optimalpipeline_rj.seedconnzthreshmni152)
                                                       
                             # save the result as a BetweenSubject struct
                             '''self.betweensubject[i,j].reproducibility=r
@@ -517,6 +542,7 @@ def getsubjects(subjectfile):
         biopacphysio=''
         slicetiming=''
         sliceorder=''
+        aseg=''
         try:
             (opts,args) = getopt.getopt(l,'',['subjectID=',\
                                               'sessionID=',\
@@ -532,6 +558,7 @@ def getsubjects(subjectfile):
                                               'motglm=',\
                                               'siemensphysio=',\
                                               'biopacphysio=',\
+                                              'aseg=',\
                                               'slicetiming=',\
                                               'sliceorder='])
         except getopt.GetoptError:
@@ -569,6 +596,8 @@ def getsubjects(subjectfile):
                 slicetiming=arg
             elif opt in ('--sliceorder'):
                 sliceorder=arg
+            elif opt in ('--aseg'):
+                aseg=arg
         data=Data()
         data.bold=bold
         data.structural=structural
@@ -583,6 +612,7 @@ def getsubjects(subjectfile):
         data.biopacphysio=biopacphysio
         data.slicetiming=slicetiming
         data.sliceorder=sliceorder
+        data.aseg=aseg
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if s.ID==subjectID]
         if len(matchsubj)>0:
@@ -737,6 +767,7 @@ def savesubjects(filename,subjects):
                         '--biopacphysio \''+run.data.biopacphysio+'\' '+\
                         '--slicetiming \''+run.data.slicetiming+'\' '+\
                         '--sliceorder \''+run.data.sliceorder+'\' '+\
+                        '--aseg \''+run.data.aseg+'\' '+\
                         '\n')
     f.close()
     

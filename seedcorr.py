@@ -24,7 +24,7 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     
     # check to make sure seed image has the right dimensions
     if (not img.shape[0:3] == seed.shape[0:3]):
-        sys.exit('Error: {} and {} do not match in dimension.'.format(ifile,seedfile))
+        sys.exit('In calcseedcorr: {} and {} do not match in dimension.'.format(ifile,seedfile))
             
     imgreshape=img.reshape(np.prod(img.shape[0:3]),img.shape[3])
     seedreshape=seed.reshape(np.prod(seed.shape[0:3]),1)
@@ -34,10 +34,10 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     
     # check meants
     if (np.std(meants) == 0):
-        sys.exit('Error: seed file needs to contain a binary ROI')
+        print('WARNING: mean time series over seed ROI has zero standard deviation')
     
     r_1D=np.zeros(np.prod(img.shape[0:3]))
-    t_1D=np.zeros(np.prod(img.shape[0:3]))
+    #t_1D=np.zeros(np.prod(img.shape[0:3]))
     z_1D=np.zeros(np.prod(img.shape[0:3]))
     p_1D=np.zeros(np.prod(img.shape[0:3]))
     n=img.shape[3]
@@ -54,33 +54,47 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
             p_1D[i]=2*(1-scipy.stats.norm.cdf(abs(z_1D[i])))
             
     p_1D_fdr=mtest.multipletests(p_1D,p_thresh,'fdr_bh')
-    r_1D[~p_1D_fdr[0]]=0
-    z_1D[~p_1D_fdr[0]]=0
-    
                 
     # reshape to 3D
     r=np.reshape(r_1D,(img.shape[0],img.shape[1],img.shape[2]))
     z=np.reshape(z_1D,(img.shape[0],img.shape[1],img.shape[2]))
     p_adj=np.reshape(p_1D_fdr[1],(img.shape[0],img.shape[1],img.shape[2]))
-    p=np.reshape(p_1D,(img.shape[0],img.shape[1],img.shape[2]))
+    #p=np.reshape(p_1D,(img.shape[0],img.shape[1],img.shape[2]))
     
     # write r to NIFTI file
     onifti = nibabel.nifti1.Nifti1Image(r,affine)
-    onifti.to_filename(fileutils.removeniftiext(obase)+'_pearsonr.nii.gz')
+    onifti.to_filename(fileutils.removeniftiext(obase)+'_r.nii.gz')
 
     # write t to NIFTI file
     onifti = nibabel.nifti1.Nifti1Image(z,affine)
     onifti.to_filename(fileutils.removeniftiext(obase)+'_z.nii.gz')
+
+    # now threshold r and z
+    r_1D[~p_1D_fdr[0]]=0
+    z_1D[~p_1D_fdr[0]]=0    
+
+    # reshape to 3D
+    r=np.reshape(r_1D,(img.shape[0],img.shape[1],img.shape[2]))
+    z=np.reshape(z_1D,(img.shape[0],img.shape[1],img.shape[2]))
+    
+    # write r to NIFTI file
+    onifti = nibabel.nifti1.Nifti1Image(r,affine)
+    onifti.to_filename(fileutils.removeniftiext(obase)+'_r_thresh.nii.gz')
+
+    # write t to NIFTI file
+    onifti = nibabel.nifti1.Nifti1Image(z,affine)
+    onifti.to_filename(fileutils.removeniftiext(obase)+'_z_thresh.nii.gz')
+    
     
     # write p_adj to NIFTI file
     onifti = nibabel.nifti1.Nifti1Image(p_adj,affine)
     onifti.to_filename(fileutils.removeniftiext(obase)+'_p_adj.nii.gz')
     
     # write p to NIFTI file
-    onifti = nibabel.nifti1.Nifti1Image(p,affine)
-    onifti.to_filename(fileutils.removeniftiext(obase)+'_p.nii.gz')    
+    #onifti = nibabel.nifti1.Nifti1Image(p,affine)
+    #onifti.to_filename(fileutils.removeniftiext(obase)+'_p.nii.gz')    
     
-
+    return((fileutils.removeniftiext(obase)+'_r.nii.gz',fileutils.removeniftiext(obase)+'_z.nii.gz',fileutils.removeniftiext(obase)+'_r_thresh.nii.gz',fileutils.removeniftiext(obase)+'_z_thresh.nii.gz',fileutils.removeniftiext(obase)+'_p_adj.nii.gz'))
     
 
             

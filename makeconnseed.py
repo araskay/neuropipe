@@ -64,7 +64,13 @@ for subj in subjects:
                 # threshold at 50% and binarize
                 p=subprocess.Popen(['fslmaths', fileutils.removext(run.data.bold)+'_'+namebase,\
                                     '-thr', '50', '-bin', fileutils.removext(run.data.bold)+'_'+namebase])
-                p.communicate()            
+                p.communicate()
+            else:
+                # threshold at 0.5 and binarize
+                p=subprocess.Popen(['fslmaths', fileutils.removext(run.data.bold)+'_'+namebase,\
+                                    '-bin', fileutils.removext(run.data.bold)+'_'+namebase])
+                p.communicate()
+                
             run.data.connseed=fileutils.addniigzext(fileutils.removext(run.data.bold)+'_'+namebase)
             
 workflow.savesubjects(ofile,subjects)

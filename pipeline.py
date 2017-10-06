@@ -8,6 +8,8 @@ import subprocess # used to run bash commands
 import os
 import spmsim, preprocessingstep
 
+p_thresh=0.05 # significance level for thresholding seed connectivity maps
+
 class Pipeline:
     def __init__(self,name,steps):
         self.name=name
@@ -23,10 +25,14 @@ class Pipeline:
         self.splithalfseedconnreproducibility=None
         self.splithalfseedconnoverlap=None
         #self.connectivityseedfile=''
-        self.seedconnoutput=''
-        self.seedconn_threshoutput=''
-        self.seedconnoutputmni152=''
-        self.seedconn_threshoutputmni152=''
+        self.seedconnr=''
+        self.seedconnrthresh=''
+        self.seedconnz=''
+        self.seedconnzthresh=''
+        self.seedconnrmni152=''
+        self.seedconnrthreshmni152=''
+        self.seedconnzmni152=''
+        self.seedconnzthreshmni152=''
         self.envvars=None
         self.parcellated=False
         self.seedconncomputed=False
@@ -139,47 +145,30 @@ class Pipeline:
         if (not self.pipelinerunsplithalf):
             self.runsplithalf()
         # compute seed connectivity maps for each split half
-        seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[0]), \
-                              fileutils.addniigzext(self.data.connseed), \
-                              self.splithalfoutputs[0]+'_seedconn.nii.gz', \
-                              1) # p_thresh = 1 (i.e., do not threshold)
-        seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[1]), \
-                              fileutils.addniigzext(self.data.connseed), \
-                              self.splithalfoutputs[1]+'_seedconn.nii.gz', \
-                              1) # p_thresh = 1 (i.e., do not threshold)
-        # now compute the correlation between r_sh1 and r_sh2
-        self.splithalfseedconnreproducibility=spmsim.pearsoncorr(self.splithalfoutputs[0]+'_seedconn_pearsonr.nii.gz', \
-                                                                 self.splithalfoutputs[1]+'_seedconn_pearsonr.nii.gz')
-        ## split-half overlap
-        # compute THRESHOLDED seed connectivity maps for each split half
-        seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[0]), \
-                              fileutils.addniigzext(self.data.connseed), \
-                              self.splithalfoutputs[0]+'_seedconn_thr.nii.gz', \
-                              0.05) # p_thresh = 0.05
-        seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[1]), \
-                              fileutils.addniigzext(self.data.connseed), \
-                              self.splithalfoutputs[1]+'_seedconn_thr.nii.gz', \
-                              0.05) # p_thresh = 0.05       
-        self.splithalfseedconnoverlap=spmsim.jaccardind(self.splithalfoutputs[0]+'_seedconn_thr_pearsonr.nii.gz', \
-                                                                 self.splithalfoutputs[1]+'_seedconn_thr_pearsonr.nii.gz')
+        (sh1r,sh1z,sh1rthresh,sh1zthresh,sh1padj)=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[0]), \
+                                                                        fileutils.addniigzext(self.data.connseed), \
+                                                                        self.splithalfoutputs[0], \
+                                                                        p_thresh)
+        (sh2r,sh2z,sh2rthresh,sh2zthresh,sh2padj)=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[1]), \
+                                                                        fileutils.addniigzext(self.data.connseed), \
+                                                                        self.splithalfoutputs[1], \
+                                                                        p_thresh)
+        
+        # split-half reproducibility
+        self.splithalfseedconnreproducibility=spmsim.pearsoncorr(sh1r, sh2r)
+        # split-half overlap
+        self.splithalfseedconnoverlap=spmsim.jaccardind(sh1rthresh, sh2rthresh)
+        
     def calcseedconn(self,p_thresh):
         if not self.pipelinerun:
             self.run()
         # do not threshold
-        seedcorr.calcseedcorr(fileutils.addniigzext(self.output), \
-                              fileutils.addniigzext(self.data.connseed), \
-                              self.output+'_seedconn', \
-                              1)
-        self.seedconnoutput=self.output+'_seedconn_pearsonr'
+        (self.seedconnr,self.seedconnz,self.seedconrthresh,self.seedconnzthresh,padj)=seedcorr.calcseedcorr(fileutils.addniigzext(self.output), fileutils.addniigzext(self.data.connseed),self.output, p_thresh)
         
-        # threshold at p_thresh
-        seedcorr.calcseedcorr(fileutils.addniigzext(self.output), \
-                              fileutils.addniigzext(self.data.connseed), \
-                              self.output+'_seedconn_thresh', \
-                              p_thresh)
-        self.seedconn_threshoutput=self.output+'_seedconn_thresh_pearsonr'
-        self.seedconnoutputmni152=''
-        self.seedconn_threshoutputmni152=''
+        self.seedconnrmni152=''
+        self.seedconnrthreshmni152=''
+        self.seedconnzmni152=''
+        self.seedconnzthreshmni152=''
         
         self.seedconncomputed=True
     
@@ -195,7 +184,7 @@ class Pipeline:
         print('S-H overlap:',self.splithalfseedconnoverlap)
         
     def seedconn2mni(self):
-        if self.seedconnoutput=='' or self.seedconn_threshoutput=='':
+        if self.seedconnr=='' or self.seedconnz=='':
             sys.exit('Error in seedconn2mni: Seed connectivity not computed. Need to call calcseedconn first')
         # first get transformation parameters on the output of the pipeline
         steps=[preprocessingstep.PreprocessingStep('tmean',[]),\
@@ -207,21 +196,21 @@ class Pipeline:
         p.setibase(self.output)
         p.setobase(fileutils.removext(self.output))
         p.run()
-        # then use the parameters to transform the SPM
-        # first the unthresholded SPM
-        p=subprocess.Popen(['flirt','-in',self.seedconnoutput,\
+
+        # then use the parameters to transform the SPMs
+        p=subprocess.Popen(['flirt','-in',self.seedconnz,\
                             '-ref',self.envvars.mni152,\
                             '-applyxfm','-init',self.data.tomni152,\
-                            '-out',fileutils.removext(self.seedconnoutput)+'_2mni152'])
-        p.communicate()        
-        self.seedconnoutputmni152=fileutils.removext(self.seedconnoutput)+'_2mni152.nii.gz'
-        # then the thresholded SPM
-        p=subprocess.Popen(['flirt','-in',self.seedconn_threshoutput,\
-                            '-ref',self.envvars.mni152,\
-                            '-applyxfm','-init',self.data.tomni152,\
-                            '-out',fileutils.removext(self.seedconn_threshoutput)+'_2mni152'])
+                            '-out',fileutils.removext(self.seedconnz)+'_mni152'])
         p.communicate()
-        self.seedconn_threshoutputmni152=fileutils.removext(self.seedconn_threshoutput)+'_2mni152.nii.gz'
+        self.seedconnzmni152=fileutils.removext(self.seedconnz)+'_mni152.nii.gz'
+        # then the thresholded SPM
+        p=subprocess.Popen(['flirt','-in',self.seedconnzthresh,\
+                            '-ref',self.envvars.mni152,\
+                            '-applyxfm','-init',self.data.tomni152,\
+                            '-out',fileutils.removext(self.seedconnzthresh)+'_mni152'])
+        p.communicate()
+        self.seedconnzthreshmni152=fileutils.removext(self.seedconnzthresh)+'_mni152.nii.gz'
 
     def output2structural(self):
         if self.data.structural == '':
@@ -240,31 +229,40 @@ class Pipeline:
     def parcellate(self):
         if not self.pipelinerun:
             self.run()
-        if self.data.structuralcsfseg=='' or self.data.structuralgmseg=='' or self.data.structuralwmseg=='':
-            self.data.parcellate_mprage()
+        if self.data.structuralcsf=='' or self.data.structuralgm=='' or self.data.structuralwm=='':
+            self.data.parcellate_structural()
         if self.data.struct2func=='':
             self.output2structural()
         
-        p=subprocess.Popen(['flirt','-in',self.data.structuralcsfseg,\
+        p=subprocess.Popen(['flirt','-in',self.data.structuralcsf,\
                             '-ref',self.output,\
                             '-applyxfm','-init',self.data.struct2func,\
-                            '-out',fileutils.removext(self.output)+'_seg_csf'])
-        p.communicate()           
-        p=subprocess.Popen(['flirt','-in',self.data.structuralgmseg,\
-                            '-ref',self.output,\
-                            '-applyxfm','-init',self.data.struct2func,\
-                            '-out',fileutils.removext(self.output)+'_seg_gm'])
-        p.communicate() 
-        p=subprocess.Popen(['flirt','-in',self.data.structuralwmseg,\
-                            '-ref',self.output,\
-                            '-applyxfm','-init',self.data.struct2func,\
-                            '-out',fileutils.removext(self.output)+'_seg_wm'])
-        p.communicate()         
-
-        self.data.boldcsfseg=fileutils.removext(self.output)+'_seg_csf.nii.gz'
-        self.data.boldgmseg=fileutils.removext(self.output)+'_seg_gm.nii.gz'
-        self.data.boldwmseg=fileutils.removext(self.output)+'_seg_wm.nii.gz'        
+                            '-out',fileutils.removext(self.output)+'_csf'])
+        p.communicate()
+        p=subprocess.Popen(['fslmaths',fileutils.removext(self.output)+'_csf','-thr','0.5','-bin',fileutils.removext(self.output)+'_csf'])
+        p.communicate()
         
+        p=subprocess.Popen(['flirt','-in',self.data.structuralgm,\
+                            '-ref',self.output,\
+                            '-applyxfm','-init',self.data.struct2func,\
+                            '-out',fileutils.removext(self.output)+'_gm'])
+        p.communicate()
+        p=subprocess.Popen(['fslmaths',fileutils.removext(self.output)+'_gm','-thr','0.5','-bin',fileutils.removext(self.output)+'_gm'])
+        p.communicate()
+        
+        p=subprocess.Popen(['flirt','-in',self.data.structuralwm,\
+                            '-ref',self.output,\
+                            '-applyxfm','-init',self.data.struct2func,\
+                            '-out',fileutils.removext(self.output)+'_wm'])
+        p.communicate()         
+        p=subprocess.Popen(['fslmaths',fileutils.removext(self.output)+'_wm','-thr','0.5','-bin',fileutils.removext(self.output)+'_wm'])
+        p.communicate()
+        
+        self.data.boldcsf=fileutils.removext(self.output)+'_csf.nii.gz'
+        self.data.boldgm=fileutils.removext(self.output)+'_gm.nii.gz'
+        self.data.boldwm=fileutils.removext(self.output)+'_wm.nii.gz'        
+        
+        '''
         p=subprocess.Popen(['flirt','-in',self.data.structuralcsfpve,\
                             '-ref',self.output,\
                             '-applyxfm','-init',self.data.struct2func,\
@@ -296,7 +294,7 @@ class Pipeline:
         self.data.boldcsf=fileutils.removext(self.output)+'_pve_csf_thr.nii.gz'
         self.data.boldgm=fileutils.removext(self.output)+'_pve_gm_thr.nii.gz'
         self.data.boldwm=fileutils.removext(self.output)+'_pve_wm_thr.nii.gz'
-        
+        '''
         self.parcellated=True
         
         
@@ -339,16 +337,22 @@ class Pipeline:
         self.data.imeantsgm=fileutils.removext(self.ibase)+'_meants_gm.txt'
         self.data.imeantswm=fileutils.removext(self.ibase)+'_meants_wm.txt'        
         
-        if len(self.seedconn_threshoutput)>0:
+        if len(self.seedconnzthresh)>0:
+            #fslmeants computes mean over pixels>0 on the mask, so first take abs
+            p=subprocess.Popen(['fslmaths',self.output,'-abs',fileutils.removext(self.seedconnzthresh)+'___'])
+            p.communicate()
             p=subprocess.Popen(['fslmeants','-i',self.output,\
                                 '-o',fileutils.removext(self.output)+'_meants_net.txt',\
-                                '-m',self.seedconn_threshoutput])
-            p.communicate()             
+                                '-m',fileutils.removext(self.seedconnzthresh)+'___'])
+            p.communicate()
+            
 
             p=subprocess.Popen(['fslmeants','-i',self.ibase,\
                                 '-o',fileutils.removext(self.ibase)+'_meants_net.txt',\
-                                '-m',self.seedconn_threshoutput])
+                                '-m',fileutils.removext(self.seedconnzthresh)+'___'])
             p.communicate()            
+            # remove the temp abs mask
+            os.remove(fileutils.removext(self.seedconnzthresh)+'___.nii.gz')
             
             self.data.meantsnet=fileutils.removext(self.output)+'_meants_net.txt'
             self.data.imeantsnet=fileutils.removext(self.ibase)+'_meants_net.txt'
