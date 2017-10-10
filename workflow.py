@@ -151,6 +151,7 @@ class Run:
             sys.exit('Error: No pipelines set for the run. Set pipelines before calling process()')
         for pipe in self.pipelines:
             pipe.calcseedconn(pthresh)
+            pipe.seedconn2mni()
             
     def findoptimalpipeline(self):
         if (self.pipelines == []):
