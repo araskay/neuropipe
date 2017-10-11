@@ -26,8 +26,8 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     if (not img.shape[0:3] == seed.shape[0:3]):
         sys.exit('In calcseedcorr: {} and {} do not match in dimension.'.format(ifile,seedfile))
             
-    imgreshape=img.reshape(np.prod(img.shape[0:3]),img.shape[3])
-    seedreshape=seed.reshape(np.prod(seed.shape[0:3]),1)
+    imgreshape=img.reshape((np.prod(img.shape[0:3]),img.shape[3]))
+    seedreshape=seed.reshape((np.prod(seed.shape[0:3]),1))
     
     # compute mean time series
     meants=np.mean(imgreshape[np.where(seedreshape == 1)[0], :], axis=0)
