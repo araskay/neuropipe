@@ -183,11 +183,24 @@ class Pipeline:
         print('S-H reproducibility:',self.splithalfseedconnreproducibility)
         print('S-H overlap:',self.splithalfseedconnoverlap)
         
+    
+    def output2mni(self):
+        if not self.pipelinerun:
+            self.run()
+        steps=[preprocessingstep.PreprocessingStep('tomni152',[])]
+        p=Pipeline('',steps)
+        p.setenvvars(self.envvars)
+        p.setdata(self.data)
+        p.setibase(self.output)
+        p.setobase(fileutils.removext(self.output))
+        p.run()        
+        
+        
     def seedconn2mni(self):
         if self.seedconnr=='' or self.seedconnz=='':
             sys.exit('Error in seedconn2mni: Seed connectivity not computed. Need to call calcseedconn first')
         # first get transformation parameters on the output of the pipeline
-        steps=[preprocessingstep.PreprocessingStep('tmean',[]),\
+        '''steps=[preprocessingstep.PreprocessingStep('tmean',[]),\
                preprocessingstep.PreprocessingStep('tomni152',[])]
         #steps=[preprocessingstep.PreprocessingStep('tomni152',[])]
         p=Pipeline('',steps)
@@ -195,7 +208,10 @@ class Pipeline:
         p.setdata(self.data)
         p.setibase(self.output)
         p.setobase(fileutils.removext(self.output))
-        p.run()
+        p.run()'''
+        
+        if self.data.tomni152=='':
+            self.output2mni()
 
         # then use the parameters to transform the SPMs
         p=subprocess.Popen(['flirt','-in',self.seedconnz,\
