@@ -33,6 +33,10 @@ class Pipeline:
         self.seedconnrthreshmni152=''
         self.seedconnzmni152=''
         self.seedconnzthreshmni152=''
+        self.seedcov=''
+        self.seedcovmni152=''
+        self.variance=''
+        self.variancemni152=''
         self.envvars=None
         self.parcellated=False
         self.seedconncomputed=False
@@ -163,12 +167,14 @@ class Pipeline:
         if not self.pipelinerun:
             self.run()
         # do not threshold
-        (self.seedconnr,self.seedconnz,self.seedconrthresh,self.seedconnzthresh,padj)=seedcorr.calcseedcorr(fileutils.addniigzext(self.output), fileutils.addniigzext(self.data.connseed),self.output, p_thresh)
+        (self.seedconnr,self.seedconnz,self.seedconrthresh,self.seedconnzthresh,padj,self.seedcov,self.variance)=seedcorr.calcseedcorr(fileutils.addniigzext(self.output), fileutils.addniigzext(self.data.connseed),self.output, p_thresh)
         
         self.seedconnrmni152=''
         self.seedconnrthreshmni152=''
         self.seedconnzmni152=''
         self.seedconnzthreshmni152=''
+        self.seedcovmni152=''
+        self.variancemni152=''
         
         self.seedconncomputed=True
     
@@ -227,12 +233,27 @@ class Pipeline:
                             '-out',fileutils.removext(self.seedconnzthresh)+'_mni152'])
         p.communicate()
         self.seedconnzthreshmni152=fileutils.removext(self.seedconnzthresh)+'_mni152.nii.gz'
+        
+        p=subprocess.Popen(['flirt','-in',self.seedcov,\
+                            '-ref',self.envvars.mni152,\
+                            '-applyxfm','-init',self.data.tomni152,\
+                            '-out',fileutils.removext(self.seedcov)+'_mni152'])
+        p.communicate()
+        self.seedcovmni152=fileutils.removext(self.seedcov)+'_mni152.nii.gz'
+        
+        p=subprocess.Popen(['flirt','-in',self.variance,\
+                            '-ref',self.envvars.mni152,\
+                            '-applyxfm','-init',self.data.tomni152,\
+                            '-out',fileutils.removext(self.variance)+'_mni152'])
+        p.communicate()
+        self.variancemni152=fileutils.removext(self.variance)+'_mni152.nii.gz'
 
     def output2structural(self):
         if self.data.structural == '':
             sys.exit('In output2structural: Structural data not given. Cannot proceed without. Exiting!')
         p=subprocess.Popen(['flirt','-in',self.output,\
                             '-ref',self.data.structural,\
+                            '-dof',self.envvars.boldregdof,\
                             '-out',fileutils.removext(self.output)+'_func2struct',\
                             '-omat',fileutils.removext(self.output)+'_func2struct.mat']) 
         p.communicate()

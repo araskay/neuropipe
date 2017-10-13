@@ -40,6 +40,8 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     #t_1D=np.zeros(np.prod(img.shape[0:3]))
     z_1D=np.zeros(np.prod(img.shape[0:3]))
     p_1D=np.zeros(np.prod(img.shape[0:3]))
+    covar=np.zeros(np.prod(img.shape[0:3]))
+    var=np.zeros(np.prod(img.shape[0:3]))
     n=img.shape[3]
     
     # compute Pearson correlations wrt mean time series
@@ -52,6 +54,8 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
             fr=1/2*np.log((1+r_1D[i])/(1-r_1D[i]))
             z_1D[i]=fr*np.sqrt(n-3)
             p_1D[i]=2*(1-scipy.stats.norm.cdf(abs(z_1D[i])))
+            covar[i]=np.cov(meants,imgreshape[i,:])[0][1]
+            var[i]=np.var(imgreshape[i,:])
             
     p_1D_fdr=mtest.multipletests(p_1D,p_thresh,'fdr_bh')
                 
@@ -60,6 +64,16 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     z=np.reshape(z_1D,(img.shape[0],img.shape[1],img.shape[2]))
     p_adj=np.reshape(p_1D_fdr[1],(img.shape[0],img.shape[1],img.shape[2]))
     #p=np.reshape(p_1D,(img.shape[0],img.shape[1],img.shape[2]))
+    covar=np.reshape(covar,(img.shape[0],img.shape[1],img.shape[2]))
+    var=np.reshape(var,(img.shape[0],img.shape[1],img.shape[2]))
+    
+    # write covar to NIFTI file
+    onifti = nibabel.nifti1.Nifti1Image(covar,affine)
+    onifti.to_filename(fileutils.removeniftiext(obase)+'_cov.nii.gz')
+    
+    # write var to NIFTI file
+    onifti = nibabel.nifti1.Nifti1Image(var,affine)
+    onifti.to_filename(fileutils.removeniftiext(obase)+'_var.nii.gz')
     
     # write r to NIFTI file
     onifti = nibabel.nifti1.Nifti1Image(r,affine)
@@ -94,7 +108,7 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     #onifti = nibabel.nifti1.Nifti1Image(p,affine)
     #onifti.to_filename(fileutils.removeniftiext(obase)+'_p.nii.gz')    
     
-    return((fileutils.removeniftiext(obase)+'_r.nii.gz',fileutils.removeniftiext(obase)+'_z.nii.gz',fileutils.removeniftiext(obase)+'_r_thresh.nii.gz',fileutils.removeniftiext(obase)+'_z_thresh.nii.gz',fileutils.removeniftiext(obase)+'_p_adj.nii.gz'))
+    return((fileutils.removeniftiext(obase)+'_r.nii.gz',fileutils.removeniftiext(obase)+'_z.nii.gz',fileutils.removeniftiext(obase)+'_r_thresh.nii.gz',fileutils.removeniftiext(obase)+'_z_thresh.nii.gz',fileutils.removeniftiext(obase)+'_p_adj.nii.gz',fileutils.removeniftiext(obase)+'_cov.nii.gz',fileutils.removeniftiext(obase)+'_var.nii.gz'))
     
 
             

@@ -11,6 +11,8 @@ pthresh=0.05 # significance level for thresholding seed connectivity maps
 class EnvVars:
     def __init__(self):
         self.mni152=''
+        self.boldregdof='12'
+        self.structregdof='12'
 
 class Data:
     def __init__(self):

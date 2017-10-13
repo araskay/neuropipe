@@ -22,8 +22,8 @@ Subject <- c('1','2','3','4','5','6','7','8','9','10','11','1','2','3','4','5','
 
 
 #clr <- c(1:length(data$NetcardRelativePowerPost),1:length(data$NetcardRelativePowerPost))
-p <- qplot(x=RETROICOR , y=value, geom=c("boxplot"), fill=RETROICOR) +
-#geom_boxplot(mapping=aes(x=RETROICOR, y=value), color=c('red','blue'))+
+p <- ggplot() +
+geom_boxplot(mapping=aes(x=RETROICOR, y=value), color=c('red','blue'))+
 geom_point(mapping=aes(x=RETROICOR, y=value), size=9, shape=21)+
 geom_text(mapping=aes(x=RETROICOR, y=value, label=Subject))+
 ylab('Relative Power')

@@ -16,6 +16,8 @@ def printhelp():
     print('--parcellate            : parcellate the output of the run/optimal/fixed pipeline(s).')
     print('--meants                : compute mean time series over CSF, GM, and WM for the pipeline output. This automatically parcellates the output. If used with --seedconn, meant time series over the network is also computed.')
     print('--seedconn              : compute seed-connectivity network on the pipeline output. Need to provide a seed file in subjects file.')
+    print('--boldregdof <dof>      : degrees of freedom to be used for bold/functional registration (Default = 12).')
+    print('--structregdof <dof>      : degrees of freedom to be used for structural registration (Default = 12).')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 import workflow
@@ -34,18 +36,17 @@ optimalpipesteps=[] # this is a list of lists
 fixedpipesteps=[] # this is a list
 showpipes=False
 resout=''
-mni152=''
 parcellate=False
 meants=False
 seedconn=False
 runpipename=''
 
-#mni152='/usr/share/data/fsl-mni152-templates/MNI152lin_T1_2mm_brain' # this can be got as an input
+envvars=workflow.EnvVars()
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','template=','resout=','parcellate','meants','seedconn'])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','template=','resout=','parcellate','meants','seedconn','boldregdof=','structregdof='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -89,7 +90,7 @@ for (opt,arg) in opts:
     elif opt in ('--showpipes'):
         showpipes=True
     elif opt in ('--template'):
-        mni152=arg
+        envvars.mni152=arg
     elif opt in ('--resout'):
         resout=arg
     elif opt in ('--parcellate'):
@@ -97,13 +98,14 @@ for (opt,arg) in opts:
     elif opt in ('--meants'):
         meants=True
     elif opt in ('--seedconn'):
-        seedconn=True        
+        seedconn=True
+    elif opt in ('--boldregdof'):
+        envvars.boldregdof=arg
+    elif opt in ('--structregdof'):
+        envvars.structregdof=arg
 
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
-        
-envvars=workflow.EnvVars()
-envvars.mni152=mni152
         
 # run workflow
 if len(runpipesteps)>0:

@@ -67,8 +67,8 @@ def groupnetwork(spmfiles,ofile):
     
     # adjust for multiple comparisons    
     p_fdr=mtest.multipletests(p,p_thresh,'fdr_bh')    
-    t[~p_fdr[0]]=np.nan
-    #t[p>0.05]=np.nan
+    #t[~p_fdr[0]]=np.nan
+    t[p>0.05]=np.nan
 
     # write t to file
     t=np.reshape(t,(img.shape[0],img.shape[1],img.shape[2]))
@@ -81,20 +81,20 @@ def groupnetwork(spmfiles,ofile):
 # multiple sessions per subject are added to the lists on the right
 sessions=dict()
 sessions['7130']=['20140312']
-#sessions['7934']=['20140207']
+sessions['7934']=['20140207'] #bad seed
 sessions['9910']=['20140204']
 sessions['10577']=['20140325']
 sessions['10649']=['20140316']
-#sessions['11164']=['20140316']
+#sessions['11164']=['20140316'] # seed fine!
 sessions['11308']=['20140304']
-#sessions['11494']=['20140311']
+#sessions['11494']=['20140311'] #fine on tmean #bad seed
 sessions['11515']=['20140305']
-#sessions['11570']=['20140310']
-#sessions['11672']=['20140318']
+##sessions['11570']=['20140310'] #fine on tmean
+#sessions['11672']=['20140318'] # bad registration on both # bad seed
 
-basepath='/data/klymene/chen_lab/mkayvanrad/data/original/healthyvolunteer/processed/retroicorpipe'
+basepath='/data/klymene/chen_lab/mkayvanrad/data/original/healthyvolunteer/processed/retroicorpipe_notmean'
 
-ofile=basepath+'/z_thresh_prepostmatchedpairst.nii.gz'
+ofile=basepath+'/cov_prepostmatchedpairst.nii.gz'
 
 prefiles=[]
 postfiles=[]
@@ -102,10 +102,10 @@ spmfiles=[]
 
 for subj in sessions.keys():
     for sess in sessions[subj]:
-        prefiles.append(basepath+'/'+subj+'/'+sess+'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_z_thresh_mni152.nii.gz')
-        postfiles.append(basepath+'/'+subj+'/'+sess+'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_z_thresh_mni152.nii.gz')
+        prefiles.append(basepath+'/'+subj+'/'+sess+'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_cov_mni152.nii.gz')
+        postfiles.append(basepath+'/'+subj+'/'+sess+'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_cov_mni152.nii.gz')
         
 prepostmatchedpairst(prefiles,postfiles,ofile)
 
-groupnetwork(prefiles,basepath+'/z_thresh_pregroupnetwork.nii.gz')
-groupnetwork(postfiles,basepath+'/z_thresh_postgroupnetwork.nii.gz')
+groupnetwork(prefiles,basepath+'/cov_pregroupnetwork.nii.gz')
+groupnetwork(postfiles,basepath+'/cov_postgroupnetwork.nii.gz')

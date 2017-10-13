@@ -178,11 +178,13 @@ class PreprocessingStep:
                 sys.exity('In tomni152: Structural data not given. Cannot proceed without. Exiting!')
             p=subprocess.Popen(['flirt','-in',self.ibase,\
                                 '-ref',self.data.structural,\
+                                '-dof',self.envvars.boldregdof,\
                                 '-out',fileutils.removext(self.obase)+'__func2struct',\
                                 '-omat',fileutils.removext(self.obase)+'__func2struct.mat']+self.params)
             p.communicate()
             p=subprocess.Popen(['flirt','-in',self.data.structural,\
                                 '-ref',self.envvars.mni152,\
+                                '-dof',self.envvars.structregdof,\
                                 '-out',fileutils.removext(self.obase)+'__struct2mni152',\
                                 '-omat',fileutils.removext(self.obase)+'__struct2mni152.mat']+self.params)
             p.communicate()

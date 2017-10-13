@@ -5,17 +5,19 @@ ofile=''
 seedatlasfile=''
 atlasfile=''
 binary=False
+boldregdof='12'
+structregdof='12'
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:s:t:',\
-                                ['help','input=', 'output=', 'seed=' , 'template=', 'binary'])
+                                ['help','input=', 'output=', 'seed=' , 'template=', 'binary','boldregdof=','structregdof='])
 except getopt.GetoptError:
-    print('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file> [--binary]')
+    print('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file> [--binary --boldregdof <dof> --structregdof <dof>]')
     sys.exit()
 for (opt,arg) in opts:
     if opt in ('-h', '--help'):
-        print('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file> [--binary]')
+        print('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file> [--binary --boldregdof <dof> --structregdof <dof>]')
         sys.exit()
     elif opt in ('-i','--input'):
         ifile=arg
@@ -27,6 +29,10 @@ for (opt,arg) in opts:
         atlasfile=arg
     elif opt in ('--binary'):
         binary=True
+    elif opt in ('--boldregdof'):
+        boldregdof=arg
+    elif opt in ('--structregdof'):
+        structregdof=arg
 
 if ifile=='' or ofile=='' or seedatlasfile=='' or atlasfile=='':
     sys.exit('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file>')
@@ -39,11 +45,17 @@ namebase=fileutils.removext(namebase)
 for subj in subjects:
     for sess in subj.sessions:
         for run in sess.runs:
+            print(['flirt','-in',run.data.bold,'-ref',run.data.structural,\
+                                '-dof',boldregdof,\
+                                '-out',fileutils.removext(run.data.bold)+'__func2struct',\
+                                '-omat',fileutils.removext(run.data.bold)+'__func2struct.mat'])
             p=subprocess.Popen(['flirt','-in',run.data.bold,'-ref',run.data.structural,\
+                                '-dof',boldregdof,\
                                 '-out',fileutils.removext(run.data.bold)+'__func2struct',\
                                 '-omat',fileutils.removext(run.data.bold)+'__func2struct.mat'])
             p.communicate()
             p=subprocess.Popen(['flirt', '-ref', atlasfile, '-in', run.data.structural,\
+                                '-dof',structregdof,\
                                 '-out', fileutils.removext(run.data.structural)+'__struct2mni',\
                                 '-omat', fileutils.removext(run.data.structural)+'__struct2mni.mat'])
             p.communicate()
