@@ -12,7 +12,6 @@ class PreprocessingStep:
         self.ibase=''
         self.obase=''
         self.data=None
-        self.envvars=None
         
     def setibase(self,ibase):
         self.ibase=ibase
@@ -23,8 +22,6 @@ class PreprocessingStep:
     def setdata(self,data):
         self.data=data
         
-    def setenvvars(self,envvars):
-        self.envvars=envvars
                 
     def run(self):
         ## fsl mcflirt
@@ -35,13 +32,6 @@ class PreprocessingStep:
                 self.data.motpar=fileutils.removeniftiext(self.obase)+'.par'
             else:
                 os.remove(fileutils.removeniftiext(self.obase)+'.par')
-        
-        ## seed connectivity
-        elif (self.name == 'seedconn'):
-            seedcorr.calcseedcorr(fileutils.addniigzext(self.ibase), \
-                                  self.params[self.params.index('-seed')+1], \
-                                  fileutils.addniigzext(self.obase), \
-                                  float(self.params[self.params.index('-spm_thresh')+1])) 
         
         ## afni spatial smoothing
         elif (self.name == 'ssmooth'):
@@ -171,40 +161,6 @@ class PreprocessingStep:
             else:
                 os.remove(fileutils.removeniftiext(self.obase)+'__motglm.nii.gz')
         
-        elif (self.name == 'tomni152'):
-            if self.envvars.mni152=='':
-                sys.exit('In tomni152: MNI152 environment variable not set. Exiting!')
-            if self.data.structural == '':
-                sys.exity('In tomni152: Structural data not given. Cannot proceed without. Exiting!')
-            p=subprocess.Popen(['flirt','-in',self.ibase,\
-                                '-ref',self.data.structural,\
-                                '-dof',self.envvars.boldregdof,\
-                                '-cost','bbr',\
-                                '-out',fileutils.removext(self.obase)+'__func2struct',\
-                                '-omat',fileutils.removext(self.obase)+'__func2struct.mat']+self.params)
-            p.communicate()
-            p=subprocess.Popen(['flirt','-in',self.data.structural,\
-                                '-ref',self.envvars.mni152,\
-                                '-dof',self.envvars.structregdof,\
-                                '-out',fileutils.removext(self.obase)+'__struct2mni152',\
-                                '-omat',fileutils.removext(self.obase)+'__struct2mni152.mat']+self.params)
-            p.communicate()
-            p=subprocess.Popen(['convert_xfm','-omat',fileutils.removext(self.obase)+'.mat',\
-                                '-concat',fileutils.removext(self.obase)+'__struct2mni152.mat',
-                                fileutils.removext(self.obase)+'__func2struct.mat'])
-            p.communicate()
-            p=subprocess.Popen(['flirt','-in',self.ibase,\
-                                '-ref',self.envvars.mni152,\
-                                '-applyxfm','-init',fileutils.removext(self.obase)+'.mat',\
-                                '-out',self.obase])
-            p.communicate()     
-            self.data.tomni152=fileutils.removext(self.obase)+'.mat'
-            # remove temporary files
-            os.remove(fileutils.removext(self.obase)+'__func2struct.nii.gz')
-            os.remove(fileutils.removext(self.obase)+'__func2struct.mat')
-            os.remove(fileutils.removext(self.obase)+'__struct2mni152.nii.gz')
-            os.remove(fileutils.removext(self.obase)+'__struct2mni152.mat')
-        
         elif self.name=='tmean':
             p=subprocess.Popen(['fslmaths',self.ibase,'-Tmean',self.obase])
             p.communicate()
@@ -237,9 +193,6 @@ class PreprocessingStep:
     def removeofiles(self):
         if (self.name == 'mcflirt'):
             os.remove(fileutils.addniigzext(self.obase))
-        elif (self.name == 'seedconn'):
-            os.remove(fileutils.removeniftiext(self.obase)+'_pearsonr.nii.gz')
-            os.remove(fileutils.removeniftiext(self.obase)+'_tval.nii.gz')
         elif (self.name == 'ssmooth'):
             os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'motcor'):
@@ -260,11 +213,11 @@ class PreprocessingStep:
             os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'motreg'):
             os.remove(fileutils.addniigzext(self.obase))
-        elif (self.name == 'tomni152'):
-            os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'tmean'):
             os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'slicetimer'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'stcor'):
             os.remove(fileutils.addniigzext(self.obase))
         else:
             sys.exit('Error: preprocessing step not defined')    

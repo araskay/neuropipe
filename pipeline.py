@@ -37,7 +37,6 @@ class Pipeline:
         self.seedcovmni152=''
         self.variance=''
         self.variancemni152=''
-        self.envvars=None
         self.parcellated=False
         self.seedconncomputed=False
         self.meantscomputed=False
@@ -50,9 +49,6 @@ class Pipeline:
     
     def setdata(self,data):
         self.data=data
-    
-    def setenvvars(self,envvars):
-        self.envvars=envvars
     
     def discardintermediates(self):
         self.keepintermed=False
@@ -77,7 +73,6 @@ class Pipeline:
                 step.setibase(stepibase)
                 step.setobase(stepobase)
                 step.setdata(self.data)
-                step.setenvvars(self.envvars)
                 step.run()
                 stepibase=stepobase
             self.output=stepobase
@@ -193,76 +188,50 @@ class Pipeline:
     def output2mni(self):
         if not self.pipelinerun:
             self.run()
-        steps=[preprocessingstep.PreprocessingStep('tomni152',[])]
-        p=Pipeline('',steps)
-        p.setenvvars(self.envvars)
-        p.setdata(self.data)
-        p.setibase(self.output)
-        p.setobase(fileutils.removext(self.output))
-        p.run()        
+        self.data.bold=self.output
+        self.data.func2mni()
         
         
     def seedconn2mni(self):
         if self.seedconnr=='' or self.seedconnz=='':
             sys.exit('Error in seedconn2mni: Seed connectivity not computed. Need to call calcseedconn first')
         # first get transformation parameters on the output of the pipeline
-        '''steps=[preprocessingstep.PreprocessingStep('tmean',[]),\
-               preprocessingstep.PreprocessingStep('tomni152',[])]
-        #steps=[preprocessingstep.PreprocessingStep('tomni152',[])]
-        p=Pipeline('',steps)
-        p.setenvvars(self.envvars)
-        p.setdata(self.data)
-        p.setibase(self.output)
-        p.setobase(fileutils.removext(self.output))
-        p.run()'''
-        
-        if self.data.tomni152=='':
-            self.output2mni()
+        self.output2mni()
 
         # then use the parameters to transform the SPMs
         p=subprocess.Popen(['flirt','-in',self.seedconnz,\
-                            '-ref',self.envvars.mni152,\
-                            '-applyxfm','-init',self.data.tomni152,\
+                            '-ref',self.data.envvars.mni152,\
+                            '-applyxfm','-init',self.data.func2mni,\
                             '-out',fileutils.removext(self.seedconnz)+'_mni152'])
         p.communicate()
         self.seedconnzmni152=fileutils.removext(self.seedconnz)+'_mni152.nii.gz'
-        # then the thresholded SPM
+
         p=subprocess.Popen(['flirt','-in',self.seedconnzthresh,\
-                            '-ref',self.envvars.mni152,\
-                            '-applyxfm','-init',self.data.tomni152,\
+                            '-ref',self.data.envvars.mni152,\
+                            '-applyxfm','-init',self.data.func2mni,\
                             '-out',fileutils.removext(self.seedconnzthresh)+'_mni152'])
         p.communicate()
         self.seedconnzthreshmni152=fileutils.removext(self.seedconnzthresh)+'_mni152.nii.gz'
         
         p=subprocess.Popen(['flirt','-in',self.seedcov,\
-                            '-ref',self.envvars.mni152,\
-                            '-applyxfm','-init',self.data.tomni152,\
+                            '-ref',self.data.envvars.mni152,\
+                            '-applyxfm','-init',self.data.func2mni,\
                             '-out',fileutils.removext(self.seedcov)+'_mni152'])
         p.communicate()
         self.seedcovmni152=fileutils.removext(self.seedcov)+'_mni152.nii.gz'
         
         p=subprocess.Popen(['flirt','-in',self.variance,\
-                            '-ref',self.envvars.mni152,\
-                            '-applyxfm','-init',self.data.tomni152,\
+                            '-ref',self.data.envvars.mni152,\
+                            '-applyxfm','-init',self.data.func2mni,\
                             '-out',fileutils.removext(self.variance)+'_mni152'])
         p.communicate()
         self.variancemni152=fileutils.removext(self.variance)+'_mni152.nii.gz'
 
     def output2structural(self):
-        if self.data.structural == '':
-            sys.exit('In output2structural: Structural data not given. Cannot proceed without. Exiting!')
-        p=subprocess.Popen(['flirt','-in',self.output,\
-                            '-ref',self.data.structural,\
-                            '-dof',self.envvars.boldregdof,\
-                            '-cost','bbr',\
-                            '-out',fileutils.removext(self.output)+'_func2struct',\
-                            '-omat',fileutils.removext(self.output)+'_func2struct.mat']) 
-        p.communicate()
-        p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.output)+'_struct2func.mat',\
-                            fileutils.removext(self.output)+'_func2struct.mat'])
-        p.communicate()
-        self.data.func2struct=fileutils.removext(self.output)+'_func2struct.mat'
-        self.data.struct2func=fileutils.removext(self.output)+'_struct2func.mat'        
+        if not self.pipelinerun:
+            self.run()
+        self.data.bold=self.output
+        self.data.func2struct()
 
     def parcellate(self):
         if not self.pipelinerun:
@@ -300,39 +269,6 @@ class Pipeline:
         self.data.boldgm=fileutils.removext(self.output)+'_gm.nii.gz'
         self.data.boldwm=fileutils.removext(self.output)+'_wm.nii.gz'        
         
-        '''
-        p=subprocess.Popen(['flirt','-in',self.data.structuralcsfpve,\
-                            '-ref',self.output,\
-                            '-applyxfm','-init',self.data.struct2func,\
-                            '-out',fileutils.removext(self.output)+'_pve_csf'])
-        p.communicate()           
-        p=subprocess.Popen(['flirt','-in',self.data.structuralgmpve,\
-                            '-ref',self.output,\
-                            '-applyxfm','-init',self.data.struct2func,\
-                            '-out',fileutils.removext(self.output)+'_pve_gm'])
-        p.communicate() 
-        p=subprocess.Popen(['flirt','-in',self.data.structuralwmpve,\
-                            '-ref',self.output,\
-                            '-applyxfm','-init',self.data.struct2func,\
-                            '-out',fileutils.removext(self.output)+'_pve_wm'])
-        p.communicate()        
-        
-        self.data.boldcsfpve=fileutils.removext(self.output)+'_pve_csf.nii.gz'
-        self.data.boldgmpve=fileutils.removext(self.output)+'_pve_gm.nii.gz'
-        self.data.boldwmpve=fileutils.removext(self.output)+'_pve_wm.nii.gz'
-        
-        # threshold
-        p=subprocess.Popen(['fslmaths',self.data.boldcsfpve,'-thr','0.7',fileutils.removext(self.output)+'_pve_csf_thr.nii.gz'])
-        p.communicate()
-        p=subprocess.Popen(['fslmaths',self.data.boldgmpve,'-thr','0.7',fileutils.removext(self.output)+'_pve_gm_thr.nii.gz'])
-        p.communicate()
-        p=subprocess.Popen(['fslmaths',self.data.boldwmpve,'-thr','0.9',fileutils.removext(self.output)+'_pve_wm_thr.nii.gz'])
-        p.communicate()
-        
-        self.data.boldcsf=fileutils.removext(self.output)+'_pve_csf_thr.nii.gz'
-        self.data.boldgm=fileutils.removext(self.output)+'_pve_gm_thr.nii.gz'
-        self.data.boldwm=fileutils.removext(self.output)+'_pve_wm_thr.nii.gz'
-        '''
         self.parcellated=True
         
         

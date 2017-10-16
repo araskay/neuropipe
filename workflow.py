@@ -27,8 +27,6 @@ class Data:
         self.motglm=''
         self.siemensphysio=''
         self.biopacphysio=''
-        #self.tostruct=''
-        self.tomni152=''
         self.sliceorder=''
         self.slicetiming=''
         #self.structuralcsfpve=''
@@ -51,6 +49,10 @@ class Data:
         self.boldwm=''        
         self.func2struct=''
         self.struct2func=''
+        self.struct2mni=''
+        self.mni2struct=''
+        self.func2mni=''
+        self.mni2func=''
         self.meantscsf=''
         self.meantsgm=''
         self.meantswm=''
@@ -61,6 +63,8 @@ class Data:
         self.imeantsnet=''
         self.aseg=''
         self.wmseg=''
+        self.regintermed=''
+        self.envvars=EnvVars()
     
     # this is not recommended anymore- use parcellate_structural
     def parcellate_mprage(self):
@@ -81,7 +85,7 @@ class Data:
         if self.structural == '':
             sys.exit('In parcellate_structural: Structural image not given. Cannot proceed without. Exiting!') 
         if self.aseg == '':
-            print('In parcellate_structural: aseg not given. Cannot proceed without. Stepping back to FSL FAST segmentation.')
+            print('In parcellate_structural: aseg not given. Stepping back to FSL FAST segmentation.')
             self.parcellate_mprage()
         else:
             p=subprocess.Popen(['mri_binarize','--i',self.aseg,'--o',fileutils.removext(self.structural)+'_csf.nii.gz','--ventricles'])
@@ -94,8 +98,82 @@ class Data:
             self.structuralwm=fileutils.removext(self.structural)+'_wm.nii.gz'
             self.structuralgm=fileutils.removext(self.structural)+'_gm.nii.gz'
             
-            
-            
+    def func2struct(self):
+        if self.structural == '':
+            sys.exit('In func2struct: Structural data not given. Cannot proceed without. Exiting!')
+        if self.regintermed == '':
+            p=subprocess.Popen(['flirt','-in',self.bold,\
+                                '-ref',self.structural,\
+                                '-dof',self.envvars.boldregdof,\
+                                '-cost','bbr',\
+                                '-out',fileutils.removext(self.bold)+'_func2struct',\
+                                '-omat',fileutils.removext(self.output)+'_func2struct.mat']) 
+            p.communicate()
+        else:
+            p=subprocess.Popen(['flirt','-in',self.bold,\
+                                '-ref',self.regintermed,\
+                                '-dof','3',\
+                                '-cost','bbr',\
+                                '-out',fileutils.removext(self.bold)+'__func2intermed',\
+                                '-omat',fileutils.removext(self.bold)+'__func2intermed.mat']) 
+            p.communicate()
+            p=subprocess.Popen(['flirt','-in',self.data.regintermed,\
+                                '-ref',self.data.structural,\
+                                '-dof',self.envvars.boldregdof,\
+                                '-cost','bbr',\
+                                '-out',fileutils.removext(self.regintermed)+'__intermed2struct',\
+                                '-omat',fileutils.removext(self.regintermed)+'__intermed2struct.mat']) 
+            p.communicate()
+            p=subprocess.Popen(['convert_xfm','-omat',fileutils.removext(self.bold)+'_func2struct.mat',\
+                                '-concat',fileutils.removext(self.regintermed)+'__intermed2struct.mat',\
+                                fileutils.removext(self.bold)+'__func2intermed.mat'])
+            p.communicate()
+            p=subprocess.Popen(['flirt','-in',self.bold,\
+                                '-ref',self.data.structural,\
+                                '-applyxfm','-init',fileutils.removext(self.bold)+'_func2struct.mat',\
+                                '-out',fileutils.removext(self.bold)+'_func2struct'])
+            p.communicate()
+        self.data.func2struct=fileutils.removext(self.bold)+'_func2struct.mat'
+        # while here, compute the inverse transform as well
+        p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.bold)+'_struct2func.mat',\
+                            self.func2struct])
+        p.communicate()
+        self.data.struct2func=fileutils.removext(self.bold)+'_struct2func.mat'            
+                
+    def struct2mni(self):
+        if self.envvars.mni152=='':
+            sys.exit('In struct2mni: MNI152 environment variable not set. Exiting!')
+        p=subprocess.Popen(['flirt','-in',self.structural,\
+                            '-ref',self.envvars.mni152,\
+                            '-dof',self.envvars.structregdof,\
+                            '-out',fileutils.removext(self.structural)+'_struct2mni',\
+                            '-omat',fileutils.removext(self.structural)+'_struct2mni.mat'])
+        p.communicate()
+        self.struct2mni=fileutils.removext(self.structural)+'_struct2mni.mat'
+        # while here, compute the inverse transform as well
+        p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.structural)+'_mni2struct.mat',\
+                            self.struct2mni])
+        p.communicate()
+        self.mni2struct=fileutils.removext(self.structural)+'_mni2struct.mat' 
+        
+    def func2mni(self):
+        self.func2struct()
+        self.struct2mni()
+
+        p=subprocess.Popen(['convert_xfm','-omat',fileutils.removext(self.bold)+'_func2mni.mat',\
+                            '-concat',self.struct2mni,self.func2sruct])
+        p.communicate()
+        self.func2mni=fileutils.removext(self.bold)+'_func2mni.mat'
+        p=subprocess.Popen(['flirt','-in',self.bold,\
+                            '-ref',self.envvars.mni152,\
+                            '-applyxfm','-init',self.func2mni,\
+                            '-out',fileutils.removext(self.bold)+'_func2mni'])
+        p.communicate()     
+        # while here, compute the inverse transform as well
+        p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.bold)+'_mni2func.mat',\
+                            fileutils.removext(self.bold)+'_func2mni.mat'])
+        p.communicate()        
+        self.mni2func=fileutils.removext(self.bold)+'_mni2func.mat'
 
 class BetweenSubjectMetrics:
     def __init__(self):
@@ -107,13 +185,6 @@ class BetweenSubjectMetrics:
         self.overlap_j=0
         self.reproducibility_rj=0
         self.overlap_rj=0
-        '''self.subject1=None
-        self.session1=None
-        self.run1=None
-        self.subject2=None
-        self.session2=None
-        self.run2=None
-        self.metric=None'''
     
 class Run:
     def __init__(self,seqname,data):
@@ -197,8 +268,6 @@ class Workflow:
         self.name=name
         self.subjects=[]
         self.optimalpipelinesfound=False
-        '''self.betweensubjectreproducibility=[]
-        self.averagebetweensubjectreproducibility=None'''
         self.betweensubject=None
         self.parcellate=False
     
@@ -338,21 +407,6 @@ class Workflow:
                             self.betweensubject[j,i].reproducibility_rj=r_rj
                             self.betweensubject[j,i].overlap_rj=jind_rj                            
                             
-                            '''betsubj=BetweenSubject()
-                            betsubj.subject1=subj1
-                            betsubj.subject2=subj2
-                            betsubj.session1=sess1
-                            betsubj.session2=sess2
-                            betsubj.run1=run1
-                            betsubj.run2=run2
-                            betsubj.metric=r
-                            self.betweensubjectreproducibility.append(betsubj)
-                            avgr=avgr+r
-        if count>0:
-            avgr=avgr/count
-        self.averagebetweensubjectreproducibility=avgr'''
-  
-        
     def saveallpipes(self,filename):
         # save all pipelines in csv format
         f=open(filename,'w')
@@ -512,18 +566,6 @@ class Workflow:
                 print('Between subject overlap (rj-pipe): ',self.betweensubject[i,j].overlap_rj)
                 print('-----')
         
-        '''for betsubj in self.betweensubjectreproducibility:
-
-            print(betsubj.subject1.ID,'_',betsubj.session1.ID, \
-                  'Optimal pipeline:',betsubj.run1.optimalpipeline.getsteps(), \
-                  'S-H Reproducibility:',betsubj.run1.optimalpipeline.splithalfseedconnreproducibility)
-            print(betsubj.subject2.ID,'_',betsubj.session2.ID, \
-                  'Optimal pipeline:',betsubj.run2.optimalpipeline.getsteps(), \
-                  'S-H Reproducibility:',betsubj.run2.optimalpipeline.splithalfseedconnreproducibility)
-            print('Between subject reproducibility: ',betsubj.subject1.ID,'&',betsubj.subject2.ID,': ',betsubj.metric)
-        print('Avg between subj reproducibility: ',self.averagebetweensubjectreproducibility)'''  
-        
-        
 def getsubjects(subjectfile):
     subjects=[]
     f=open(subjectfile)
@@ -548,6 +590,7 @@ def getsubjects(subjectfile):
         sliceorder=''
         aseg=''
         wmseg=''
+        regintermed=''
         try:
             (opts,args) = getopt.getopt(l,'',['subjectID=',\
                                               'sessionID=',\
@@ -565,6 +608,7 @@ def getsubjects(subjectfile):
                                               'biopacphysio=',\
                                               'aseg=',\
                                               'wmseg=',\
+                                              'regintermed=',\
                                               'slicetiming=',\
                                               'sliceorder='])
         except getopt.GetoptError:
@@ -606,6 +650,8 @@ def getsubjects(subjectfile):
                 aseg=arg
             elif opt in ('--wmseg'):
                 wmseg=arg
+            elif opt in ('--regintermed'):
+                regintermed=arg
         data=Data()
         data.bold=bold
         data.structural=structural
@@ -622,6 +668,7 @@ def getsubjects(subjectfile):
         data.sliceorder=sliceorder
         data.aseg=aseg
         data.wmseg=wmseg
+        data.regintermed=regintermed
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if s.ID==subjectID]
         if len(matchsubj)>0:
@@ -639,121 +686,6 @@ def getsubjects(subjectfile):
         line=f.readline()
         l=shlex.split(line)
     return(subjects)
-
-'''# this is to be moved to and intergrated into makeconnseed.py                
-def makeconnseed(data,seedatlasfile,atlasfile,ofile,binary):
-    # data is a Data object
-    # seedatlasfile contains a probabilistic seed ROI on MNI space (e.g., data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz)
-    img=nibabel.load(data.bold)
-    nvol=img.shape[3]
-    refvol=nvol/2 # use the middle volume as reference
-    # extract brain mask from a temporal mean volume and apply to 4D data
-    obase=data.opath
-    p=subprocess.Popen(['fslmaths',data.bold,'-Tmean',obase+'__tmean']) # temporal mean
-    p.communicate()
-    p=subprocess.Popen(['bet2',obase+'__tmean',obase+'__tmean','-f','0.3','-n','-m']) # create a binary mask from the the mean image. (bet2 automatically adds a _mask suffix to the output file)
-    p.communicate()
-    p=subprocess.Popen(['fslmaths',data.bold,'-mas',obase+'__tmean_mask',obase+'__bet']) # use the mask to brain extract the 4D functional data
-    p.communicate()
-    # calculate registration parameters
-    p=subprocess.Popen(['fslroi',obase+'__bet',obase+'__bet_refvol',str(refvol),'1']) # use the middle volume as reference
-    p.communicate()
-    p=subprocess.Popen(['flirt','-in',data.bold,'-ref',data.structural,\
-                        '-out',fileutils.removext(data.bold)+'__func2struct',\
-                        '-omat',fileutils.removext(data.bold)+'__func2struct.mat'])
-    p.communicate()
-    p=subprocess.Popen(['flirt', '-ref', atlasfile, '-in', data.structural,\
-                        '-out', fileutils.removext(data.structural)+'__struct2mni',\
-                        '-omat', fileutils.removext(data.structural)+'__struct2mni.mat'])
-    p.communicate()
-    p=subprocess.Popen(['convert_xfm', '-omat', fileutils.removext(data.bold)+'__func2mni.mat',\
-                        '-concat', fileutils.removext(data.structural)+'__struct2mni.mat',\
-                        fileutils.removext(data.bold)+'__func2struct.mat'])
-    p.communicate()
-    p=subprocess.Popen(['convert_xfm', '-inverse', '-omat', fileutils.removext(data.bold)+'__mni2func.mat',\
-                        fileutils.removext(data.bold)+'__func2mni.mat'])
-    p.communicate()
-    # now use the transformation matrix to transfrom the atlas to subject-specific functional space
-    p=subprocess.Popen(['flirt', '-in', seedatlasfile,\
-                        '-applyxfm', '-init', fileutils.removext(data.bold)+'__mni2func.mat',\
-                        '-out', ofile,\
-                        '-paddingsize', '0.0', '-interp', 'trilinear', '-ref', data.bold])
-    p.communicate()
-    if not binary:
-        # threshold at 50% and binarize
-        p=subprocess.Popen(['fslmaths', ofile, '-thr', '50', '-bin', ofile])
-        p.communicate()
-    # remove temp files
-    return(fileutils.addniigzext(ofile)) # also return the path to the seed file'''
-
-'''# this is to be moved to and intergrated into makeconnseed.py                
-def makeconnseed(data,seedatlasfile,atlasfile,ofile,binary):
-    # data is a Data object
-    # seedatlasfile contains a probabilistic seed ROI on MNI space (e.g., data/atlas/harvard-oxford_cortical_subcortical_structural/pcc.nii.gz)
-    img=nibabel.load(data.bold)
-    nvol=img.shape[3]
-    refvol=nvol/2 # use the middle volume as reference
-    # extract brain mask from a temporal mean volume and apply to 4D data
-    obase=data.opath
-    p=subprocess.Popen(['fslmaths',data.bold,'-Tmean',obase+'__tmean']) # temporal mean
-    p.communicate()
-    p=subprocess.Popen(['bet2',obase+'__tmean',obase+'__tmean','-f','0.3','-n','-m']) # create a binary mask from the the mean image. (bet2 automatically adds a _mask suffix to the output file)
-    p.communicate()
-    p=subprocess.Popen(['fslmaths',data.bold,'-mas',obase+'__tmean_mask',obase+'__bet']) # use the mask to brain extract the 4D functional data
-    p.communicate()
-    # calculate registration parameters
-    p=subprocess.Popen(['fslroi',obase+'__bet',obase+'__bet_refvol',str(refvol),'1']) # use the middle volume as reference
-    p.communicate()
-    p=subprocess.Popen(['flirt','-in',obase+'__bet_refvol','-ref',data.structural,\
-                        '-out',obase+'__func2struct','-omat',obase+'__func2struct.mat', '-dof','7'])
-    p.communicate()
-    p=subprocess.Popen(['flirt', '-ref', atlasfile, '-in', data.structural,\
-                        '-out', obase+'__struct2mni', '-omat', obase+'__struct2mni.mat', '-dof', '12'])
-    p.communicate()
-    p=subprocess.Popen(['convert_xfm', '-omat', obase+'__func2mni.mat',\
-                        '-concat', obase+'__struct2mni.mat', obase+'__func2struct.mat'])
-    p.communicate()
-    p=subprocess.Popen(['convert_xfm', '-inverse', '-omat', obase+'__mni2func.mat', obase+'__func2mni.mat'])
-    p.communicate()
-    # now use the transformation matrix to transfrom the atlas to subject-specific functional space
-    p=subprocess.Popen(['flirt', '-in', seedatlasfile,\
-                        '-applyxfm', '-init', obase+'__mni2func.mat',\
-                        '-out', ofile,\
-                        '-paddingsize', '0.0', '-interp', 'trilinear', '-ref', obase+'__bet_refvol'])
-    p.communicate()
-    if not binary:
-        # threshold at 50% and binarize
-        p=subprocess.Popen(['fslmaths', ofile, '-thr', '50', '-bin', ofile])
-        p.communicate()
-    # remove temp files
-    os.remove(fileutils.addniigzext(obase+'__tmean'))
-    os.remove(fileutils.addniigzext(obase+'__tmean_mask'))
-    os.remove(fileutils.addniigzext(obase+'__bet'))
-    os.remove(fileutils.addniigzext(obase+'__bet_refvol'))
-    os.remove(fileutils.addniigzext(obase+'__func2struct'))   
-    os.remove(obase+'__func2struct.mat')
-    os.remove(fileutils.addniigzext(obase+'__struct2mni'))
-    os.remove(obase+'__struct2mni.mat')
-    os.remove(obase+'__func2mni.mat')
-    os.remove(obase+'__mni2func.mat')
-    return(fileutils.addniigzext(ofile)) # also return the path to the seed file'''
-
-'''def skullstrip_fsl(ifile,obase):
-    p=subprocess.Popen(['fslreorient2std',ifile,fileutils.removeniftiext(obase)+'_reorient'])
-    p.communicate()
-    p=subprocess.Popen(['bet',fileutils.removeniftiext(obase)+'_reorient',\
-                        fileutils.removeniftiext(obase)+'_reorient_skullstrip'])
-    p.communicate()
-    return(fileutils.addniigzext(fileutils.removeniftiext(obase)+'_reorient_skullstrip')) # also return the path to the brain extracted file
-
-def skullstrip_afni(ifile,obase):
-    p=subprocess.Popen(['fslreorient2std',ifile,fileutils.removeniftiext(obase)+'_reorient'])
-    p.communicate()
-    p=subprocess.Popen(['3dSkullStrip','-input',fileutils.removeniftiext(obase)+'_reorient.nii.gz',\
-                        '-prefix',fileutils.removeniftiext(obase)+'_reorient_skullstrip'])
-    p.communicate()
-    fileutils.afni2nifti(fileutils.removeniftiext(obase)+'_reorient_skullstrip')
-    return(fileutils.addniigzext(fileutils.removeniftiext(obase)+'_reorient_skullstrip')) # also return the path to the brain extracted file'''
 
 def savesubjects(filename,subjects):
     f=open(filename, 'w')
@@ -778,6 +710,7 @@ def savesubjects(filename,subjects):
                         '--sliceorder \''+run.data.sliceorder+'\' '+\
                         '--aseg \''+run.data.aseg+'\' '+\
                         '--wmseg \''+run.data.wmseg+'\' '+\
+                        '--regintermed \''+run.data.regintermed+'\' '+\
                         '\n')
     f.close()
     

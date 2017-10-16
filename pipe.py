@@ -2,22 +2,22 @@ def printhelp():
     print('USAGE:')
     print('pipe.py  --subjects <subjects file> --pipeline <pipeline file> --perm <pipeline file> --onoff <pipeline file> --const <pipeline file> --add --combine --fixed <pipeline file> --showpipes --template <template file> --resout <base name>')
     print('ARGUMENTS:')
-    print('--subjects <subj file>  : specify subjects file (required)')
-    print('--pipeline <pipe file>  : specify a pipeline file to be run on all subjects without optimization and/or calculation of between subject metrics')
-    print('--perm <pipe file>      : specify a pipeline file to be used to form permutations section of the optimized pipeline')
-    print('--onoff <pipe file>     : specify a pipeline file to be used to form on/off section of the optimized pipeline')
-    print('--const <pipe file>     : specify a pipeline file to be used to form constant section of the optimized pipeline')
-    print('--combine               : flag specifying that all new (permutation/on-off/constant) steps are combined with the previous ones from this point on (Default) (See example below)')
-    print('--add                   : flag specifying that all new (permutation/on-off/constant) steps are added to the previous pipelines from this point on (Default is ‘combine’) (See example below)')
-    print('--fixed <pipe file>     : specify a fixed pipeline for the calculation of between subject metrics')
-    print('--showpipes             : show all pipelines to be run/optimized/validated without running. Only use to see a list of pipelines to be run/optimized. This will NOT run/optimize the pipelines. Remove the flag to run/optimize.')
-    print('--template <temp file>  : template file to be used for between subject calculations, e.g., MNI template. Required with --perm, --onoff, --const, --fixed, unless using --showpipes.')
-    print('--resout <base name>    : base path/name to save results in csv format. Extension (‘.csv’) and suffixed are added to the base name. Default is ‘’.')
-    print('--parcellate            : parcellate the output of the run/optimal/fixed pipeline(s).')
-    print('--meants                : compute mean time series over CSF, GM, and WM for the pipeline output. This automatically parcellates the output. If used with --seedconn, meant time series over the network is also computed.')
-    print('--seedconn              : compute seed-connectivity network on the pipeline output. Need to provide a seed file in subjects file.')
-    print('--boldregdof <dof>      : degrees of freedom to be used for bold/functional registration (Default = 12).')
-    print('--structregdof <dof>      : degrees of freedom to be used for structural registration (Default = 12).')
+    print('--subjects <subj file>: specify subjects file (required)')
+    print('--pipeline <pipe file>: specify a pipeline file to be run on all subjects without optimization and/or calculation of between subject metrics')
+    print('--perm <pipe file>: specify a pipeline file to be used to form permutations section of the optimized pipeline')
+    print('--onoff <pipe file>: specify a pipeline file to be used to form on/off section of the optimized pipeline')
+    print('--const <pipe file>: specify a pipeline file to be used to form constant section of the optimized pipeline')
+    print('--combine: flag specifying that all new (permutation/on-off/constant) steps are combined with the previous ones from this point on (Default) (See example below)')
+    print('--add: flag specifying that all new (permutation/on-off/constant) steps are added to the previous pipelines from this point on (Default is ‘combine’) (See example below)')
+    print('--fixed <pipe file>: specify a fixed pipeline for the calculation of between subject metrics')
+    print('--showpipes : show all pipelines to be run/optimized/validated without running. Only use to see a list of pipelines to be run/optimized. This will NOT run/optimize the pipelines. Remove the flag to run/optimize.')
+    print('--template <temp file>: template file to be used for between subject calculations, e.g., MNI template. Required with --perm, --onoff, --const, --fixed, unless using --showpipes.')
+    print('--resout <base name>: base path/name to save results in csv format. Extension (‘.csv’) and suffixed are added to the base name. Default is ‘’.')
+    print('--parcellate: parcellate the output of the run/optimal/fixed pipeline(s).')
+    print('--meants: compute mean time series over CSF, GM, and WM for the pipeline output. This automatically parcellates the output. If used with --seedconn, meant time series over the network is also computed.')
+    print('--seedconn: compute seed-connectivity network on the pipeline output. Need to provide a seed file in subjects file.')
+    print('--boldregdof <dof>: degrees of freedom to be used for bold/functional registration (Default = 12).')
+    print('--structregdof <dof>: degrees of freedom to be used for structural registration (Default = 12).')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 import workflow
@@ -106,21 +106,22 @@ for (opt,arg) in opts:
 
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
+
+subjects=[]
+for sfile in subjectsfiles:
+    subjects+=workflow.getsubjects(sfile)
         
 # run workflow
 if len(runpipesteps)>0:
     runwf=workflow.Workflow('Run Pipe')
-    subjects=[]
-    for sfile in subjectsfiles:
-        subjects=subjects+workflow.getsubjects(sfile)
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
+                run.data.envvars=envars
                 pipe=Pipeline(runpipename,runpipesteps)
                 pipe.setibase(run.data.bold)
                 pipe.setobase(run.data.opath)
                 pipe.setdata(run.data) # when running pipeline do not deepcopy so that results, e.g., motpar, can be recorded if needed
-                pipe.setenvvars(envvars)
                 run.addpipeline(pipe)
         runwf.addsubject(subj)
     if parcellate:
@@ -133,20 +134,17 @@ if len(runpipesteps)>0:
 # optimal workflow
 if len(optimalpipesteps)>0:
     optimalwf=workflow.Workflow('Optimal Pipe')
-    subjects=[]
-    for sfile in subjectsfiles:
-        subjects=subjects+workflow.getsubjects(sfile)
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
                 count=0
+                run.data.envvars=envvars
                 for steps in optimalpipesteps:
                     count=count+1
                     pipe=Pipeline('pipe'+str(count),steps)
                     pipe.setibase(run.data.bold)
                     pipe.setobase(run.data.opath)
                     pipe.setdata(copy.deepcopy(run.data))
-                    pipe.setenvvars(envvars)
                     run.addpipeline(pipe)
         optimalwf.addsubject(subj)
     if parcellate:
@@ -159,17 +157,14 @@ if len(optimalpipesteps)>0:
 # fixed workflow
 if len(fixedpipesteps)>0:
     fixedwf=workflow.Workflow('Fixed Pipe')
-    subjects=[]
-    for sfile in subjectsfiles:
-        subjects=subjects+workflow.getsubjects(sfile)
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
+                run.data.envvars=envvars
                 pipe=Pipeline('fixedpipe',fixedpipesteps)
                 pipe.setibase(run.data.bold)
                 pipe.setobase(run.data.opath)
                 pipe.setdata(copy.deepcopy(run.data))
-                pipe.setenvvars(envvars)
                 run.addpipeline(pipe)
         fixedwf.addsubject(subj)
     if parcellate:
