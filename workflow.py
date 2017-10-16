@@ -60,6 +60,7 @@ class Data:
         self.imeantswm=''
         self.imeantsnet=''
         self.aseg=''
+        self.wmseg=''
     
     # this is not recommended anymore- use parcellate_structural
     def parcellate_mprage(self):
@@ -546,6 +547,7 @@ def getsubjects(subjectfile):
         slicetiming=''
         sliceorder=''
         aseg=''
+        wmseg=''
         try:
             (opts,args) = getopt.getopt(l,'',['subjectID=',\
                                               'sessionID=',\
@@ -562,6 +564,7 @@ def getsubjects(subjectfile):
                                               'siemensphysio=',\
                                               'biopacphysio=',\
                                               'aseg=',\
+                                              'wmseg=',\
                                               'slicetiming=',\
                                               'sliceorder='])
         except getopt.GetoptError:
@@ -601,6 +604,8 @@ def getsubjects(subjectfile):
                 sliceorder=arg
             elif opt in ('--aseg'):
                 aseg=arg
+            elif opt in ('--wmseg'):
+                wmseg=arg
         data=Data()
         data.bold=bold
         data.structural=structural
@@ -616,6 +621,7 @@ def getsubjects(subjectfile):
         data.slicetiming=slicetiming
         data.sliceorder=sliceorder
         data.aseg=aseg
+        data.wmseg=wmseg
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if s.ID==subjectID]
         if len(matchsubj)>0:
@@ -771,6 +777,7 @@ def savesubjects(filename,subjects):
                         '--slicetiming \''+run.data.slicetiming+'\' '+\
                         '--sliceorder \''+run.data.sliceorder+'\' '+\
                         '--aseg \''+run.data.aseg+'\' '+\
+                        '--wmseg \''+run.data.wmseg+'\' '+\
                         '\n')
     f.close()
     

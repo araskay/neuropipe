@@ -30,7 +30,7 @@ for subj in subjects:
     for sess in subj.sessions:
         for run in sess.runs:
             p=subprocess.Popen(['fslreorient2std',run.data.structural,fileutils.removext(run.data.structural)+'_reorient'])
-            p.communicate
+            p.communicate()
             run.data.structural=fileutils.removext(run.data.structural)+'_reorient.nii.gz'
             
             

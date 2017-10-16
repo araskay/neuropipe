@@ -179,6 +179,7 @@ class PreprocessingStep:
             p=subprocess.Popen(['flirt','-in',self.ibase,\
                                 '-ref',self.data.structural,\
                                 '-dof',self.envvars.boldregdof,\
+                                '-cost','bbr',\
                                 '-out',fileutils.removext(self.obase)+'__func2struct',\
                                 '-omat',fileutils.removext(self.obase)+'__func2struct.mat']+self.params)
             p.communicate()

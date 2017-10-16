@@ -45,20 +45,26 @@ namebase=fileutils.removext(namebase)
 for subj in subjects:
     for sess in subj.sessions:
         for run in sess.runs:
-            print(['flirt','-in',run.data.bold,'-ref',run.data.structural,\
+            # first create mean time series
+            p=subprocess.Popen(['fslmaths',run.data.bold,'-Tmean',fileutils.removext(run.data.bold)+'__meants'])
+            p.communicate()
+            #register mean time series volume to structural
+            #run.data.parcellate_structural()
+
+            p=subprocess.Popen(['flirt','-in',fileutils.removext(run.data.bold)+'__meants','-ref',run.data.structural,\
                                 '-dof',boldregdof,\
-                                '-out',fileutils.removext(run.data.bold)+'__func2struct',\
-                                '-omat',fileutils.removext(run.data.bold)+'__func2struct.mat'])
-            p=subprocess.Popen(['flirt','-in',run.data.bold,'-ref',run.data.structural,\
-                                '-dof',boldregdof,\
-                                '-out',fileutils.removext(run.data.bold)+'__func2struct',\
+                                '-cost','bbr',\
+                                '-bbrtype','global_abs',\
+                                '-out',fileutils.removext(run.data.bold)+'__meants_func2struct',\
                                 '-omat',fileutils.removext(run.data.bold)+'__func2struct.mat'])
             p.communicate()
+            # register structural to standard template
             p=subprocess.Popen(['flirt', '-ref', atlasfile, '-in', run.data.structural,\
                                 '-dof',structregdof,\
                                 '-out', fileutils.removext(run.data.structural)+'__struct2mni',\
                                 '-omat', fileutils.removext(run.data.structural)+'__struct2mni.mat'])
             p.communicate()
+            #
             p=subprocess.Popen(['convert_xfm', '-omat', fileutils.removext(run.data.bold)+'__func2mni.mat',\
                                 '-concat', fileutils.removext(run.data.structural)+'__struct2mni.mat',\
                                 fileutils.removext(run.data.bold)+'__func2struct.mat'])

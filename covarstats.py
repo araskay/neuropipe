@@ -81,16 +81,16 @@ def groupnetwork(spmfiles,ofile):
 # multiple sessions per subject are added to the lists on the right
 sessions=dict()
 sessions['7130']=['20140312']
-sessions['7934']=['20140207'] #bad seed
+sessions['7934']=['20140207']
 sessions['9910']=['20140204']
 sessions['10577']=['20140325']
 sessions['10649']=['20140316']
-#sessions['11164']=['20140316'] # seed fine!
+sessions['11164']=['20140316']
 sessions['11308']=['20140304']
-#sessions['11494']=['20140311'] #fine on tmean #bad seed
+sessions['11494']=['20140311'] 
 sessions['11515']=['20140305']
-##sessions['11570']=['20140310'] #fine on tmean
-#sessions['11672']=['20140318'] # bad registration on both # bad seed
+sessions['11570']=['20140310'] 
+sessions['11672']=['20140318'] 
 
 basepath='/data/klymene/chen_lab/mkayvanrad/data/original/healthyvolunteer/processed/retroicorpipe_notmean'
 

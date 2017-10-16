@@ -254,6 +254,7 @@ class Pipeline:
         p=subprocess.Popen(['flirt','-in',self.output,\
                             '-ref',self.data.structural,\
                             '-dof',self.envvars.boldregdof,\
+                            '-cost','bbr',\
                             '-out',fileutils.removext(self.output)+'_func2struct',\
                             '-omat',fileutils.removext(self.output)+'_func2struct.mat']) 
         p.communicate()
