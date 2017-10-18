@@ -7,7 +7,7 @@
 % respiration signals using power_spectra.m.
 
 
-basepath='/home/mkayvanrad/data/healthyvolunteer/processed/retroicorpipe_smallseed/';
+basepath='/home/mkayvanrad/data/healthyvolunteer/processed/retroicorpipe/';
 ndiscard=10;
 TR=0.380; % seconds (for current fast EPI data)
 
@@ -15,9 +15,9 @@ TR=0.380; % seconds (for current fast EPI data)
 %% compute relative poweres
 % read the following frequencies on the resp and puls frequency specra
 
-fin=fopen('/home/mkayvanrad/data/healthyvolunteer/physio.csv');
-fcardout=fopen('/home/mkayvanrad/data/healthyvolunteer/cardPowerSpectra.csv','w');
-frespout=fopen('/home/mkayvanrad/data/healthyvolunteer/respPowerSpectra.csv','w');
+fin=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/physio.csv');
+fcardout=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/cardPowerSpectra.csv','w');
+frespout=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/respPowerSpectra.csv','w');
 % read the header
 h=textscan(fin,'%s%s%s%s%s%s%s',1,'delimiter',',');
 
@@ -27,7 +27,9 @@ phys=textscan(fin,'%s%s%f%f%s%f%f','delimiter',',');
 fprintf(fcardout,'Subject, NetcardRelativePowerPre, NetcardRelativePowerPost, GMcardRelativePowerPre, GMcardRelativePowerPost, CSFcardRelativePowerPre, CSFcardRelativePowerPost, WMcardRelativePowerPre, WMcardRelativePowerPost \n');
 fprintf(frespout,'Subject, NetrespRelativePowerPre,NetrespRelativePowerPost,GMrespRelativePowerPre,GMrespRelativePowerPost,CSFrespRelativePowerPre,CSFrespRelativePowerPost,WMrespRelativePowerPre,WMrespRelativePowerPost \n');
 
-for i=1:length(phys{1})
+n=length(phys{1});
+
+for i=1:n
     
     subject=cell2mat(phys{1}(i));
     
@@ -90,68 +92,85 @@ for i=1:length(phys{1})
     Fmeants_postRetcorGM=fft(meants_postRetcorGM);
     Fmeants_postRetcorNet=fft(meants_postRetcorNet);
 
-    %% plot CSF power spectra
-    figure(1)
+    %% plot
     l=length(Fmeants_preRetcorCSF);
     fs=1/TR;
     f=fs*(0:l/2)/l;
 
-    subplot(2,1,1)
-    plot(f,2*abs(Fmeants_preRetcorCSF(1:l/2+1))/l)
-    title('Mean BOLD time series over CSF pre Retroicor');
-    %xlabel('Frequency (Hz)')
-    ylabel('P(f)')
-
-    subplot(2,1,2)
-    plot(f,2*abs(Fmeants_postRetcorCSF(1:l/2+1))/l)
-    title('Mean BOLD time series over CSF post Retroicor');
-    xlabel('Frequency (Hz)')
-    ylabel('P(f)')
-
-    %% plot GM power spectra
-    figure(2)
-
-    subplot(2,1,1)
-    plot(f,2*abs(Fmeants_preRetcorGM(1:l/2+1))/l)
-    title('Mean BOLD time series over GM pre Retroicor');
-    %xlabel('Frequency (Hz)')
-    ylabel('P(f)')
-
-    subplot(2,1,2)
-    plot(f,2*abs(Fmeants_postRetcorGM(1:l/2+1))/l)
-    title('Mean BOLD time series over GM post Retroicor');
-    xlabel('Frequency (Hz)')
-    ylabel('P(f)')
-
-    %% plot WM power spectra
-    figure(3)
-
-    subplot(2,1,1)
-    plot(f,2*abs(Fmeants_preRetcorWM(1:l/2+1))/l)
-    title('Mean BOLD time series over WM pre Retroicor');
-    %xlabel('Frequency (Hz)')
-    ylabel('P(f)')
-
-    subplot(2,1,2)
-    plot(f,2*abs(Fmeants_postRetcorWM(1:l/2+1))/l)
-    title('Mean BOLD time series over WM post Retroicor');
-    xlabel('Frequency (Hz)')
-    ylabel('P(f)')
+%     %% plot CSF power spectra 
+%     subplot(2,1,1)
+%     plot(f,2*abs(Fmeants_preRetcorCSF(1:l/2+1))/l)
+%     title('Mean BOLD time series over CSF pre Retroicor');
+%     %xlabel('Frequency (Hz)')
+%     ylabel('P(f)')
+% 
+%     subplot(2,1,2)
+%     plot(f,2*abs(Fmeants_postRetcorCSF(1:l/2+1))/l)
+%     title('Mean BOLD time series over CSF post Retroicor');
+%     xlabel('Frequency (Hz)')
+%     ylabel('P(f)')
+% 
+%     %% plot GM power spectra
+%     figure(2)
+% 
+%     subplot(2,1,1)
+%     plot(f,2*abs(Fmeants_preRetcorGM(1:l/2+1))/l)
+%     title('Mean BOLD time series over GM pre Retroicor');
+%     %xlabel('Frequency (Hz)')
+%     ylabel('P(f)')
+% 
+%     subplot(2,1,2)
+%     plot(f,2*abs(Fmeants_postRetcorGM(1:l/2+1))/l)
+%     title('Mean BOLD time series over GM post Retroicor');
+%     xlabel('Frequency (Hz)')
+%     ylabel('P(f)')
+% 
+%     %% plot WM power spectra
+%     figure(3)
+% 
+%     subplot(2,1,1)
+%     plot(f,2*abs(Fmeants_preRetcorWM(1:l/2+1))/l)
+%     title('Mean BOLD time series over WM pre Retroicor');
+%     %xlabel('Frequency (Hz)')
+%     ylabel('P(f)')
+% 
+%     subplot(2,1,2)
+%     plot(f,2*abs(Fmeants_postRetcorWM(1:l/2+1))/l)
+%     title('Mean BOLD time series over WM post Retroicor');
+%     xlabel('Frequency (Hz)')
+%     ylabel('P(f)')
 
     %% plot Network power spectra
-    figure(4)
-
-    subplot(2,1,1)
-    plot(f,2*abs(Fmeants_preRetcorNet(1:l/2+1))/l)
-    title('Mean BOLD time series over Network pre Retroicor');
-    %xlabel('Frequency (Hz)')
-    ylabel('P(f)')
-
-    subplot(2,1,2)
-    plot(f,2*abs(Fmeants_postRetcorNet(1:l/2+1))/l)
-    title('Mean BOLD time series over Network post Retroicor');
-    xlabel('Frequency (Hz)')
-    ylabel('P(f)')
+%     figure(1)
+%     if i==1
+%         title('Pre RETROICOR')
+%     end
+% 
+%     subplot(n,1,i)
+%     plot(f,2*abs(Fmeants_preRetcorNet(1:l/2+1))/l)
+%     %title('Mean BOLD time series over Network pre Retroicor');
+%     %xlabel('Frequency (Hz)')
+%     ylabel('P(f)')
+% 
+%     figure(2)
+%     if i==1
+%         title('Post RETROICOR')
+%     end
+%     subplot(n,1,i)
+%     plot(f,2*abs(Fmeants_postRetcorNet(1:l/2+1))/l)
+%     %title('Mean BOLD time series over Network post Retroicor');
+%     %xlabel('Frequency (Hz)')
+%     ylabel('P(f)')
+    
+    figure(i)
+%     if i==1
+%         title('Difference')
+%     end
+%     subplot(n,1,i)
+    plot(f,2*abs(Fmeants_postRetcorNet(1:l/2+1))/l-2*abs(Fmeants_preRetcorNet(1:l/2+1))/l)
+    title('Difference PSD pre and post RETROICOR')
+    xlabel('f(Hz)')
+    ylabel('Power Density (A^2/Hz)')
 
     fresp_min=phys{6}(i);
     fresp_max=phys{7}(i);
@@ -198,3 +217,4 @@ for i=1:length(phys{1})
 end
 
 fclose(fcardout);
+fclose(frespout);
