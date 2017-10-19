@@ -18,6 +18,7 @@ TR=0.380; % seconds (for current fast EPI data)
 fin=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/physio.csv');
 fcardout=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/cardPowerSpectra.csv','w');
 frespout=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/respPowerSpectra.csv','w');
+flowout=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/lowPowerSpectra.csv','w');
 % read the header
 h=textscan(fin,'%s%s%s%s%s%s%s',1,'delimiter',',');
 
@@ -26,6 +27,7 @@ phys=textscan(fin,'%s%s%f%f%s%f%f','delimiter',',');
 
 fprintf(fcardout,'Subject, NetcardRelativePowerPre, NetcardRelativePowerPost, GMcardRelativePowerPre, GMcardRelativePowerPost, CSFcardRelativePowerPre, CSFcardRelativePowerPost, WMcardRelativePowerPre, WMcardRelativePowerPost \n');
 fprintf(frespout,'Subject, NetrespRelativePowerPre,NetrespRelativePowerPost,GMrespRelativePowerPre,GMrespRelativePowerPost,CSFrespRelativePowerPre,CSFrespRelativePowerPost,WMrespRelativePowerPre,WMrespRelativePowerPost \n');
+fprintf(flowout,'Subject, NetlowRelativePowerPre,NetlowRelativePowerPost\n');
 
 n=length(phys{1});
 
@@ -141,32 +143,21 @@ for i=1:n
 %     ylabel('P(f)')
 
     %% plot Network power spectra
-%     figure(1)
-%     if i==1
-%         title('Pre RETROICOR')
-%     end
-% 
-%     subplot(n,1,i)
-%     plot(f,2*abs(Fmeants_preRetcorNet(1:l/2+1))/l)
-%     %title('Mean BOLD time series over Network pre Retroicor');
-%     %xlabel('Frequency (Hz)')
-%     ylabel('P(f)')
-% 
-%     figure(2)
-%     if i==1
-%         title('Post RETROICOR')
-%     end
-%     subplot(n,1,i)
-%     plot(f,2*abs(Fmeants_postRetcorNet(1:l/2+1))/l)
-%     %title('Mean BOLD time series over Network post Retroicor');
-%     %xlabel('Frequency (Hz)')
-%     ylabel('P(f)')
+    figure(20+i)
+
+    subplot(2,1,1)
+    plot(f,2*abs(Fmeants_preRetcorNet(1:l/2+1))/l)
+    title('Mean BOLD time series over Network pre Retroicor');
+    %xlabel('Frequency (Hz)')
+    ylabel('P(f)')
+
+    subplot(2,1,2)
+    plot(f,2*abs(Fmeants_postRetcorNet(1:l/2+1))/l)
+    title('Mean BOLD time series over Network post Retroicor');
+    xlabel('Frequency (Hz)')
+    ylabel('P(f)')
     
     figure(i)
-%     if i==1
-%         title('Difference')
-%     end
-%     subplot(n,1,i)
     plot(f,2*abs(Fmeants_postRetcorNet(1:l/2+1))/l-2*abs(Fmeants_preRetcorNet(1:l/2+1))/l)
     title('Difference PSD pre and post RETROICOR')
     xlabel('f(Hz)')
@@ -176,6 +167,10 @@ for i=1:n
     fresp_max=phys{7}(i);
     fcard_min=phys{3}(i);
     fcard_max=phys{4}(i);
+    
+    % looking at low frequency
+    flow_min=0.01;
+    flow_max=0.1;
 
     l=length(Fmeants_preRetcorCSF);
     fs=1/TR;
@@ -184,7 +179,9 @@ for i=1:n
     fresp_max_ind=ceil(fresp_max/(fs/2)*l/2);
     fcard_min_ind=ceil(fcard_min/(fs/2)*l/2);
     fcard_max_ind=ceil(fcard_max/(fs/2)*l/2);
-
+    flow_min_ind=ceil(flow_min/(fs/2)*l/2);
+    flow_max_ind=ceil(flow_max/(fs/2)*l/2);
+    
     CSFrespRelativePowerPre=sum(abs(Fmeants_preRetcorCSF(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_preRetcorCSF).^2);
     CSFrespRelativePowerPost=sum(abs(Fmeants_postRetcorCSF(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_postRetcorCSF).^2);
     CSFcardRelativePowerPre=sum(abs(Fmeants_preRetcorCSF(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_preRetcorCSF).^2);
@@ -205,6 +202,9 @@ for i=1:n
     NetcardRelativePowerPre=sum(abs(Fmeants_preRetcorNet(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_preRetcorNet).^2);
     NetcardRelativePowerPost=sum(abs(Fmeants_postRetcorNet(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_postRetcorNet).^2);
     
+    NetlowRelativePowerPre=sum(abs(Fmeants_preRetcorNet(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_preRetcorNet).^2);
+    NetlowRelativePowerPost=sum(abs(Fmeants_postRetcorNet(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_postRetcorNet).^2);
+    
     card=[NetcardRelativePowerPre,NetcardRelativePowerPost,GMcardRelativePowerPre,GMcardRelativePowerPost,CSFcardRelativePowerPre,CSFcardRelativePowerPost,WMcardRelativePowerPre,WMcardRelativePowerPost];
     mat2str(card)
     fprintf(fcardout,'%s,',subject);
@@ -213,6 +213,10 @@ for i=1:n
     resp=[NetrespRelativePowerPre,NetrespRelativePowerPost,GMrespRelativePowerPre,GMrespRelativePowerPost,CSFrespRelativePowerPre,CSFrespRelativePowerPost,WMrespRelativePowerPre,WMrespRelativePowerPost];
     fprintf(frespout,'%s,',subject);
     fprintf(frespout,'%f,%f,%f,%f,%f,%f,%f,%f\n',resp);
+    
+    low=[NetlowRelativePowerPre,NetlowRelativePowerPost];
+    fprintf(flowout,'%s,',subject);
+    fprintf(flowout,'%f,%f\n',low);
 
 end
 
