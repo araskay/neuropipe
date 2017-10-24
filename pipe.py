@@ -14,8 +14,9 @@ def printhelp():
     print('--template <temp file>: template file to be used for between subject calculations, e.g., MNI template. Required with --perm, --onoff, --const, --fixed, unless using --showpipes.')
     print('--resout <base name>: base path/name to save results in csv format. Extension (.csv) and suffixed are added to the base name.')
     print('--parcellate: parcellate the output of the run/optimal/fixed pipeline(s).')
-    print('--meants: compute mean time series over CSF, GM, and WM for the pipeline output. This automatically parcellates the output. If used with --seedconn, meant time series over the network is also computed.')
+    print('--meants: compute mean time series over CSF, GM, and WM for the pipeline output. This automatically parcellates the output. If used with --seedconn, mean time series over the network is also computed.')
     print('--seedconn: compute seed-connectivity network on the pipeline output. Need to provide a seed file in subjects file.')
+    print('--tomni: transform pipeline output to standard MNI space.')
     print('--boldregdof <dof>: degrees of freedom to be used for bold/functional registration (Default = 12).')
     print('--structregdof <dof>: degrees of freedom to be used for structural registration (Default = 12).')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
@@ -39,6 +40,7 @@ resout=''
 parcellate=False
 meants=False
 seedconn=False
+tomni=False
 runpipename=''
 
 envvars=workflow.EnvVars()
@@ -46,7 +48,7 @@ envvars=workflow.EnvVars()
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','template=','resout=','parcellate','meants','seedconn','boldregdof=','structregdof='])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','template=','resout=','parcellate','meants','seedconn','tomni','boldregdof=','structregdof='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -99,6 +101,8 @@ for (opt,arg) in opts:
         meants=True
     elif opt in ('--seedconn'):
         seedconn=True
+    elif opt in ('--tomni'):
+        tomni=True
     elif opt in ('--boldregdof'):
         envvars.boldregdof=arg
     elif opt in ('--structregdof'):
@@ -117,7 +121,7 @@ if len(runpipesteps)>0:
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
-                run.data.envvars=envars
+                run.data.envvars=envvars
                 pipe=Pipeline(runpipename,runpipesteps)
                 pipe.setibase(run.data.bold)
                 pipe.setobase(run.data.opath)
@@ -130,6 +134,8 @@ if len(runpipesteps)>0:
         runwf.seedconn=True
     if meants:
         runwf.meants=True
+    if tomni:
+        runwf.tomni=True
         
 # optimal workflow
 if len(optimalpipesteps)>0:
@@ -153,7 +159,7 @@ if len(optimalpipesteps)>0:
         optimalwf.seedconn=True
     if meants:
         optimalwf.meants=True
-        
+         
 # fixed workflow
 if len(fixedpipesteps)>0:
     fixedwf=workflow.Workflow('Fixed Pipe')
@@ -173,7 +179,7 @@ if len(fixedpipesteps)>0:
         fixedwf.seedconn=True
     if meants:
         fixedwf.meants=True
-
+        
 if showpipes:
     # print all pipelines run
     if len(runpipesteps)>0:

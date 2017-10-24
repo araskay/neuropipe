@@ -12,11 +12,11 @@ try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',\
                                 ['help','input=', 'output=', 'skiprecon', 'keeprecon'])
 except getopt.GetoptError:
-    print('Usage: skullstripstructural.py -i <input subject file> -o <output subject file> [--skipreconn --keeprecon]\n Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
+    print('Usage: skullstripstructural.py -i <input subject file> -o <output subject file> [--skiprecon --keeprecon]\n Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
     sys.exit()
 for (opt,arg) in opts:
     if opt in ('-h', '--help'):
-        print('Usage: skullstripstructural.py -i <input subject file> -o <output subject file> [--skipreconn --keeprecon]\n Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
+        print('Usage: skullstripstructural.py -i <input subject file> -o <output subject file> [--skiprecon --keeprecon]\n Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
         sys.exit()
     elif opt in ('-i','--input'):
         ifile=arg
@@ -28,7 +28,7 @@ for (opt,arg) in opts:
         keeprecon=True
 
 if ifile=='' or ofile=='':
-    sys.exit('Usage: skullstripstructural.py -i <input subject file> -o <output subject file> [--skipreconn --keeprecon]\nReport bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
+    sys.exit('Usage: skullstripstructural.py -i <input subject file> -o <output subject file> [--skiprecon --keeprecon]\nReport bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
         
 subjects=workflow.getsubjects(ifile)
 

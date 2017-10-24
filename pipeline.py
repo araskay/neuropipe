@@ -189,7 +189,7 @@ class Pipeline:
         if not self.pipelinerun:
             self.run()
         self.data.bold=self.output
-        self.data.func2mni()
+        self.data.transform_func2mni()
         
         
     def seedconn2mni(self):
@@ -231,7 +231,7 @@ class Pipeline:
         if not self.pipelinerun:
             self.run()
         self.data.bold=self.output
-        self.data.func2struct()
+        self.data.transform_func2struct()
 
     def parcellate(self):
         if not self.pipelinerun:

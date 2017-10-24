@@ -98,7 +98,7 @@ class Data:
             self.structuralwm=fileutils.removext(self.structural)+'_wm.nii.gz'
             self.structuralgm=fileutils.removext(self.structural)+'_gm.nii.gz'
             
-    def func2struct(self):
+    def transform_func2struct(self):
         if self.structural == '':
             sys.exit('In func2struct: Structural data not given. Cannot proceed without. Exiting!')
         if self.regintermed == '':
@@ -110,6 +110,7 @@ class Data:
                                 '-omat',fileutils.removext(self.output)+'_func2struct.mat']) 
             p.communicate()
         else:
+            print('BOLD to INTERMED')
             p=subprocess.Popen(['flirt','-in',self.bold,\
                                 '-ref',self.regintermed,\
                                 '-dof','3',\
@@ -117,30 +118,34 @@ class Data:
                                 '-out',fileutils.removext(self.bold)+'__func2intermed',\
                                 '-omat',fileutils.removext(self.bold)+'__func2intermed.mat']) 
             p.communicate()
-            p=subprocess.Popen(['flirt','-in',self.data.regintermed,\
-                                '-ref',self.data.structural,\
+            print('INTERMED TO STRUCT')
+            p=subprocess.Popen(['flirt','-in',self.regintermed,\
+                                '-ref',self.structural,\
                                 '-dof',self.envvars.boldregdof,\
                                 '-cost','bbr',\
                                 '-out',fileutils.removext(self.regintermed)+'__intermed2struct',\
                                 '-omat',fileutils.removext(self.regintermed)+'__intermed2struct.mat']) 
             p.communicate()
+            print('CONCAT')
             p=subprocess.Popen(['convert_xfm','-omat',fileutils.removext(self.bold)+'_func2struct.mat',\
                                 '-concat',fileutils.removext(self.regintermed)+'__intermed2struct.mat',\
                                 fileutils.removext(self.bold)+'__func2intermed.mat'])
             p.communicate()
+            print('BEGIN')
             p=subprocess.Popen(['flirt','-in',self.bold,\
-                                '-ref',self.data.structural,\
+                                '-ref',self.structural,\
                                 '-applyxfm','-init',fileutils.removext(self.bold)+'_func2struct.mat',\
                                 '-out',fileutils.removext(self.bold)+'_func2struct'])
             p.communicate()
-        self.data.func2struct=fileutils.removext(self.bold)+'_func2struct.mat'
+            print('OK')
+        self.func2struct=fileutils.removext(self.bold)+'_func2struct.mat'
         # while here, compute the inverse transform as well
         p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.bold)+'_struct2func.mat',\
                             self.func2struct])
         p.communicate()
-        self.data.struct2func=fileutils.removext(self.bold)+'_struct2func.mat'            
+        self.struct2func=fileutils.removext(self.bold)+'_struct2func.mat'            
                 
-    def struct2mni(self):
+    def transform_struct2mni(self):
         if self.envvars.mni152=='':
             sys.exit('In struct2mni: MNI152 environment variable not set. Exiting!')
         p=subprocess.Popen(['flirt','-in',self.structural,\
@@ -156,12 +161,12 @@ class Data:
         p.communicate()
         self.mni2struct=fileutils.removext(self.structural)+'_mni2struct.mat' 
         
-    def func2mni(self):
-        self.func2struct()
-        self.struct2mni()
+    def transform_func2mni(self):
+        self.transform_func2struct()
+        self.transform_struct2mni()
 
         p=subprocess.Popen(['convert_xfm','-omat',fileutils.removext(self.bold)+'_func2mni.mat',\
-                            '-concat',self.struct2mni,self.func2sruct])
+                            '-concat',self.struct2mni,self.func2struct])
         p.communicate()
         self.func2mni=fileutils.removext(self.bold)+'_func2mni.mat'
         p=subprocess.Popen(['flirt','-in',self.bold,\
@@ -174,6 +179,7 @@ class Data:
                             fileutils.removext(self.bold)+'_func2mni.mat'])
         p.communicate()        
         self.mni2func=fileutils.removext(self.bold)+'_mni2func.mat'
+        print('ALL REGISTRATION DONE :)')
 
 class BetweenSubjectMetrics:
     def __init__(self):
@@ -226,7 +232,13 @@ class Run:
         for pipe in self.pipelines:
             pipe.calcseedconn(pthresh)
             pipe.seedconn2mni()
-            
+    
+    def tomni(self):
+        if (self.pipelines == []):
+            sys.exit('Error: No pipelines set for the run. Set pipelines before calling process()')
+        for pipe in self.pipelines:
+            pipe.output2mni()
+                    
     def findoptimalpipeline(self):
         if (self.pipelines == []):
             sys.exit('Error: No pipelines set for the run. Set pipelines before calling findoptimalpipeline()')
@@ -270,6 +282,9 @@ class Workflow:
         self.optimalpipelinesfound=False
         self.betweensubject=None
         self.parcellate=False
+        self.seedconn=False
+        self.meants=False
+        self.tomni=False
     
     def addsubject(self,subject):
         self.subjects.append(subject)
@@ -294,6 +309,8 @@ class Workflow:
                         run.parcellate()
                     if self.meants:
                         run.meants()
+                    if self.tomni:
+                        run.tomni()
                     
         
     def findoptimalpipelines(self):
