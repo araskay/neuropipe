@@ -161,10 +161,6 @@ class PreprocessingStep:
             else:
                 os.remove(fileutils.removeniftiext(self.obase)+'__motglm.nii.gz')
         
-        elif self.name=='tmean':
-            p=subprocess.Popen(['fslmaths',self.ibase,'-Tmean',self.obase])
-            p.communicate()
-        
         elif self.name=='slicetimer':
             # get the TR from the data
             img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
@@ -212,8 +208,6 @@ class PreprocessingStep:
         elif (self.name == '3dFourier'):
             os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'motreg'):
-            os.remove(fileutils.addniigzext(self.obase))
-        elif (self.name == 'tmean'):
             os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'slicetimer'):
             os.remove(fileutils.addniigzext(self.obase))

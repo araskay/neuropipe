@@ -13,6 +13,8 @@ class EnvVars:
         self.mni152=''
         self.boldregdof='12'
         self.structregdof='12'
+        self.boldregcost='corratio' # flirt default
+        self.structregcost='corratio' #flirt default
 
 class Data:
     def __init__(self):
@@ -64,6 +66,7 @@ class Data:
         self.aseg=''
         self.wmseg=''
         self.regintermed=''
+        self.boldtmean=''
         self.envvars=EnvVars()
     
     # this is not recommended anymore- use parcellate_structural
@@ -98,17 +101,25 @@ class Data:
             self.structuralwm=fileutils.removext(self.structural)+'_wm.nii.gz'
             self.structuralgm=fileutils.removext(self.structural)+'_gm.nii.gz'
             
+    def calc_boldtmean(self):
+        p=subprocess.Popen(['fslmaths',self.bold,'-Tmean',fileutils.removext(self.bold)+'_tmean'])
+        p.communicate()
+        self.boldtmean=fileutils.removext(self.bold)+'_tmean'
+    
     def transform_func2struct(self):
         if self.structural == '':
             sys.exit('In func2struct: Structural data not given. Cannot proceed without. Exiting!')
+        # regintermed not updated any more- to be removed
         if self.regintermed == '':
-            p=subprocess.Popen(['flirt','-in',self.bold,\
+            self.calc_boldtmean()
+            p=subprocess.Popen(['flirt','-in',self.boldtmean,\
                                 '-ref',self.structural,\
                                 '-dof',self.envvars.boldregdof,\
-                                '-cost','bbr',\
+                                '-cost',self.envvars.boldregcost,\
                                 '-out',fileutils.removext(self.bold)+'_func2struct',\
-                                '-omat',fileutils.removext(self.output)+'_func2struct.mat']) 
+                                '-omat',fileutils.removext(self.bold)+'_func2struct.mat']) 
             p.communicate()
+        '''
         else:
             print('BOLD to INTERMED')
             p=subprocess.Popen(['flirt','-in',self.bold,\
@@ -138,6 +149,7 @@ class Data:
                                 '-out',fileutils.removext(self.bold)+'_func2struct'])
             p.communicate()
             print('OK')
+        '''
         self.func2struct=fileutils.removext(self.bold)+'_func2struct.mat'
         # while here, compute the inverse transform as well
         p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.bold)+'_struct2func.mat',\
@@ -151,6 +163,7 @@ class Data:
         p=subprocess.Popen(['flirt','-in',self.structural,\
                             '-ref',self.envvars.mni152,\
                             '-dof',self.envvars.structregdof,\
+                            '-cost',self.envvars.structregcost,\
                             '-out',fileutils.removext(self.structural)+'_struct2mni',\
                             '-omat',fileutils.removext(self.structural)+'_struct2mni.mat'])
         p.communicate()
@@ -179,7 +192,6 @@ class Data:
                             fileutils.removext(self.bold)+'_func2mni.mat'])
         p.communicate()        
         self.mni2func=fileutils.removext(self.bold)+'_mni2func.mat'
-        print('ALL REGISTRATION DONE :)')
 
 class BetweenSubjectMetrics:
     def __init__(self):

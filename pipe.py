@@ -17,8 +17,10 @@ def printhelp():
     print('--meants: compute mean time series over CSF, GM, and WM for the pipeline output. This automatically parcellates the output. If used with --seedconn, mean time series over the network is also computed.')
     print('--seedconn: compute seed-connectivity network on the pipeline output. Need to provide a seed file in subjects file.')
     print('--tomni: transform pipeline output to standard MNI space.')
-    print('--boldregdof <dof>: degrees of freedom to be used for bold/functional registration (Default = 12).')
+    print('--boldregdof <dof>: degrees of freedom to be used for bold registration (Default = 12).')
     print('--structregdof <dof>: degrees of freedom to be used for structural registration (Default = 12).')
+    print('--boldregcost <cost function>: cost fuction to be used for bold registration (Default = \'corratio\').')
+    print('--structregcost <cost function>: cost fuction to be used for structural registration (Default = \'corratio\').')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 import workflow
@@ -48,7 +50,7 @@ envvars=workflow.EnvVars()
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes','template=','resout=','parcellate','meants','seedconn','tomni','boldregdof=','structregdof='])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -107,6 +109,10 @@ for (opt,arg) in opts:
         envvars.boldregdof=arg
     elif opt in ('--structregdof'):
         envvars.structregdof=arg
+    elif opt in ('--boldregcost'):
+        envvars.boldregcost=arg
+    elif opt in ('--structregcost'):
+        envvars.structregcost=arg
 
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
