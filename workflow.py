@@ -109,57 +109,40 @@ class Data:
     def transform_func2struct(self):
         if self.structural == '':
             sys.exit('In func2struct: Structural data not given. Cannot proceed without. Exiting!')
-        # regintermed not updated any more- to be removed
-        if self.regintermed == '':
+        
+        if self.func2struct=='':
             self.calc_boldtmean()
             p=subprocess.Popen(['flirt','-in',self.boldtmean,\
                                 '-ref',self.structural,\
                                 '-dof',self.envvars.boldregdof,\
                                 '-cost',self.envvars.boldregcost,\
-                                '-out',fileutils.removext(self.bold)+'_func2struct',\
+                                '-out',fileutils.removext(self.boldtmean)+'_func2struct',\
                                 '-omat',fileutils.removext(self.bold)+'_func2struct.mat']) 
             p.communicate()
-        '''
-        else:
-            print('BOLD to INTERMED')
-            p=subprocess.Popen(['flirt','-in',self.bold,\
-                                '-ref',self.regintermed,\
-                                '-dof','3',\
-                                '-cost','bbr',\
-                                '-out',fileutils.removext(self.bold)+'__func2intermed',\
-                                '-omat',fileutils.removext(self.bold)+'__func2intermed.mat']) 
-            p.communicate()
-            print('INTERMED TO STRUCT')
-            p=subprocess.Popen(['flirt','-in',self.regintermed,\
-                                '-ref',self.structural,\
-                                '-dof',self.envvars.boldregdof,\
-                                '-cost','bbr',\
-                                '-out',fileutils.removext(self.regintermed)+'__intermed2struct',\
-                                '-omat',fileutils.removext(self.regintermed)+'__intermed2struct.mat']) 
-            p.communicate()
-            print('CONCAT')
-            p=subprocess.Popen(['convert_xfm','-omat',fileutils.removext(self.bold)+'_func2struct.mat',\
-                                '-concat',fileutils.removext(self.regintermed)+'__intermed2struct.mat',\
-                                fileutils.removext(self.bold)+'__func2intermed.mat'])
-            p.communicate()
-            print('BEGIN')
-            p=subprocess.Popen(['flirt','-in',self.bold,\
-                                '-ref',self.structural,\
-                                '-applyxfm','-init',fileutils.removext(self.bold)+'_func2struct.mat',\
-                                '-out',fileutils.removext(self.bold)+'_func2struct'])
-            p.communicate()
-            print('OK')
-        '''
-        self.func2struct=fileutils.removext(self.bold)+'_func2struct.mat'
-        # while here, compute the inverse transform as well
+
+            self.func2struct=fileutils.removext(self.bold)+'_func2struct.mat'
+
+        p=subprocess.Popen(['flirt','-in',self.bold,\
+                            '-ref',self.structural,\
+                            '-applyxfm','-init',self.func2struct,\
+                            '-out',fileutils.removext(self.bold)+'_func2struct'])
+        p.communicate()            
+  
+                
+    def transform_struct2func(self):
+        if self.func2struct=='':
+            self.transform_func2struct()
         p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.bold)+'_struct2func.mat',\
                             self.func2struct])
         p.communicate()
-        self.struct2func=fileutils.removext(self.bold)+'_struct2func.mat'            
-                
+        self.struct2func=fileutils.removext(self.bold)+'_struct2func.mat'         
+            
+    
     def transform_struct2mni(self):
         if self.envvars.mni152=='':
             sys.exit('In struct2mni: MNI152 environment variable not set. Exiting!')
+        
+        
         p=subprocess.Popen(['flirt','-in',self.structural,\
                             '-ref',self.envvars.mni152,\
                             '-dof',self.envvars.structregdof,\
@@ -601,25 +584,7 @@ def getsubjects(subjectfile):
     line=f.readline()
     l=shlex.split(line)
     while len(l)>0:
-        subjectID=''
-        sessionID=''
-        bold=''
-        card=''
-        resp=''
-        opath=''
-        sequence=''
-        structural=''
-        connseed=''
-        motpar=''
-        brainmask=''
-        motglm=''
-        siemensphysio=''
-        biopacphysio=''
-        slicetiming=''
-        sliceorder=''
-        aseg=''
-        wmseg=''
-        regintermed=''
+        data=Data()
         try:
             (opts,args) = getopt.getopt(l,'',['subjectID=',\
                                               'sessionID=',\
@@ -639,65 +604,66 @@ def getsubjects(subjectfile):
                                               'wmseg=',\
                                               'regintermed=',\
                                               'slicetiming=',\
-                                              'sliceorder='])
+                                              'sliceorder=',\
+                                              'func2struct=',\
+                                              'struct2func=',\
+                                              'struct2mni=',\
+                                              'mni2struct=',\
+                                              'func2mni=',\
+                                              'mni2func='])
         except getopt.GetoptError:
             sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file (e.g., subjects.txt). Also please note that identifiers require double dash (--)')
         for (opt,arg) in opts:
             if opt in ('--subjectID'):
-                subjectID=arg
+                data.subjectID=arg
             elif opt in ('--sessionID'):
-                sessionID=arg
+                data.sessionID=arg
             elif opt in ('--bold'):
-                bold=arg
+                data.bold=arg
             elif opt in ('--structural'):
-                structural=arg
+                data.structural=arg
             elif opt in ('--card'):
-                card=arg
+                data.card=arg
             elif opt in ('--resp'):
-                resp=arg
+                data.resp=arg
             elif opt in ('--opath'):
-                opath=arg
+                data.opath=arg
             elif opt in ('--sequence'):
-                sequence=arg
+                data.sequence=arg
             elif opt in ('--connseed'):
-                connseed=arg
+                data.connseed=arg
             elif opt in ('--motpar'):
-                motpar=arg
+                data.motpar=arg
             elif opt in ('--brainmask'):
-                brainmask=arg
+                data.brainmask=arg
             elif opt in ('--motglm'):
-                motglm=arg
+                data.motglm=arg
             elif opt in ('--siemensphysio'):
-                siemensphysio=arg
+                data.siemensphysio=arg
             elif opt in ('--biopacphysio'):
-                biopacphysio=arg
+                data.biopacphysio=arg
             elif opt in ('--slicetiming'):
-                slicetiming=arg
+                data.slicetiming=arg
             elif opt in ('--sliceorder'):
-                sliceorder=arg
+                data.sliceorder=arg
             elif opt in ('--aseg'):
-                aseg=arg
+                data.aseg=arg
             elif opt in ('--wmseg'):
-                wmseg=arg
+                data.wmseg=arg
             elif opt in ('--regintermed'):
-                regintermed=arg
-        data=Data()
-        data.bold=bold
-        data.structural=structural
-        data.card=card
-        data.resp=resp
-        data.opath=opath
-        data.connseed=connseed
-        data.motpar=motpar
-        data.brainmask=brainmask
-        data.motglm=motglm
-        data.siemensphysio=siemensphysio
-        data.biopacphysio=biopacphysio
-        data.slicetiming=slicetiming
-        data.sliceorder=sliceorder
-        data.aseg=aseg
-        data.wmseg=wmseg
-        data.regintermed=regintermed
+                data.regintermed=arg
+            elif opt in ('--func2struct'):
+                data.func2struct=arg
+            elif opt in ('--struct2func'):
+                data.struct2func=arg
+            elif opt in ('--struct2mni'):
+                data.struct2mni=arg
+            elif opt in ('--mni2struct'):
+                data.mni2struct=arg
+            elif opt in ('--func2mni'):
+                data.func2mni=arg
+            elif opt in ('--mni2func'):
+                data.mni2func=arg
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if s.ID==subjectID]
         if len(matchsubj)>0:
@@ -740,6 +706,12 @@ def savesubjects(filename,subjects):
                         '--aseg \''+run.data.aseg+'\' '+\
                         '--wmseg \''+run.data.wmseg+'\' '+\
                         '--regintermed \''+run.data.regintermed+'\' '+\
+                        '--func2struct \''+run.data.func2struct+'\' '+\
+                        '--struct2func \''+run.data.struct2func+'\' '+\
+                        '--struct2mni \''+run.data.struct2mni+'\' '+\
+                        '--mni2struct \''+run.data.mni2struct+'\' '+\
+                        '--func2mni \''+run.data.func2mni+'\' '+\
+                        '--mni2func \''+run.data.mni2func+'\' '+\
                         '\n')
     f.close()
     

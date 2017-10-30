@@ -7,6 +7,7 @@ import fileutils
 import subprocess # used to run bash commands
 import os
 import spmsim, preprocessingstep
+import copy
 
 p_thresh=0.05 # significance level for thresholding seed connectivity maps
 
@@ -24,7 +25,6 @@ class Pipeline:
         self.splithalfoutputs=['','']
         self.splithalfseedconnreproducibility=None
         self.splithalfseedconnoverlap=None
-        #self.connectivityseedfile=''
         self.seedconnr=''
         self.seedconnrthresh=''
         self.seedconnz=''
@@ -56,9 +56,6 @@ class Pipeline:
     def keepintermediates(self):
         self.keepintermed=True
         
-    #def setconnectivityseedfile(self,seedfile):
-    #    self.connectivityseedfile=seedfile
-    
     def run(self):
         # first create output directory if necessary
         (directory,namebase)=os.path.split(self.obase)
@@ -93,7 +90,7 @@ class Pipeline:
             p.communicate()
             self.output=self.obase+'_'+self.name
         self.pipelinerun=True
-                
+        self.data.bold=self.output        
         
     def runsplithalf(self):
         # first create output directory if necessary
@@ -104,6 +101,7 @@ class Pipeline:
         obase=self.obase
         output=self.output
         pipelinerun=self.pipelinerun
+        data=copy.deepcopy(self.data)
         # read input and split it into half
         img_nib=nibabel.load(fileutils.addniigzext(ibase))
         img=img_nib.get_data()
@@ -133,6 +131,7 @@ class Pipeline:
         self.obase=obase
         self.output=output
         self.pipelinerun=pipelinerun
+        self.data=data
         # set pipelinerunsplithalf to True
         self.pipelinerunsplithalf=True
     
@@ -188,7 +187,6 @@ class Pipeline:
     def output2mni(self):
         if not self.pipelinerun:
             self.run()
-        self.data.bold=self.output
         self.data.transform_func2mni()
         
         
@@ -230,7 +228,6 @@ class Pipeline:
     def output2structural(self):
         if not self.pipelinerun:
             self.run()
-        self.data.bold=self.output
         self.data.transform_func2struct()
 
     def parcellate(self):
@@ -239,7 +236,7 @@ class Pipeline:
         if self.data.structuralcsf=='' or self.data.structuralgm=='' or self.data.structuralwm=='':
             self.data.parcellate_structural()
         if self.data.struct2func=='':
-            self.output2structural()
+            self.data.transform_struct2func()
         
         p=subprocess.Popen(['flirt','-in',self.data.structuralcsf,\
                             '-ref',self.output,\
