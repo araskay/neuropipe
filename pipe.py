@@ -21,6 +21,7 @@ def printhelp():
     print('--structregdof <dof>: degrees of freedom to be used for structural registration (Default = 12).')
     print('--boldregcost <cost function>: cost fuction to be used for bold registration (Default = \'corratio\').')
     print('--structregcost <cost function>: cost fuction to be used for structural registration (Default = \'corratio\').')
+    print('--outputsubjects <subj file>: specify a subject file, which is populated based on the results of the pipeline run on all subjects. Only applicable with --pipeline.')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 import workflow
@@ -44,13 +45,14 @@ meants=False
 seedconn=False
 tomni=False
 runpipename=''
+outputsubjectsfile=''
 
 envvars=workflow.EnvVars()
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost='])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=','outputsubjects='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -113,6 +115,8 @@ for (opt,arg) in opts:
         envvars.boldregcost=arg
     elif opt in ('--structregcost'):
         envvars.structregcost=arg
+    elif op in ('--outputsubjects'):
+        outputsubjectsfile=arg
 
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
@@ -131,7 +135,7 @@ if len(runpipesteps)>0:
                 pipe=Pipeline(runpipename,runpipesteps)
                 pipe.setibase(run.data.bold)
                 pipe.setobase(run.data.opath)
-                pipe.setdata(run.data) # when running pipeline do not deepcopy so that results, e.g., motpar, can be recorded if needed
+                pipe.setdata(run.data) # when running pipeline do not deepcopy so that results can be recorded if needed
                 run.addpipeline(pipe)
         runwf.addsubject(subj)
     if parcellate:
@@ -225,6 +229,8 @@ if showpipes:
 # now process    
 if len(runpipesteps)>0:
     runwf.run()
+    if len(outputsubjectsfile)>0:
+        workflow.savesubjects(outputsubjectsfile,runwf.subjects)
 if len(optimalpipesteps)>0:
     seqname=optimalwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
     optimalwf.computebetweensubjectreproducibility(seqname)

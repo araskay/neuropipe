@@ -59,7 +59,7 @@ for subj in subjects:
             pipe.run()
             # now find registration parameters
             data.bold=pipe.output
-            data.transform_func2mni()
+            data.transform_mni2func()
                 
                 
             '''                

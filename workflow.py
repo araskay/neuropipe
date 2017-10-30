@@ -142,35 +142,49 @@ class Data:
         if self.envvars.mni152=='':
             sys.exit('In struct2mni: MNI152 environment variable not set. Exiting!')
         
+        if self.struct2mni=='':
+            p=subprocess.Popen(['flirt','-in',self.structural,\
+                                '-ref',self.envvars.mni152,\
+                                '-dof',self.envvars.structregdof,\
+                                '-cost',self.envvars.structregcost,\
+                                '-out',fileutils.removext(self.structural)+'_struct2mni',\
+                                '-omat',fileutils.removext(self.structural)+'_struct2mni.mat'])
+            p.communicate()
+            self.struct2mni=fileutils.removext(self.structural)+'_struct2mni.mat'
+        else:
+            p=subprocess.Popen(['flirt','-in',self.structural,\
+                                '-ref',self.envvars.mni152,\
+                                '-applyxfm','-init',self.struct2mni,\
+                                '-out',fileutils.removext(self.structural)+'_struct2mni'])
+            p.communicate()
         
-        p=subprocess.Popen(['flirt','-in',self.structural,\
-                            '-ref',self.envvars.mni152,\
-                            '-dof',self.envvars.structregdof,\
-                            '-cost',self.envvars.structregcost,\
-                            '-out',fileutils.removext(self.structural)+'_struct2mni',\
-                            '-omat',fileutils.removext(self.structural)+'_struct2mni.mat'])
-        p.communicate()
-        self.struct2mni=fileutils.removext(self.structural)+'_struct2mni.mat'
-        # while here, compute the inverse transform as well
+    def transfrom_mni2struct(self):
+        if self.struct2mni=='':
+            self.transform_struct2mni()
         p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.structural)+'_mni2struct.mat',\
                             self.struct2mni])
         p.communicate()
         self.mni2struct=fileutils.removext(self.structural)+'_mni2struct.mat' 
         
     def transform_func2mni(self):
-        self.transform_func2struct()
-        self.transform_struct2mni()
+        if self.func2mni=='':
+            self.transform_func2struct()
+            self.transform_struct2mni()
 
-        p=subprocess.Popen(['convert_xfm','-omat',fileutils.removext(self.bold)+'_func2mni.mat',\
-                            '-concat',self.struct2mni,self.func2struct])
-        p.communicate()
-        self.func2mni=fileutils.removext(self.bold)+'_func2mni.mat'
+            p=subprocess.Popen(['convert_xfm','-omat',fileutils.removext(self.bold)+'_func2mni.mat',\
+                                '-concat',self.struct2mni,self.func2struct])
+            p.communicate()
+            self.func2mni=fileutils.removext(self.bold)+'_func2mni.mat'
         p=subprocess.Popen(['flirt','-in',self.bold,\
                             '-ref',self.envvars.mni152,\
                             '-applyxfm','-init',self.func2mni,\
                             '-out',fileutils.removext(self.bold)+'_func2mni'])
         p.communicate()     
-        # while here, compute the inverse transform as well
+
+    def transform_mni2func(self)
+        if self.func2mni=='':
+            self.transform_func2mni()
+
         p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.bold)+'_mni2func.mat',\
                             fileutils.removext(self.bold)+'_func2mni.mat'])
         p.communicate()        
