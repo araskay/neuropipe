@@ -16,7 +16,7 @@ def printhelp():
     print('--parcellate: parcellate the output of the run/optimal/fixed pipeline(s).')
     print('--meants: compute mean time series over CSF, GM, and WM for the pipeline output. This automatically parcellates the output. If used with --seedconn, mean time series over the network is also computed.')
     print('--seedconn: compute seed-connectivity network on the pipeline output. Need to provide a seed file in subjects file.')
-    print('--tomni: transform pipeline output to standard MNI space.')
+    print('--tomni: transform pipeline output and seed connectivity (if used --seedconn) to standard MNI space.')
     print('--boldregdof <dof>: degrees of freedom to be used for bold registration (Default = 12).')
     print('--structregdof <dof>: degrees of freedom to be used for structural registration (Default = 12).')
     print('--boldregcost <cost function>: cost fuction to be used for bold registration (Default = \'corratio\').')
@@ -115,7 +115,7 @@ for (opt,arg) in opts:
         envvars.boldregcost=arg
     elif opt in ('--structregcost'):
         envvars.structregcost=arg
-    elif op in ('--outputsubjects'):
+    elif opt in ('--outputsubjects'):
         outputsubjectsfile=arg
 
 if subjectsfiles==[]:

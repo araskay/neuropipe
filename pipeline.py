@@ -143,19 +143,13 @@ class Pipeline:
         if (not self.pipelinerunsplithalf):
             self.runsplithalf()
         # compute seed connectivity maps for each split half
-        (sh1r,sh1z,sh1rthresh,sh1zthresh,sh1padj)=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[0]), \
-                                                                        fileutils.addniigzext(self.data.connseed), \
-                                                                        self.splithalfoutputs[0], \
-                                                                        p_thresh)
-        (sh2r,sh2z,sh2rthresh,sh2zthresh,sh2padj)=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[1]), \
-                                                                        fileutils.addniigzext(self.data.connseed), \
-                                                                        self.splithalfoutputs[1], \
-                                                                        p_thresh)
+        (sh1r,sh1z,sh1rthresh,sh1zthresh,sh1padj,sh1cov,sh1var)=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[0]), fileutils.addniigzext(self.data.connseed), self.splithalfoutputs[0], p_thresh)
+        (sh2r,sh2z,sh2rthresh,sh2zthresh,sh2padj,sh2cov,sh2var)=seedcorr.calcseedcorr(fileutils.addniigzext(self.splithalfoutputs[1]), fileutils.addniigzext(self.data.connseed), self.splithalfoutputs[1], p_thresh)
         
         # split-half reproducibility
-        self.splithalfseedconnreproducibility=spmsim.pearsoncorr(sh1r, sh2r)
+        self.splithalfseedconnreproducibility=spmsim.pearsoncorr(sh1z, sh2z)
         # split-half overlap
-        self.splithalfseedconnoverlap=spmsim.jaccardind(sh1rthresh, sh2rthresh)
+        self.splithalfseedconnoverlap=spmsim.jaccardind(sh1zthresh, sh2zthresh)
         
     def calcseedconn(self,p_thresh):
         if not self.pipelinerun:
@@ -194,7 +188,7 @@ class Pipeline:
         if self.seedconnr=='' or self.seedconnz=='':
             sys.exit('Error in seedconn2mni: Seed connectivity not computed. Need to call calcseedconn first')
         # first get transformation parameters on the output of the pipeline
-        self.output2mni()
+        self.data.transform_func2mni()
 
         # then use the parameters to transform the SPMs
         p=subprocess.Popen(['flirt','-in',self.seedconnz,\

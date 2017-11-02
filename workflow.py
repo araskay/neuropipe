@@ -130,12 +130,13 @@ class Data:
   
                 
     def transform_struct2func(self):
-        if self.func2struct=='':
-            self.transform_func2struct()
-        p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.bold)+'_struct2func.mat',\
-                            self.func2struct])
-        p.communicate()
-        self.struct2func=fileutils.removext(self.bold)+'_struct2func.mat'         
+        if self.struct2func=='':
+            if self.func2struct=='':
+                self.transform_func2struct()
+            p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.bold)+'_struct2func.mat',\
+                                self.func2struct])
+            p.communicate()
+            self.struct2func=fileutils.removext(self.bold)+'_struct2func.mat'         
             
     
     def transform_struct2mni(self):
@@ -159,12 +160,13 @@ class Data:
             p.communicate()
         
     def transfrom_mni2struct(self):
-        if self.struct2mni=='':
-            self.transform_struct2mni()
-        p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.structural)+'_mni2struct.mat',\
-                            self.struct2mni])
-        p.communicate()
-        self.mni2struct=fileutils.removext(self.structural)+'_mni2struct.mat' 
+        if self.mni2struct=='':
+            if self.struct2mni=='':
+                self.transform_struct2mni()
+            p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.structural)+'_mni2struct.mat',\
+                                self.struct2mni])
+            p.communicate()
+            self.mni2struct=fileutils.removext(self.structural)+'_mni2struct.mat' 
         
     def transform_func2mni(self):
         if self.func2mni=='':
@@ -181,14 +183,15 @@ class Data:
                             '-out',fileutils.removext(self.bold)+'_func2mni'])
         p.communicate()     
 
-    def transform_mni2func(self)
-        if self.func2mni=='':
-            self.transform_func2mni()
+    def transform_mni2func(self):
+        if self.mni2func=='':
+            if self.func2mni=='':
+                self.transform_func2mni()
 
-        p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.bold)+'_mni2func.mat',\
-                            fileutils.removext(self.bold)+'_func2mni.mat'])
-        p.communicate()        
-        self.mni2func=fileutils.removext(self.bold)+'_mni2func.mat'
+            p=subprocess.Popen(['convert_xfm','-inverse','-omat',fileutils.removext(self.bold)+'_mni2func.mat',\
+                                fileutils.removext(self.bold)+'_func2mni.mat'])
+            p.communicate()        
+            self.mni2func=fileutils.removext(self.bold)+'_mni2func.mat'
 
 class BetweenSubjectMetrics:
     def __init__(self):
@@ -234,20 +237,22 @@ class Run:
             sys.exit('Error: No pipelines set for the run. Set pipelines before calling process()')
         for pipe in self.pipelines:
             pipe.meants()
-
+            
     def seedconn(self):
         if (self.pipelines == []):
             sys.exit('Error: No pipelines set for the run. Set pipelines before calling process()')
         for pipe in self.pipelines:
             pipe.calcseedconn(pthresh)
-            pipe.seedconn2mni()
+            
     
     def tomni(self):
         if (self.pipelines == []):
             sys.exit('Error: No pipelines set for the run. Set pipelines before calling process()')
         for pipe in self.pipelines:
             pipe.output2mni()
-                    
+            if pipe.seedconncomputed:
+                pipe.seedconn2mni()
+                        
     def findoptimalpipeline(self):
         if (self.pipelines == []):
             sys.exit('Error: No pipelines set for the run. Set pipelines before calling findoptimalpipeline()')
@@ -319,7 +324,7 @@ class Workflow:
                     if self.meants:
                         run.meants()
                     if self.tomni:
-                        run.tomni()
+                        run.tomni() # this should happen after run.seedconn()
                     
         
     def findoptimalpipelines(self):
@@ -598,6 +603,9 @@ def getsubjects(subjectfile):
     line=f.readline()
     l=shlex.split(line)
     while len(l)>0:
+        subjectID=''
+        sessionID=''
+        sequence=''       
         data=Data()
         try:
             (opts,args) = getopt.getopt(l,'',['subjectID=',\
@@ -629,9 +637,11 @@ def getsubjects(subjectfile):
             sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file (e.g., subjects.txt). Also please note that identifiers require double dash (--)')
         for (opt,arg) in opts:
             if opt in ('--subjectID'):
-                data.subjectID=arg
+                subjectID=arg
             elif opt in ('--sessionID'):
-                data.sessionID=arg
+                sessionID=arg
+            elif opt in ('--sequence'):
+                sequence=arg                
             elif opt in ('--bold'):
                 data.bold=arg
             elif opt in ('--structural'):
@@ -642,8 +652,6 @@ def getsubjects(subjectfile):
                 data.resp=arg
             elif opt in ('--opath'):
                 data.opath=arg
-            elif opt in ('--sequence'):
-                data.sequence=arg
             elif opt in ('--connseed'):
                 data.connseed=arg
             elif opt in ('--motpar'):

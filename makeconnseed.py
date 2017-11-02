@@ -48,52 +48,31 @@ namebase=fileutils.removext(namebase)
 for subj in subjects:
     for sess in subj.sessions:
         for run in sess.runs:
-            data=copy.deepcopy(run.data)
-            data.envvars=envvars
-            # first do motion correction (to make tmean, based on which registration parameters are found, more accurate)
-            mcflirt=preprocessingstep.PreprocessingStep('mcflirt',[])
-            pipe=pipeline.Pipeline('',[mcflirt])
-            pipe.setibase(data.bold)
-            pipe.setobase(data.opath)
-            pipe.setdata(data)
-            pipe.run()
-            # now find registration parameters
-            data.bold=pipe.output
-            data.transform_mni2func()
+            if run.data.mni2func=='':
+                data=copy.deepcopy(run.data)
+                data.envvars=envvars
+                # first do motion correction (to make tmean, based on which registration parameters are found, more accurate)
+                mcflirt=preprocessingstep.PreprocessingStep('mcflirt',[])
+                pipe=pipeline.Pipeline('',[mcflirt])
+                pipe.setibase(data.bold)
+                pipe.setobase(data.opath)
+                pipe.setdata(data)
+                pipe.run()
+                # now find registration parameters
+                data.bold=pipe.output
+                data.transform_mni2func()
                 
+                run.data.func2struct=data.func2struct
+                run.data.struct2func=data.struct2func
+                run.data.struct2mni=data.struct2mni
+                run.data.mni2struct=data.mni2struct
+                run.data.func2mni=data.func2mni
+                run.data.mni2func=data.mni2func
                 
-            '''                
-            # first create mean time series
-            p=subprocess.Popen(['fslmaths',run.data.bold,'-Tmean',fileutils.removext(run.data.bold)+'__meants'])
-            p.communicate()
-            #register mean time series volume to structural
-            #run.data.parcellate_structural()
 
-            p=subprocess.Popen(['flirt','-in',fileutils.removext(run.data.bold)+'__meants','-ref',run.data.structural,\
-                                '-dof',boldregdof,\
-                                '-cost','bbr',\
-                                '-bbrtype','global_abs',\
-                                '-out',fileutils.removext(run.data.bold)+'__meants_func2struct',\
-                                '-omat',fileutils.removext(run.data.bold)+'__func2struct.mat'])
-            p.communicate()
-            # register structural to standard template
-            p=subprocess.Popen(['flirt', '-ref', atlasfile, '-in', run.data.structural,\
-                                '-dof',structregdof,\
-                                '-out', fileutils.removext(run.data.structural)+'__struct2mni',\
-                                '-omat', fileutils.removext(run.data.structural)+'__struct2mni.mat'])
-            p.communicate()
-            #
-            p=subprocess.Popen(['convert_xfm', '-omat', fileutils.removext(run.data.bold)+'__func2mni.mat',\
-                                '-concat', fileutils.removext(run.data.structural)+'__struct2mni.mat',\
-                                fileutils.removext(run.data.bold)+'__func2struct.mat'])
-            p.communicate()
-            p=subprocess.Popen(['convert_xfm', '-inverse', '-omat', fileutils.removext(run.data.bold)+'__mni2func.mat',\
-                                fileutils.removext(run.data.bold)+'__func2mni.mat'])
-            p.communicate()
-            '''
             # now use the transformation matrix to transfrom the atlas to subject-specific functional space
             p=subprocess.Popen(['flirt', '-in', seedatlasfile,\
-                                '-applyxfm', '-init', data.mni2func,\
+                                '-applyxfm', '-init', run.data.mni2func,\
                                 '-out', fileutils.removext(run.data.bold)+'_'+namebase,\
                                 '-ref', run.data.bold])
             p.communicate()
