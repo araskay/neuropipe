@@ -17,10 +17,11 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     
     img_nib=nibabel.load(ifile)
     img=img_nib.get_data()
-        
+    affine=img_nib.affine # used to save the result in a NIFTI file
+    
     seed_nib=nibabel.load(seedfile)
     seed=seed_nib.get_data()
-    affine=seed_nib.affine # used to save the result in a NIFTI file
+    
     
     # check to make sure seed image has the right dimensions
     if (not img.shape[0:3] == seed.shape[0:3]):

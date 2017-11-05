@@ -1,12 +1,11 @@
-# this script gets two text files, containing path/name of SPM files to be compared in the two sets (e.g., optimized pipe and fixed pipe) and computes group connectivity for each set, and group variations in connectivity between the two sets
+# contains functions to do stats on SPMs
 
 import nibabel,sys
 import numpy as np
 import scipy.stats
 import statsmodels.stats.multitest as mtest
-import getopt
 
-p_thresh=0.05
+p_thresh=0.01
 
 def prepostmatchedpairst(prespmfiles,postspmfiles,ofile):
     
@@ -75,57 +74,38 @@ def groupnetwork(spmfiles,ofile):
     t=np.reshape(t,(img.shape[0],img.shape[1],img.shape[2]))
     onifti = nibabel.nifti1.Nifti1Image(t,affine)
     onifti.to_filename(ofile)
-
-def printhelp():
-    print('Usage: spmstats --set1 <text file> --set2 <text file> --obase <output base>')
-
-set1=''
-set2=''
-obase=''
     
-# parse command-line arguments
-try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'h',\
-                                ['help','set1=', 'set2=','obase='])
-except getopt.GetoptError:
-    printhelp()
-    sys.exit()
-for (opt,arg) in opts:
-    if opt in ('-h', '--help'):
-        printhelp()
-        sys.exit()
-    elif opt in ('--set1'):
-        set1=arg
-    elif opt in ('--set2'):
-        set2=arg
-    elif opt in ('--obase'):
-        obase=arg
+        
+# dictionary of corresponding sessions for healthy volunteer data set
+# sessions.keys() gives you all subject IDs
+# multiple sessions per subject are added to the lists on the right
+sessions=dict()
+sessions['7130']=['20140312']
+sessions['7934']=['20140207']
+sessions['9910']=['20140204']
+sessions['10577']=['20140325']
+sessions['10649']=['20140316']
+sessions['11164']=['20140316']
+sessions['11308']=['20140304']
+sessions['11494']=['20140311']
+sessions['11515']=['20140305']
+sessions['11570']=['20140310']
+sessions['11672']=['20140318']
 
-if set1=='' or set2=='' or obase=='':
-    printhelp()
-    sys.exit() 
+basepath='/home/hpc3820/data/healthyvolunteer/processed/retroicorpipe'
+
+ofile=basepath+'/z_thresh_prepostmatchedpairst.nii.gz'
 
 prefiles=[]
 postfiles=[]
-# the code was originally written for pre- and post- retroicor, and that is where the variable names, prefiles, and postfiles, come from
+spmfiles=[]
 
-f1=open(set1)
-spm1=f1.readline()
-spm1=spm1.rstrip()
+for subj in sessions.keys():
+    for sess in sessions[subj]:
+        prefiles.append(basepath+'/'+subj+'/'+sess+'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_z_thresh_mni152.nii.gz')
+        postfiles.append(basepath+'/'+subj+'/'+sess+'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_z_thresh_mni152.nii.gz')
+        
+prepostmatchedpairst(prefiles,postfiles,ofile)
 
-f2=open(set2)
-spm2=f2.readline()    
-spm2=spm2.rstrip()
-
-while len(spm1)>0 and len(spm2)>0:
-    prefiles.append(spm1)
-    postfiles.append(spm2)
-    spm1=f1.readline()
-    spm1=spm1.rstrip()
-    spm2=f2.readline()
-    spm2=spm2.rstrip()
-
-prepostmatchedpairst(prefiles,postfiles,obase+'_groupdiff.nii.gz')
-
-groupnetwork(prefiles,obase+'_group1.nii.gz')
-groupnetwork(postfiles,obase+'_group2.nii.gz')
+groupnetwork(prefiles,basepath+'/z_thresh_pregroupnetwork.nii.gz')
+groupnetwork(postfiles,basepath+'/z_thresh_postgroupnetwork.nii.gz')
