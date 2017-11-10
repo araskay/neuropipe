@@ -1,5 +1,8 @@
 import workflow, getopt,sys,os,fileutils,subprocess,pipeline,copy,preprocessingstep
 
+def printhelp():
+    print('usage: makeconnseed.py --input <input subject file> --output <output subject file> --seed <seed file> --template <template file> [--binary[=FALSE] --boldregdof <dof> --structregdof <dof> --boldregcost <cost func> --structregcost <cost func>]\n<seed file> must be in the same space as the <template file> (e.g., both in MNI). Unless --binary used, by default the code assumes a probabilistic seed file with percentage values (i.e., 0< and <100).')
+
 ifile=''
 ofile=''
 seedatlasfile=''
@@ -12,11 +15,11 @@ try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:s:t:',\
                                 ['help','input=', 'output=', 'seed=' , 'template=', 'binary','boldregdof=','structregdof=','boldregcost=','structregcost='])
 except getopt.GetoptError:
-    print('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file> [--binary --boldregdof <dof> --structregdof <dof> --boldregcost <cost func> --structregcost <cost func>]')
+    printhelp()
     sys.exit()
 for (opt,arg) in opts:
     if opt in ('-h', '--help'):
-        print('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file> [--binary --boldregdof <dof> --structregdof <dof> --boldregcost <cost func> --structregcost <cost func>]')
+        printhelp()
         sys.exit()
     elif opt in ('-i','--input'):
         ifile=arg
@@ -38,7 +41,8 @@ for (opt,arg) in opts:
         envvars.structregcost=arg
 
 if ifile=='' or ofile=='' or seedatlasfile=='' or envvars.mni152=='':
-    sys.exit('usage: makeconnseed.py -i <input subject file> -o <output subject file> -s <seed file> -t <template file> [--binary --boldregdof <dof> --structregdof <dof> --boldregcost <cost func> --structregcost <cost func>]')
+    printhelp()
+    sys.exit()
         
 subjects=workflow.getsubjects(ifile)
 

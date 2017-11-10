@@ -1,3 +1,6 @@
+# THIS FILE IS OBSOLETE. USE makesubjects_healthyelderly.py and/or makesubjects_healthyvolunteer.py.
+# this code makes subjects files for the pipe tool. Need to have physio and nii files available. Use copyphysio.py and makeniis.py to copy/create physio/nii files.
+
 import workflow
 from pipeline import Pipeline
 from preprocessingstep import PreprocessingStep

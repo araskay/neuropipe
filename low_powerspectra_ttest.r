@@ -1,3 +1,5 @@
+# This code reads low-frequency spectral powers pre- and post- retroicor for different subjects from the csv file and (1) performs a matched pairs t-test under the null hypothesis that there is no difference in power pre- and post- retroicor, and (2) plots the distribution of powers pre- and post- retroicor for all subjects in boxplots.
+
 csvfile <- '/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/lowPowerSpectra.csv'
 
 data <- read.csv(csvfile)

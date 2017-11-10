@@ -1,3 +1,5 @@
+# use this code to copy physio files from the common physio directory on chegs to subject/session folders
+
 import fileutils
 import sys, getopt, os
 import subprocess, shutil

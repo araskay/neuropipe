@@ -1,4 +1,4 @@
-# this script gets two text files, containing path/name of SPM files to be compared in the two sets (e.g., optimized pipe and fixed pipe) and computes group connectivity for each set, and group variations in connectivity between the two sets
+# this script gets two text files, containing path/name of SPM files to be compared in the two sets (e.g., optimized pipe and fixed pipe) and computes group connectivity for each set, and group variations in connectivity between the two sets. For pre- and post-RETROICOR version use spmstats_prepostRET.py. 
 
 import nibabel,sys
 import numpy as np

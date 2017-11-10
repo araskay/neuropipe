@@ -1,3 +1,5 @@
+# This code reads dicoms from the main dicom folder on chegs (chen_lab/data/dcm), unzips and copies them to <subject>/<session>/dcm folder, and creates nii files in <subject>/<session>/dcm folder. 
+
 import fileutils
 import sys, getopt, os
 import subprocess

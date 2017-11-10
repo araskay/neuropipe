@@ -1,4 +1,4 @@
-# contains functions to do stats on SPMs
+# This code computes group t-values and mathed-pairs t-values (thresholded) for Pearson R pre- and post- retroicor.
 
 import nibabel,sys
 import numpy as np

@@ -1,3 +1,5 @@
+# includes functions for working with files/directories used in the pipeline tool.
+
 import os, shutil
 import subprocess
 

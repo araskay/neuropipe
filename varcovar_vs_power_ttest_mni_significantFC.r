@@ -1,3 +1,5 @@
+# this code read regression coefficients of variations in var/cov against variations in cardiac and respiratory power pre- and post- RETROICOR and plots them (in terms of box plots) and performs t-tests on them. Regression coefficients (csv file) are generated using connectivity_vs_physspectramni_significantFC.m
+
 csvfile <- '/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/varcovar_vs_power_mni_significantFC.csv'
 
 data <- read.csv(csvfile)

@@ -1,4 +1,4 @@
-# contains functions to do stats on SPMs
+# This script computes group t-values and matched-pairs t-values for cardiac and respiratory power pre- and post- RETROICOR. Cardiac and repiratory powers are computed using connectivity_vs_physspectra.m and saved in nifti files in subject-specific functional space. This code transforms them to MNI space first, then computes group t-values.
 
 import nibabel,sys
 import numpy as np

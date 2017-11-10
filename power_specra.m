@@ -1,6 +1,6 @@
 % use this code to manually identify cardiac pulsation and respiration
 % frequency bands for each subject. Change subject, pulsfile, and respfile
-% below. Save the results to physio.csv.
+% below. Run. Identify frequency bands on the plots. Save the results to physio.csv.
 
 basephyspath='/home/mkayvanrad/data/healthyvolunteer/physio';
 subject='11672/20140318';

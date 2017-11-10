@@ -1,3 +1,5 @@
+# This code reads cardiac, respiratory, and low-frequency spectral powers from the corresponding csv files and plots them all together. For matched pairs t-tests and/or individual plots see card_powerspectra_ttest.r, resp_powerspectra_ttest.r, and low_powerspectra_ttest.r.
+
 library (ggplot2)
 
 csvfile_card <- '/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/cardPowerSpectra.csv'

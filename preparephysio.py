@@ -1,4 +1,9 @@
+# this code gets a subject file and runs prepphysio and respbiopac2resp1d.m on the subjects.
+
 import workflow, getopt,sys,fileutils, subprocess,os
+
+def printhelp():
+    print('usage: prepaerphysio.py --input <input subject file> --output <output subject file>\n<input subject file needs to contain Siemens and Biopac files.')
 
 ifile=''
 ofile=''
@@ -8,11 +13,11 @@ try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',\
                                 ['help','input=', 'output='])
 except getopt.GetoptError:
-    print('usage: makeconnseed.py -i <input subject file> -o <output subject file>')
+    printhelp()
     sys.exit()
 for (opt,arg) in opts:
     if opt in ('-h', '--help'):
-        print('usage: makeconnseed.py -i <input subject file> -o <output subject file>')
+        printhelp()
         sys.exit()
     elif opt in ('-i','--input'):
         ifile=arg
@@ -20,7 +25,8 @@ for (opt,arg) in opts:
         ofile=arg
 
 if ifile=='' or ofile=='':
-    sys.exit('Please provide both input subject file and output subject file')
+    printhelp()
+    sys.exit()
         
 subjects=workflow.getsubjects(ifile)
 

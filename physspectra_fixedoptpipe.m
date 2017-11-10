@@ -1,8 +1,9 @@
-% this code reads mean time series over CSF, WM, GM, and the network (motor
+% this code reads mean time series over CSF, WM, GM, and the network (e.g., motor
 % network in the case of current fast EPI data set) and plots their power
-% spectra pre and post retroicor. It also calculates and compares relative
-% power in the cardiac pulsation and respiration bands pre and post
-% retroicor and saves the results into csv files. The code uses the
+% spectra for the fixed and optimal pipelines.
+% It also calculates and compares relative
+% power in the cardiac pulsation and respiration bands for the fiexed and
+% optimal pipeline and saves the results into csv files. The code uses the
 % frequency bands identified manually on the cardiac pulsation and
 % respiration signals using power_spectra.m.
 

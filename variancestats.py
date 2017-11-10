@@ -1,4 +1,4 @@
-# THIS CODE IS OBSOLETE. This code computes variance on MNI-transformed images. For some reason, this results in variations outside the field of view. Now the variance is computed in the subject-specific functional space as part of the calcseedconn and seedconn2mni routines of the pipeline.
+# THIS CODE IS OBSOLETE. This code computes variance on MNI-transformed images. For some reason, this results in variations outside the field of view. In the new implementation, the variance is computed in the subject-specific functional space as part of the calcseedconn and seedconn2mni routines of the pipeline.
 
 # this code computes variance for each subject pre and post retroicor, and then compares variance pre and post at group level
 
