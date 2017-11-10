@@ -1,14 +1,14 @@
-csvfile <- '/home/mkayvanrad/data/healthyvolunteer/respPowerSpectra.csv'
+csvfile <- '/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/respPowerSpectra.csv'
 
 data <- read.csv(csvfile)
 
-print(t.test(data$NetrespRelativePowerPre,data$NetrespRelativePowerPost,paired=TRUE))
+print(t.test(data$NetrespRelativePowerPost,data$NetrespRelativePowerPre,paired=TRUE))
 
-print(t.test(data$GMrespRelativePowerPre,data$GMrespRelativePowerPost,paired=TRUE))
+# print(t.test(data$GMrespRelativePowerPost,data$GMrespRelativePowerPre,paired=TRUE))
 
-print(t.test(data$WMrespRelativePowerPre,data$WMrespRelativePowerPost,paired=TRUE))
+# print(t.test(data$WMrespRelativePowerPost,data$WMrespRelativePowerPre,paired=TRUE))
 
-# t.test(data$CSFrespRelativePowerPre,data$CSFrespRelativePowerPost,paired=TRUE)
+# print(t.test(data$CSFrespRelativePowerPost,data$CSFrespRelativePowerPre,paired=TRUE))
 
 # plot power spectra over the network
 library (ggplot2)
@@ -19,18 +19,15 @@ value <- c(data$NetrespRelativePowerPre,data$NetrespRelativePowerPost)
 #Graph
 Subject <- c('1','2','3','4','5','6','7','8','9','10','11','1','2','3','4','5','6','7','8','9','10','11')
 
-
-
-#clr <- c(1:length(data$NetrespRelativePowerPost),1:length(data$NetrespRelativePowerPost))
 p <- ggplot() +
 geom_boxplot(mapping=aes(x=RETROICOR, y=value), color=c('red','blue'))+
 geom_point(mapping=aes(x=RETROICOR, y=value), size=9, shape=21)+
 geom_text(mapping=aes(x=RETROICOR, y=value, label=Subject))+
-ylab('Relative Power')
+ylab('Normalized Power')
 
 print(data$NetrespRelativePowerPost-data$NetrespRelativePowerPre)
 
-png(filename='/home/mkayvanrad/data/healthyvolunteer/respPowerSpectra.png')
+png(filename='/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/respPowerSpectra.png')
 print(p)
 dev.off()
 

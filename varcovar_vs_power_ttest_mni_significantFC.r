@@ -1,4 +1,4 @@
-csvfile <- '/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/varcovar_vs_power.csv'
+csvfile <- '/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/varcovar_vs_power_mni_significantFC.csv'
 
 data <- read.csv(csvfile)
 
@@ -43,7 +43,7 @@ ylab('Regression Coefficients')
 
 print(p)
 
-png(filename='/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/varcovar_vs_power.png')
+png(filename='/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/varcovar_vs_power_MNI_significantFC.png')
 print(p)
 dev.off()
 
@@ -100,7 +100,7 @@ require(gridExtra)
 grid.arrange(p1,p2,p3,p4,ncol=4)
 
 
-png(filename='/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/varcovar_vs_power_all.png')
+png(filename='/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/varcovar_vs_power_MNI_significantFC_all.png')
 grid.arrange(p1,p2,p3,p4,ncol=4)
 dev.off()
 

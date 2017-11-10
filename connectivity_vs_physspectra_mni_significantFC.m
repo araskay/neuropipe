@@ -5,6 +5,8 @@
 % thresholded at FDR=0.05) are considered.
 % The code uses the frequency bands identified manually on the cardiac
 % pulsation and respiration signals using power_spectra.m.
+% this version, moreover, works with images in the MNI space, and only
+% considers points with significant group variation in FC.
 
 
 basepath='/home/mkayvanrad/data/healthyvolunteer/processed/retroicorpipe/';
@@ -12,8 +14,10 @@ ndiscard=10;
 TR=0.380; % seconds (for current fast EPI data)
 obase='/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/';
 
+groupSPMfile='/home/mkayvanrad/data/healthyvolunteer/processed/retroicorpipe/z_thresh_prepostmatchedpairst.nii.gz';
+
 % output files
-fout=fopen(strcat(obase,'varcovar_vs_power.csv'),'w');
+fout=fopen(strcat(obase,'varcovar_vs_power_mni_significantFC.csv'),'w');
 
 fprintf(fout,'Subject, var_b_card, var_b_resp, var_r2, var_p, cov_b_card, cov_b_resp, cov_r2, cov_p\n');
 
@@ -30,25 +34,18 @@ for i=1:n
     
     subject=cell2mat(phys{1}(i));
     
-    preBOLDfile=strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier.nii.gz');
-    postBOLDfile=strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor.nii.gz');
-    preSPMfile=strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_z_thresh.nii.gz');
-    postSPMfile=strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_z_thresh.nii.gz');
-    precovfile=strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_cov.nii.gz');
-    postcovfile=strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_cov.nii.gz');
-    prevarfile=strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_var.nii.gz');
-    postvarfile=strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_var.nii.gz');
+    preSPMfile=strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_z_thresh_mni152.nii.gz');
+    postSPMfile=strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_z_thresh_mni152.nii.gz');
+    precovfile=strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_cov_mni152.nii.gz');
+    postcovfile=strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_cov_mni152.nii.gz');
+    prevarfile=strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_var_mni152.nii.gz');
+    postvarfile=strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_var_mni152.nii.gz');
+    prePrespfile=strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_Presp_mni152.nii.gz');
+    postPrespfile=strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_Presp_mni152.nii.gz');
+    prePcardfile=strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_Pcard_mni152.nii.gz');
+    postPcardfile=strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_Pcard_mni152.nii.gz');
     
-    preBOLD_mri = MRIread(preBOLDfile);
-    preBOLD=preBOLD_mri.vol;
-    X=preBOLD_mri.width;
-    Y=preBOLD_mri.height;
-    Z=preBOLD_mri.depth;
-    T=preBOLD_mri.nframes;
-    
-    postBOLD_mri = MRIread(postBOLDfile);
-    postBOLD=postBOLD_mri.vol;
-    
+   
     preSPM_mri = MRIread(preSPMfile);
     preSPM=preSPM_mri.vol;    
     
@@ -66,32 +63,47 @@ for i=1:n
     
     postvar_mri = MRIread(postvarfile);
     postvar=postvar_mri.vol;
+
+    prePresp_mri = MRIread(prePrespfile);
+    prePresp=prePresp_mri.vol;    
     
-    %% compute frequency power spectra
-    % discarding frames at the beginning
-    preBOLD=preBOLD(:,:,:,ndiscard+1:end);
-    postBOLD=postBOLD(:,:,:,ndiscard+1:end);
-    % now compute voxel-wise fft
-    F_pre=fft(preBOLD,[],4);
-    F_post=fft(postBOLD,[],4);
-    % now compute power at resp and card frequency bands
-    fresp_min=phys{6}(i);
-    fresp_max=phys{7}(i);
-    fcard_min=phys{3}(i);
-    fcard_max=phys{4}(i);
+    postPresp_mri = MRIread(postPrespfile);
+    postPresp=postPresp_mri.vol;    
 
-    l=size(F_pre,4);
-    fs=1/TR;
+    prePcard_mri = MRIread(prePcardfile);
+    prePcard=prePcard_mri.vol;    
+    
+    postPcard_mri = MRIread(postPcardfile);
+    postPcard=postPcard_mri.vol;
+    
+    groupSPM_mri = MRIread(groupSPMfile);
+    groupSPM=groupSPM_mri.vol;
+    
+%     %% compute frequency power spectra
+%     % discarding frames at the beginning
+%     preBOLD=preBOLD(:,:,:,ndiscard+1:end);
+%     postBOLD=postBOLD(:,:,:,ndiscard+1:end);
+%     % now compute voxel-wise fft
+%     F_pre=fft(preBOLD,[],4);
+%     F_post=fft(postBOLD,[],4);
+%     % now compute power at resp and card frequency bands
+%     fresp_min=phys{6}(i);
+%     fresp_max=phys{7}(i);
+%     fcard_min=phys{3}(i);
+%     fcard_max=phys{4}(i);
+% 
+%     l=size(F_pre,4);
+%     fs=1/TR;
+% 
+%     fresp_min_ind=ceil(fresp_min/(fs/2)*l/2);
+%     fresp_max_ind=ceil(fresp_max/(fs/2)*l/2);
+%     fcard_min_ind=ceil(fcard_min/(fs/2)*l/2);
+%     fcard_max_ind=ceil(fcard_max/(fs/2)*l/2);
 
-    fresp_min_ind=ceil(fresp_min/(fs/2)*l/2);
-    fresp_max_ind=ceil(fresp_max/(fs/2)*l/2);
-    fcard_min_ind=ceil(fcard_min/(fs/2)*l/2);
-    fcard_max_ind=ceil(fcard_max/(fs/2)*l/2);
-
-    Presp_pre=sum(abs(F_pre(:,:,:,fresp_min_ind:fresp_max_ind)).^2,4)./sum(abs(F_pre).^2,4);
-    Presp_post=sum(abs(F_post(:,:,:,fresp_min_ind:fresp_max_ind)).^2,4)./sum(abs(F_post).^2,4);
-    Pcard_pre=sum(abs(F_pre(:,:,:,fcard_min_ind:fcard_max_ind)).^2,4)./sum(abs(F_pre).^2,4);
-    Pcard_post=sum(abs(F_post(:,:,:,fcard_min_ind:fcard_max_ind)).^2,4)./sum(abs(F_post).^2,4);    
+    Presp_pre=prePresp;
+    Presp_post=postPresp;
+    Pcard_pre=prePcard;
+    Pcard_post=postPcard;    
     
     %% compute deltas
     deltaPresp=Presp_post-Presp_pre;
@@ -101,27 +113,27 @@ for i=1:n
     deltaZ=postSPM-preSPM;
     
     
-    % while here save the results in nifti files
-    mriout=prevar_mri;
-    %mriout.nframes=1;
-    mriout.vol=Presp_pre;
-    err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_Presp.nii.gz'),'float');    
-
-    mriout.vol=Pcard_pre;
-    err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_Pcard.nii.gz'),'float');    
-
-    mriout.vol=Presp_post;
-    err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_Presp.nii.gz'),'float');    
-
-    mriout.vol=Pcard_post;
-    err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_Pcard.nii.gz'),'float');    
+%     % while here save the results in nifti files
+%     mriout=prevar_mri;
+%     %mriout.nframes=1;
+%     mriout.vol=Presp_pre;
+%     err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_Presp.nii.gz'),'float');    
+% 
+%     mriout.vol=Pcard_pre;
+%     err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_Pcard.nii.gz'),'float');    
+% 
+%     mriout.vol=Presp_post;
+%     err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_Presp.nii.gz'),'float');    
+% 
+%     mriout.vol=Pcard_post;
+%     err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_Pcard.nii.gz'),'float');    
     
-    % only consider voxels where z>0
-    deltaPresp=deltaPresp(preSPM>0 & postSPM>0);
-    deltaPcard=deltaPcard(preSPM>0 & postSPM>0);
-    deltaVar=deltaVar(preSPM>0 & postSPM>0);
-    deltaCov=deltaCov(preSPM>0 & postSPM>0);
-    deltaZ=deltaZ(preSPM>0 & postSPM>0);
+    % only consider voxels where there is significant chang
+    deltaPresp=deltaPresp(~isnan(groupSPM));
+    deltaPcard=deltaPcard(~isnan(groupSPM));
+    deltaVar=deltaVar(~isnan(groupSPM));
+    deltaCov=deltaCov(~isnan(groupSPM));
+    deltaZ=deltaZ(~isnan(groupSPM));
     
     c=1.5;
     outlier= (deltaPresp > (quantile(deltaPresp,0.75) + c * iqr(deltaPresp)) | deltaPresp < (quantile(deltaPresp,0.25) - c * iqr(deltaPresp))) | ...
