@@ -15,10 +15,10 @@ TR=0.380; % seconds (for current fast EPI data)
 %% compute relative poweres
 % read the following frequencies on the resp and puls frequency specra
 
-fin=fopen('/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/physio.csv');
-fcardout=fopen('/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/cardPowerSpectra.csv','w');
-frespout=fopen('/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/respPowerSpectra.csv','w');
-flowout=fopen('/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/lowPowerSpectra.csv','w');
+fin=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/physio.csv');
+fcardout=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/cardPowerSpectra.csv','w');
+frespout=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/respPowerSpectra.csv','w');
+flowout=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/lowPowerSpectra.csv','w');
 % read the header
 h=textscan(fin,'%s%s%s%s%s%s%s',1,'delimiter',',');
 
@@ -143,26 +143,25 @@ for i=1:n
 %     ylabel('P(f)')
 
     %% plot Network power spectra
-    figure(i)
+    figure(20+i)
 
-    subplot(3,1,1)
+    subplot(2,1,1)
     plot(f,2*abs(Fmeants_preRetcorNet(1:l/2+1))/l)
-    title('Pre Retroicor');
+    title('Mean BOLD time series over Network pre Retroicor');
     %xlabel('Frequency (Hz)')
-    ylabel('PSD (I^2/Hz)')
+    ylabel('P(f)')
 
-    subplot(3,1,2)
+    subplot(2,1,2)
     plot(f,2*abs(Fmeants_postRetcorNet(1:l/2+1))/l)
-    title('Post Retroicor');
-    %xlabel('Frequency (Hz)')
-    ylabel('PSD (I^2/Hz)')
+    title('Mean BOLD time series over Network post Retroicor');
+    xlabel('Frequency (Hz)')
+    ylabel('P(f)')
     
-    
-    subplot(3,1,3)
+    figure(i)
     plot(f,2*abs(Fmeants_postRetcorNet(1:l/2+1))/l-2*abs(Fmeants_preRetcorNet(1:l/2+1))/l)
-    title('Difference pre and post RETROICOR')
+    title('Difference PSD pre and post RETROICOR')
     xlabel('f(Hz)')
-    ylabel('PSD (I^2/Hz)')
+    ylabel('Power Density (A^2/Hz)')
 
     fresp_min=phys{6}(i);
     fresp_max=phys{7}(i);

@@ -10,15 +10,14 @@
 basepath='/home/mkayvanrad/data/healthyvolunteer/processed/retroicorpipe/';
 ndiscard=10;
 TR=0.380; % seconds (for current fast EPI data)
-obase='/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/';
 
 % output files
-fout=fopen(strcat(obase,'varcovar_vs_power.csv'),'w');
+fout=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/varcovar_vs_power.csv','w');
 
 fprintf(fout,'Subject, var_b_card, var_b_resp, var_r2, var_p, cov_b_card, cov_b_resp, cov_r2, cov_p\n');
 
 %% compute relative poweres
-fin=fopen('/home/mkayvanrad/Dropbox/Projects/Physiological Noise Correction/Publications/ISMRM 2017/Results/physio.csv');
+fin=fopen('/home/mkayvanrad/data/healthyvolunteer/processed/physio.csv');
 % read the header
 h=textscan(fin,'%s%s%s%s%s%s%s',1,'delimiter',',');
 % read the rest
@@ -26,7 +25,7 @@ phys=textscan(fin,'%s%s%f%f%s%f%f','delimiter',',');
 
 n=length(phys{1});
 
-for i=1:n
+for i=1:n-1
     
     subject=cell2mat(phys{1}(i));
     
@@ -100,40 +99,12 @@ for i=1:n
     deltaCov=postcov-precov;
     deltaZ=postSPM-preSPM;
     
-    
-    % while here save the results in nifti files
-    mriout=prevar_mri;
-    %mriout.nframes=1;
-    mriout.vol=Presp_pre;
-    err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_Presp.nii.gz'),'float');    
-
-    mriout.vol=Pcard_pre;
-    err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_noRet_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_Pcard.nii.gz'),'float');    
-
-    mriout.vol=Presp_post;
-    err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_Presp.nii.gz'),'float');    
-
-    mriout.vol=Pcard_post;
-    err = MRIwrite(mriout,strcat(basepath,subject,'/fepi/fepi_pipeline_slicetimer_mcflirt_brainExtractAFNI_ssmooth_3dFourier_retroicor_Pcard.nii.gz'),'float');    
-    
     % only consider voxels where z>0
     deltaPresp=deltaPresp(preSPM>0 & postSPM>0);
     deltaPcard=deltaPcard(preSPM>0 & postSPM>0);
     deltaVar=deltaVar(preSPM>0 & postSPM>0);
     deltaCov=deltaCov(preSPM>0 & postSPM>0);
     deltaZ=deltaZ(preSPM>0 & postSPM>0);
-    
-    c=1.5;
-    outlier= (deltaPresp > (quantile(deltaPresp,0.75) + c * iqr(deltaPresp)) | deltaPresp < (quantile(deltaPresp,0.25) - c * iqr(deltaPresp))) | ...
-        (deltaPcard > (quantile(deltaPcard,0.75) + c * iqr(deltaPcard)) | deltaPcard < (quantile(deltaPcard,0.25) - c * iqr(deltaPcard))) | ...
-        (deltaVar > (quantile(deltaVar,0.75) + c * iqr(deltaVar)) | deltaVar < (quantile(deltaVar,0.25) - c * iqr(deltaVar))) | ...
-        (deltaCov > (quantile(deltaCov,0.75) + c * iqr(deltaCov)) | deltaCov < (quantile(deltaCov,0.25) - c * iqr(deltaCov)));
-    
-    samp=~outlier;
-    deltaPresp=deltaPresp(samp);
-    deltaPcard=deltaPcard(samp);
-    deltaVar=deltaVar(samp);
-    deltaCov=deltaCov(samp);
     
     %% regression
     
@@ -143,25 +114,7 @@ for i=1:n
     fprintf(fout,'%s,',subject);
     fprintf(fout,'%f,%f,%f,%f,',[lm_var.Coefficients.Estimate(2),lm_var.Coefficients.Estimate(3),lm_var.Rsquared.Ordinary,lm_var.coefTest]);
     fprintf(fout,'%f,%f,%f,%f\n',[lm_cov.Coefficients.Estimate(2),lm_cov.Coefficients.Estimate(3),lm_cov.Rsquared.Ordinary,lm_cov.coefTest]);
-    
-%     figure(i+40)
-%     scatter3(deltaPcard,deltaPresp,deltaVar)
-%     
-%     
-%     figure(i+60)
-%     scatter3(deltaPcard,deltaPresp,deltaCov)
-    
-    
-%     figure(i+20)
-%     subplot(2,1,1)
-%     lm_var.plot
-%     %title('Var vs. Card & Resp Power')
-%     axis tight
-%     subplot(2,1,2)
-%     lm_cov.plot
-%     %title('Cov vs. Card & Resp Power')    
-%     axis tight
-    
+
     %% plot
     lm_var_card=fitlm(deltaPcard,deltaVar);
     figure(i)
