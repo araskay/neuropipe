@@ -4,6 +4,10 @@ import seedcorr
 import fileutils
 import os
 import nibabel
+from nipype.algorithms.confounds import (ACompCor, TCompCor)
+import shutil
+import numpy as np
+import scipy
 
 class PreprocessingStep:
     def __init__(self,name,params):
@@ -118,10 +122,7 @@ class PreprocessingStep:
                                 '-mas',fileutils.removeniftiext(self.obase)+'__brainmask',\
                                 fileutils.removeniftiext(self.obase)])
             p.communicate()
-            if self.data.brainmask == '':
-                self.data.brainmask = fileutils.removeniftiext(self.obase)+'__brainmask.nii.gz'
-            else:
-                os.remove(fileutils.removeniftiext(self.obase)+'__brainmask.nii.gz')
+            self.data.brainmask = fileutils.removeniftiext(self.obase)+'__brainmask.nii.gz'
 
         elif (self.name == 'brainExtractFSL'):
             # first extract brain mask from a temporal mean volume
@@ -137,10 +138,7 @@ class PreprocessingStep:
                                 self.obase])
             p.communicate()
             os.remove(fileutils.removeniftiext(self.obase)+'__tmean.nii.gz')
-            if self.data.brainmask == '':
-                self.data.brainmask=fileutils.removeniftiext(self.obase)+'__tmean_mask.nii.gz'
-            else:
-                os.remove(fileutils.removeniftiext(self.obase)+'__tmean_mask.nii.gz')
+            self.data.brainmask=fileutils.removeniftiext(self.obase)+'__tmean_mask.nii.gz'
             
         elif (self.name == '3dFourier'):
             p=subprocess.Popen(['3dFourier']+self.params+\
@@ -183,6 +181,91 @@ class PreprocessingStep:
             else:
                 sys.exit('Please provide slice timing offsets for slice timing correction.')                
                 
+        elif self.name=='phycaa':
+            # INCOMPLETE. ONCE COMPLETE, ADD TO removefiles
+            # get the TR from the data
+            img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
+            hdr=img_nib.header
+            tr=str(hdr.get_zooms()[3])
+            # change NIFTI_GZ to NIFTI (aparently phycaa cannot handle nifti_gz)
+            
+            # run phycaa
+
+            print(['matlab', \
+                                      '-nodisplay','-nosplash', \
+                                      '-r', 'run_phycaa('+ \
+                                      '\''+fileutils.addniigzext(self.ibase)+'\',' + \
+                                      '\''+self.data.brainmask+'\',' + \
+                                      tr+ \
+                                      ',\''+fileutils.removeniftiext(self.obase)+'\'); '+ \
+                                      'quit;'])
+
+            process=subprocess.Popen(['matlab', \
+                                      '-nodisplay','-nosplash', \
+                                      '-r', 'run_phycaa('+ \
+                                      '\''+fileutils.unzipnifti(self.ibase)+'\',' + \
+                                      '\''+fileutils.unzipnifti(self.data.brainmask)+'\',' + \
+                                      tr+ \
+                                      ',\''+fileutils.removext(self.obase)+'\'); '+ \
+                                      'quit;'])
+            (output,error)=process.communicate()
+            # remove unzipped nifti files
+            os.remove(fileutils.removext(self.ibase)+'.nii')
+            os.remove(fileutils.removext(self.data.brainmask)+'.nii')
+            # zip phycaa output to produce nii.gz file
+            fileutils.zipnifti(fileutils.removext(self.obase))
+        
+        elif self.name=='tcompcor':
+            cc = TCompCor()
+            cc.inputs.realigned_file = fileutils.addniigzext(self.ibase)
+            cc.inputs.mask_files = self.data.brainmask
+            cc.inputs.components_file=fileutils.removext(self.obase)+'__components.txt'
+            #cc.inputs.header_prefix=''
+            cc.inputs.num_components=6 # based on Behzadi's paper, also nipype default
+            cc.inputs.percentile_threshold=0.02 # based on Behzadi's paper, also nipype default
+            #cc.inputs.pre_filter = False # just remove mean, do not do further detrending
+            cc.run()
+            shutil.move('mask_000.nii.gz',fileutils.removext(self.obase)+'__hivarmask.nii.gz') # cannot set output path for high variance mask
+            
+            p=subprocess.Popen(['fsl_glm','-i',self.ibase,'-d',fileutils.removext(self.obase)+'__components.txt','-o',fileutils.removext(self.obase)+'__regmodel','--out_res='+self.obase,'-m',self.data.brainmask])
+            p.communicate()
+
+        elif self.name=='fsl_motion_outliers':
+            p=subprocess.Popen(['fsl_motion_outliers','-i',self.ibase,'-o',fileutils.removext(self.obase)+'__confound.txt','-s',fileutils.removext(self.obase)+'__metric.txt']+self.params)
+            p.communicate()
+            
+            # can use with fsl_glm as follows:
+            # p=subprocess.Popen(['fsl_glm','-i',self.ibase,'-d',fileutils.removext(self.obase)+'__confound.txt','-o',fileutils.removext(self.obase)+'__regmodel','--out_res='+self.obase,'-m',self.data.brainmask])
+            # p.communicate()
+
+            # interpolate
+            confoundmat=np.loadtxt(fileutils.removext(self.obase)+'__confound.txt')
+            outlier=np.sum(confoundmat,axis=1) # a vector in which outlier volumes are indicated by 1 and non-outliers by 0
+
+            img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
+            img=img_nib.get_data()
+            hdr=img_nib.header
+            affine=img_nib.affine # used to save the result in a NIFTI file
+            tr=hdr.get_zooms()[3]
+            
+            t=tr*np.arange(0,img.shape[3])
+
+            for x in np.arange(0,img.shape[0]):
+                for y in np.arange(0,img.shape[1]):
+                    for z in np.arange(0,img.shape[2]):
+                        t_nonoutlier=t[np.where(outlier != 1)]
+                        sig_nonoutlier=img[x,y,z,np.where(outlier != 1)]
+                        f=scipy.interpolate.interp1d(t_nonoutlier,sig_nonoutlier)
+                        img[x,y,z,np.where(outlier==1)]=f(t[np.where(outlier==1)])
+
+            onifti = nibabel.nifti1.Nifti1Image(img,affine)
+            onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')
+                        
+
+            
+                        
+            
+                    
         else:
             sys.exit('Error: preprocessing step not defined')      
          
@@ -213,6 +296,10 @@ class PreprocessingStep:
             os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'stcor'):
             os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'tcompcor'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'fsl_motion_outliers'):
+            os.remove(fileutils.addniigzext(self.obase))
         else:
             sys.exit('Error: preprocessing step not defined')    
 
@@ -232,7 +319,9 @@ def makesteps(pipelinefile):
     return(steps)
 
 def permutations(l):
-    if 0 < len(l) <= 1:
+    if len(l)==0:
+        yield([])    
+    elif len(l) == 1:
         yield(l)
     elif len(l)>1:
         for p in permutations(l[1:]):
@@ -240,13 +329,21 @@ def permutations(l):
                 yield(p[:i]+l[0:1]+p[i:])
 
 def onoff(l):
-    if 0 < len(l) <= 1:
+    if len(l)==0:
+        yield([])
+    elif len(l) == 1:
         yield(l)
         yield([])
     elif len(l)>1:
         for p in onoff(l[1:]):
             yield(l[0:1]+p)
             yield(p)
+
+def permonoff(l):
+    for p in onoff(l):
+        for q in permutations(p):
+            yield(q)
+        
 
 def concatstepslists(l1,l2):
     # NOTE: inputs must be lists of lists NOT generators

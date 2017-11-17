@@ -57,7 +57,8 @@ for subj in subjects:
                 data.envvars=envvars
                 # first do motion correction (to make tmean, based on which registration parameters are found, more accurate)
                 mcflirt=preprocessingstep.PreprocessingStep('mcflirt',[])
-                pipe=pipeline.Pipeline('',[mcflirt])
+                be=preprocessingstep.PreprocessingStep('brainExtractAFNI',[])
+                pipe=pipeline.Pipeline('',[mcflirt,be])
                 pipe.setibase(data.bold)
                 pipe.setobase(data.opath)
                 pipe.setdata(data)

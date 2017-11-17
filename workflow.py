@@ -68,6 +68,7 @@ class Data:
         self.regintermed=''
         self.boldtmean=''
         self.envvars=EnvVars()
+        
     
     # this is not recommended anymore- use parcellate_structural
     def parcellate_mprage(self):
@@ -455,7 +456,7 @@ class Workflow:
     def saveoptimalpipes(self,filename):
         # save optimal pipelines in csv format
         f=open(filename,'w')
-        f.write('Subject_Sesssion_Run,OptMetric,PipeName,PipeSteps,SHReproducibility,SHOverlap\n')
+        f.write('Subject_Sesssion_Run,OptMetric,PipeName,PipeSteps,PipeOutput,SHReproducibility,SHOverlap\n')
         for subj in self.subjects:
             for sess in subj.sessions:
                 for run in sess.runs:
@@ -463,6 +464,7 @@ class Workflow:
                     f.write(subj.ID+'_'+sess.ID+'_'+run.seqname+','+\
                             'r'+','+\
                             pipe.name+','+pipe.getsteps()+','+\
+                            fileutils.removext(pipe.output)+','+\
                             str(pipe.splithalfseedconnreproducibility)+','+\
                             str(pipe.splithalfseedconnoverlap)+'\n')
                     pipe=run.optimalpipeline_j

@@ -44,7 +44,16 @@ def mgztonifti(filename):
     p.communicate()
     os.remove(filename)
     
+def unzipnifti(filename):
+    p=subprocess.Popen(['fslchfiletype','NIFTI',filename,removext(filename)+'.nii'])
+    p.communicate()
+    return(removext(filename)+'.nii')
     
+def zipnifti(filename):
+    p=subprocess.Popen(['fslchfiletype','NIFTI_GZ',filename])
+    p.communicate()
+    return(removext(filename)+'.nii.gz')
+
 def createdir(dirpath):
     try:
         os.makedirs(dirpath)

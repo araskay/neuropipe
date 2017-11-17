@@ -4,13 +4,14 @@ def printhelp():
     print('ARGUMENTS:')
     print('--subjects <subj file>: specify subjects file (required)')
     print('--pipeline <pipe file>: specify a pipeline file to be run on all subjects without optimization and/or calculation of between subject metrics')
+    print('--const <pipe file>: specify a pipeline file to be used to form constant section of the optimized pipeline')
     print('--perm <pipe file>: specify a pipeline file to be used to form permutations section of the optimized pipeline')
     print('--onoff <pipe file>: specify a pipeline file to be used to form on/off section of the optimized pipeline')
-    print('--const <pipe file>: specify a pipeline file to be used to form constant section of the optimized pipeline')
+    print('--permonoff <pipe file>: on/off combinations and their permutations')    
     print('--combine: flag specifying that all new (permutation/on-off/constant) steps are combined with the previous ones from this point on (Default) (See example below)')
     print('--add: flag specifying that all new (permutation/on-off/constant) steps are added to the previous pipelines from this point on (Default is combine) (See example below)')
     print('--fixed <pipe file>: specify a fixed pipeline for the calculation of between subject metrics')
-    print('--showpipes : show all pipelines to be run/optimized/validated without running. Only use to see a list of pipelines to be run/optimized. This will NOT run/optimize the pipelines. Remove the flag to run/optimize.')
+    print('--showpipes: show all pipelines to be run/optimized/validated without running. Only use to see a list of pipelines to be run/optimized. This will NOT run/optimize the pipelines. Remove the flag to run/optimize.')
     print('--template <temp file>: template file to be used for between subject calculations, e.g., MNI template. Required with --perm, --onoff, --const, --fixed, unless using --showpipes.')
     print('--resout <base name>: base path/name to save results in csv format. Extension (.csv) and suffixed are added to the base name.')
     print('--parcellate: parcellate the output of the run/optimal/fixed pipeline(s).')
@@ -22,6 +23,7 @@ def printhelp():
     print('--boldregcost <cost function>: cost fuction to be used for bold registration (Default = \'corratio\').')
     print('--structregcost <cost function>: cost fuction to be used for structural registration (Default = \'corratio\').')
     print('--outputsubjects <subj file>: specify a subject file, which is populated based on the results of the pipeline run on all subjects. Only applicable with --pipeline.')
+    print('--keepintermed: keep results of the intermediate steps')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 import workflow
@@ -46,13 +48,14 @@ seedconn=False
 tomni=False
 runpipename=''
 outputsubjectsfile=''
+keepintermed=False
 
 envvars=workflow.EnvVars()
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=','outputsubjects='])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=','outputsubjects=','keepintermed'])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -81,6 +84,15 @@ for (opt,arg) in opts:
         else:
             optimalpipesteps=list(preprocessingstep.concatstepslists(optimalpipesteps,\
                                                                      list(preprocessingstep.onoff(steps))))
+
+    elif opt in ('--permonoff'):
+        steps=preprocessingstep.makesteps(arg)
+        if addsteps:
+            optimalpipesteps+=list(preprocessingstep.permonoff(steps))
+        else:
+            optimalpipesteps=list(preprocessingstep.concatstepslists(optimalpipesteps,\
+                                                                     list(preprocessingstep.permonoff(steps))))
+
     elif opt in ('--const'):
         steps=preprocessingstep.makesteps(arg)
         if addsteps:
@@ -117,6 +129,8 @@ for (opt,arg) in opts:
         envvars.structregcost=arg
     elif opt in ('--outputsubjects'):
         outputsubjectsfile=arg
+    elif opt in ('--keepintermed'):
+        keepintermed=True
 
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
@@ -136,6 +150,7 @@ if len(runpipesteps)>0:
                 pipe.setibase(run.data.bold)
                 pipe.setobase(run.data.opath)
                 pipe.setdata(run.data) # when running pipeline do not deepcopy so that results can be recorded if needed
+                pipe.keepintermed=keepintermed
                 run.addpipeline(pipe)
         runwf.addsubject(subj)
     if parcellate:
@@ -161,6 +176,7 @@ if len(optimalpipesteps)>0:
                     pipe.setibase(run.data.bold)
                     pipe.setobase(run.data.opath)
                     pipe.setdata(copy.deepcopy(run.data))
+                    pipe.keepintermed=keepintermed
                     run.addpipeline(pipe)
         optimalwf.addsubject(subj)
     if parcellate:
@@ -181,6 +197,7 @@ if len(fixedpipesteps)>0:
                 pipe.setibase(run.data.bold)
                 pipe.setobase(run.data.opath)
                 pipe.setdata(copy.deepcopy(run.data))
+                pipe.keepintermed=keepintermed
                 run.addpipeline(pipe)
         fixedwf.addsubject(subj)
     if parcellate:
