@@ -3,7 +3,8 @@
 import workflow, getopt,sys,fileutils, subprocess,os
 
 def printhelp():
-    print('usage: prepaerphysio.py --input <input subject file> --output <output subject file>\n<input subject file needs to contain Siemens and Biopac files.')
+    print('usage: prepaerphysio.py --input <input subject file> --output <output subject file>.')
+    print('input subject file needs to contain Siemens and Biopac files.')
 
 ifile=''
 ofile=''

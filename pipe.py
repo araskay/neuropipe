@@ -135,12 +135,12 @@ for (opt,arg) in opts:
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
 
-subjects=[]
-for sfile in subjectsfiles:
-    subjects+=workflow.getsubjects(sfile)
         
 # run workflow
 if len(runpipesteps)>0:
+    subjects=[]
+    for sfile in subjectsfiles:
+        subjects+=workflow.getsubjects(sfile)
     runwf=workflow.Workflow('Run Pipe')
     for subj in subjects:
         for sess in subj.sessions:
@@ -164,6 +164,9 @@ if len(runpipesteps)>0:
         
 # optimal workflow
 if len(optimalpipesteps)>0:
+    subjects=[]
+    for sfile in subjectsfiles:
+        subjects+=workflow.getsubjects(sfile)
     optimalwf=workflow.Workflow('Optimal Pipe')
     for subj in subjects:
         for sess in subj.sessions:
@@ -188,6 +191,9 @@ if len(optimalpipesteps)>0:
          
 # fixed workflow
 if len(fixedpipesteps)>0:
+    subjects=[]
+    for sfile in subjectsfiles:
+        subjects+=workflow.getsubjects(sfile)
     fixedwf=workflow.Workflow('Fixed Pipe')
     for subj in subjects:
         for sess in subj.sessions:

@@ -68,6 +68,7 @@ class Data:
         self.regintermed=''
         self.boldtmean=''
         self.envvars=EnvVars()
+        self.fsrecondir=''
         
     
     # this is not recommended anymore- use parcellate_structural
@@ -634,7 +635,8 @@ def getsubjects(subjectfile):
                                               'struct2mni=',\
                                               'mni2struct=',\
                                               'func2mni=',\
-                                              'mni2func='])
+                                              'mni2func=',\
+                                              'fsrecondir='])
         except getopt.GetoptError:
             sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file (e.g., subjects.txt). Also please note that identifiers require double dash (--)')
         for (opt,arg) in opts:
@@ -688,6 +690,8 @@ def getsubjects(subjectfile):
                 data.func2mni=arg
             elif opt in ('--mni2func'):
                 data.mni2func=arg
+            elif opt in ('--fsrecondir'):
+                data.fsrecondir=arg
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if s.ID==subjectID]
         if len(matchsubj)>0:
@@ -727,6 +731,7 @@ def savesubjects(filename,subjects):
                         '--biopacphysio \''+run.data.biopacphysio+'\' '+\
                         '--slicetiming \''+run.data.slicetiming+'\' '+\
                         '--sliceorder \''+run.data.sliceorder+'\' '+\
+                        '--fsrecondir \''+run.data.fsrecondir+'\' '+\
                         '--aseg \''+run.data.aseg+'\' '+\
                         '--wmseg \''+run.data.wmseg+'\' '+\
                         '--regintermed \''+run.data.regintermed+'\' '+\

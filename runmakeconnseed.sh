@@ -7,4 +7,4 @@
 use anaconda3.6
 use freesurfer
 pip install --user nibabel
-python makeconnseed.py --input ~/data/healthyvolunteer/fepi_subjects_checked_physio_skullstrip_reorient_connseedcordinates_aseg__corratio_registrations.txt --output ~/data/healthyvolunteer/fepi_subjects_checked_physio_skullstrip_reorient_connseedcordinates_aseg__corratio_registrations_connseed.txt --seed ~/data/atlas/LRprimarymotor_Raichlenetal2016.nii.gz --template $MNI152 --binary --boldregdof 6
+python makeconnseed.py --input ~/data/healthyvolunteer/mbepi_subjects_retroicorpipe_checked_aseg_fsrecon_reorient_physio.txt --output ~/data/healthyvolunteer/mbepi_subjects_retroicorpipe_checked_aseg_fsrecon_reorient_physio_connseedLRprimarymotor_Raichlenetal2016.txt --seed ~/data/atlas/LRprimarymotor_Raichlenetal2016.nii.gz --template $MNI152 --binary

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# it is recommended to use fsrecon.py instead of this script
+
 import workflow, getopt,sys,fileutils,shutil,os, subprocess
 
 ifile=''

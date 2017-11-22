@@ -39,11 +39,15 @@ class PreprocessingStep:
         
         ## afni spatial smoothing
         elif (self.name == 'ssmooth'):
+            if '-fwhm' in self.params:
+                fwhm=str(self.params[self.params.index('-fwhm')+1])
+            else:
+                fwhm='5' #default
             process=subprocess.Popen(['3dmerge', \
                                       '-prefix', fileutils.removeniftiext(self.obase), \
                                       '-doall', \
                                       '-quiet', \
-                                      '-1blur_fwhm', str(self.params[self.params.index('-fwhm')+1]), \
+                                      '-1blur_fwhm', fwhm, \
                                       fileutils.addniigzext(self.ibase)])
             (output,error)=process.communicate()
             fileutils.afni2nifti(fileutils.removeniftiext(self.obase))
@@ -216,15 +220,21 @@ class PreprocessingStep:
             fileutils.zipnifti(fileutils.removext(self.obase))
         
         elif self.name=='tcompcor':
-            cc = TCompCor()
-            cc.inputs.realigned_file = fileutils.addniigzext(self.ibase)
-            cc.inputs.mask_files = self.data.brainmask
-            cc.inputs.components_file=fileutils.removext(self.obase)+'__components.txt'
+            if '-ignore' in self.params:
+                ignore=float(self.params[self.params.index('-ignore')+1])
+            else:
+                ignore=0
+            ccor = TCompCor()
+            ccor.inputs.realigned_file = fileutils.addniigzext(self.ibase)
+            ccor.inputs.mask_files = self.data.brainmask
+
+            ccor.inputs.components_file=fileutils.removext(self.obase)+'__components.txt'
             #cc.inputs.header_prefix=''
-            cc.inputs.num_components=6 # based on Behzadi's paper, also nipype default
-            cc.inputs.percentile_threshold=0.02 # based on Behzadi's paper, also nipype default
+            ccor.inputs.num_components=6 # based on Behzadi's paper, also nipype default
+            ccor.inputs.percentile_threshold=0.02 # based on Behzadi's paper, also nipype default
+            #ccor.inputs.ignore_initial_volumes=ignore
             #cc.inputs.pre_filter = False # just remove mean, do not do further detrending
-            cc.run()
+            ccor.run()
             shutil.move('mask_000.nii.gz',fileutils.removext(self.obase)+'__hivarmask.nii.gz') # cannot set output path for high variance mask
             
             p=subprocess.Popen(['fsl_glm','-i',self.ibase,'-d',fileutils.removext(self.obase)+'__components.txt','-o',fileutils.removext(self.obase)+'__regmodel','--out_res='+self.obase,'-m',self.data.brainmask])
@@ -255,7 +265,7 @@ class PreprocessingStep:
                     for z in np.arange(0,img.shape[2]):
                         t_nonoutlier=t[np.where(outlier != 1)]
                         sig_nonoutlier=img[x,y,z,np.where(outlier != 1)]
-                        f=scipy.interpolate.interp1d(t_nonoutlier,sig_nonoutlier)
+                        f=scipy.interpolate.interp1d(t_nonoutlier,sig_nonoutlier,fill_value="extrapolate")
                         img[x,y,z,np.where(outlier==1)]=f(t[np.where(outlier==1)])
 
             onifti = nibabel.nifti1.Nifti1Image(img,affine)

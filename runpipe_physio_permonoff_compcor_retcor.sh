@@ -1,0 +1,12 @@
+#!/bin/bash
+#$ -S /bin/bash
+#$ -cwd
+#$ -M hpc3820@localhost
+#$ -o /home/hpc3820/code/pipeline/runpipe_physio_permonoff_compcor_output.txt
+#$ -e /home/hpc3820/code/pipeline/runpipe_physio_permonoff_compcor_error.txt
+use anaconda3.6
+use freesurfer
+pip install --user nibabel
+pip install --user nipype
+python pipe.py --subjects ~/data/healthyvolunteer/fepi_subjects_physcor_checked_physio_skullstrip_reorient_connseedcordinates_aseg_registrations_connseed.txt --const ~/data/healthyvolunteer/processed/pipe_physcor_const.txt --permonoff ~/data/healthyvolunteer/processed/pipe_physcor_permonoff.txt --fixed ~/data/healthyvolunteer/processed/pipe_physcor_const.txt --fixed ~/data/healthyvolunteer/processed/pipe_physcor_permonoff.txt --template $MNI152 --meants --seedconn --resout ~/data/healthyvolunteer/processed/pipe_physcor_permonoff
+
