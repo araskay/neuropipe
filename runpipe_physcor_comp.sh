@@ -8,5 +8,5 @@ use anaconda3.6
 use freesurfer
 pip install --user nibabel
 pip install --user nipype
-python pipe.py --subjects ~/data/healthyvolunteer/fepi_subjects_physcor_checked_physio_skullstrip_reorient_connseedcordinates_aseg_registrations_connseed.txt --fixed ~/data/healthyvolunteer/processed/pipe_physcor_const.txt --fixed ~/data/healthyvolunteer/processed/pipe_physcor_comp.txt --template $MNI152 --meants --seedconn --resout ~/data/healthyvolunteer/processed/pipe_physcor_comp
+python pipe.py --subjects ~/data/healthyvolunteer/fepi_subjects_physcor_checked_physio_skullstrip_reorient_connseedcordinates_aseg_registrations_connseed.txt --fixed ~/data/healthyvolunteer/processed/pipe_physcor_const.txt --fixed ~/data/healthyvolunteer/processed/pipe_physcor_comp.txt --template $MNI152 --meants --seedconn --resout ~/data/healthyvolunteer/processed/pipe_physcor_comp --fixpipename comp
 

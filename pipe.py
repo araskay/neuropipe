@@ -24,6 +24,9 @@ def printhelp():
     print('--structregcost <cost function>: cost fuction to be used for structural registration (Default = \'corratio\').')
     print('--outputsubjects <subj file>: specify a subject file, which is populated based on the results of the pipeline run on all subjects. Only applicable with --pipeline.')
     print('--keepintermed: keep results of the intermediate steps')
+    print('--runpipename <name>: prefix to precede name of steps in the run pipeline output files. (Default=\'\')')
+    print('--fixpipename <name>: prefix to precede name of steps in the fixed pipeline output files. (Default=\'fix\')')
+    print('--optpipename <name>: prefix to precede name of steps in the optimal pipeline output files. (Default=\'opt\')')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 import workflow
@@ -47,6 +50,8 @@ meants=False
 seedconn=False
 tomni=False
 runpipename=''
+optpipename='opt'
+fixpipename='fix'
 outputsubjectsfile=''
 keepintermed=False
 
@@ -55,7 +60,7 @@ envvars=workflow.EnvVars()
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=','outputsubjects=','keepintermed'])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=', 'outputsubjects=', 'keepintermed', 'runpipename=', 'fixpipename=', 'optpipename='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -65,9 +70,9 @@ for (opt,arg) in opts:
         sys.exit()
     elif opt in ('-p','--pipeline'):
         runpipesteps+=preprocessingstep.makesteps(arg)
-        (directory,namebase)=os.path.split(arg)
-        namebase=fileutils.removext(namebase)
-        runpipename+=namebase
+        #(directory,namebase)=os.path.split(arg)
+        #namebase=fileutils.removext(namebase)
+        #runpipename+=namebase
     elif opt in ('--fixed'):
         fixedpipesteps+=preprocessingstep.makesteps(arg)
     elif opt in ('--perm'):
@@ -131,6 +136,12 @@ for (opt,arg) in opts:
         outputsubjectsfile=arg
     elif opt in ('--keepintermed'):
         keepintermed=True
+    elif opt in ('--runpipename'):
+        runpipename=arg
+    elif opt in ('--fixpipename'):
+        fixpipename=arg
+    elif opt in ('--optpipename'):
+        optpipename=arg
 
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
@@ -141,7 +152,7 @@ if len(runpipesteps)>0:
     subjects=[]
     for sfile in subjectsfiles:
         subjects+=workflow.getsubjects(sfile)
-    runwf=workflow.Workflow('Run Pipe')
+    runwf=workflow.Workflow('RunWF')
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
@@ -167,7 +178,7 @@ if len(optimalpipesteps)>0:
     subjects=[]
     for sfile in subjectsfiles:
         subjects+=workflow.getsubjects(sfile)
-    optimalwf=workflow.Workflow('Optimal Pipe')
+    optimalwf=workflow.Workflow('OptWF')
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
@@ -175,7 +186,7 @@ if len(optimalpipesteps)>0:
                 run.data.envvars=envvars
                 for steps in optimalpipesteps:
                     count=count+1
-                    pipe=Pipeline('pipe'+str(count),steps)
+                    pipe=Pipeline(optpipename+'pipe'+str(count),steps)
                     pipe.setibase(run.data.bold)
                     pipe.setobase(run.data.opath)
                     pipe.setdata(copy.deepcopy(run.data))
@@ -194,12 +205,12 @@ if len(fixedpipesteps)>0:
     subjects=[]
     for sfile in subjectsfiles:
         subjects+=workflow.getsubjects(sfile)
-    fixedwf=workflow.Workflow('Fixed Pipe')
+    fixedwf=workflow.Workflow('FixedWF')
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
                 run.data.envvars=envvars
-                pipe=Pipeline('fixedpipe',fixedpipesteps)
+                pipe=Pipeline(fixpipename,fixedpipesteps)
                 pipe.setibase(run.data.bold)
                 pipe.setobase(run.data.opath)
                 pipe.setdata(copy.deepcopy(run.data))
