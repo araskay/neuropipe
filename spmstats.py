@@ -4,7 +4,7 @@ import nibabel,sys
 import numpy as np
 import scipy.stats
 import statsmodels.stats.multitest as mtest
-import getopt
+import getopt, os, fileutils
 
 p_thresh=0.05
 
@@ -78,6 +78,8 @@ def groupnetwork(spmfiles,ofile):
 
 def printhelp():
     print('Usage: spmstats --set1 <text file> --set2 <text file> --obase <output base>')
+    print('If two spm sets provided, group inference for each set, and group inference for variations between the two sets (set2-set1) are performed. If only one spm set provided, group inference for that set is performed.')
+ 
 
 set1=''
 set2=''
@@ -101,7 +103,11 @@ for (opt,arg) in opts:
     elif opt in ('--obase'):
         obase=arg
 
-if set1=='' or set2=='' or obase=='':
+if obase=='':
+    printhelp()
+    sys.exit()
+
+if set1=='' and set2=='':
     printhelp()
     sys.exit() 
 
@@ -109,23 +115,35 @@ prefiles=[]
 postfiles=[]
 # the code was originally written for pre- and post- retroicor, and that is where the variable names, prefiles, and postfiles, come from
 
-f1=open(set1)
-spm1=f1.readline()
-spm1=spm1.rstrip()
+# the following used to save results
+(directory,namebase)=os.path.split(set1)
+set1namebase=fileutils.removext(namebase)
+(directory,namebase)=os.path.split(set2)
+set2namebase=fileutils.removext(namebase)
 
-f2=open(set2)
-spm2=f2.readline()    
-spm2=spm2.rstrip()
-
-while len(spm1)>0 and len(spm2)>0:
-    prefiles.append(spm1)
-    postfiles.append(spm2)
+if len(set1)>0:
+    f1=open(set1)
     spm1=f1.readline()
     spm1=spm1.rstrip()
-    spm2=f2.readline()
+
+    while len(spm1)>0:
+        prefiles.append(spm1)
+        spm1=f1.readline()
+        spm1=spm1.rstrip()
+
+if len(set2)>0:
+    f2=open(set2)
+    spm2=f2.readline()    
     spm2=spm2.rstrip()
 
-prepostmatchedpairst(prefiles,postfiles,obase+'_groupdiff.nii.gz')
+    while len(spm2)>0:
+        postfiles.append(spm2)
+        spm2=f2.readline()
+        spm2=spm2.rstrip()
 
-groupnetwork(prefiles,obase+'_group1.nii.gz')
-groupnetwork(postfiles,obase+'_group2.nii.gz')
+if len(set1)>0 and len(set2)>0:
+    prepostmatchedpairst(prefiles,postfiles,obase+'_matchedpairs_'+set1namebase+'_'+set2namebase+'.nii.gz')
+if len(set1)>0:
+    groupnetwork(prefiles,obase+'_group_'+set1namebase+'.nii.gz')
+if len(set2)>0:
+    groupnetwork(postfiles,obase+'_group_'+set2namebase+'.nii.gz')

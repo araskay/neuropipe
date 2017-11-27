@@ -51,6 +51,10 @@ class PreprocessingStep:
                                       fileutils.addniigzext(self.ibase)])
             (output,error)=process.communicate()
             fileutils.afni2nifti(fileutils.removeniftiext(self.obase))
+            # if brain extraction was already performed, reapply the brain mask
+            if self.data.brainmask != '':
+                p=subprocess.Popen(['fslmaths',self.obase,'-mas',self.data.brainmask,self.obase])
+                p.communicate()
           
         ## motcor (motion correction with a PCA-based min. displacement reference)
         elif (self.name == 'motcor'):
@@ -220,6 +224,7 @@ class PreprocessingStep:
             fileutils.zipnifti(fileutils.removext(self.obase))
         
         elif self.name=='tcompcor':
+            # currently ignore does not work, since nipype's TCompCor does not recognize ignore_initial_volumes
             if '-ignore' in self.params:
                 ignore=float(self.params[self.params.index('-ignore')+1])
             else:

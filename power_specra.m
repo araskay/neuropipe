@@ -2,13 +2,14 @@
 % frequency bands for each subject. Change subject, pulsfile, and respfile
 % below. Run. Identify frequency bands on the plots. Save the results to physio.csv.
 
-basephyspath='/home/mkayvanrad/data/healthyvolunteer/physio';
-subject='11672/20140318';
+basephyspath='/home/hpc3820/data/healthyvolunteer/physio';
+subject='10577/20140325';
 
+TR=0.380; % seconds (for current fast EPI data)
 fs_phys=50;
 
-pulsfile=strcat(basephyspath,'/',subject,'/','9fmri102a11672.puls.1D');
-respfile=strcat(basephyspath,'/',subject,'/','Biopac/11672_20140318_08.resp.1D');
+pulsfile=strcat(basephyspath,'/',subject,'/','8fmri102a10577.puls.1D');
+respfile=strcat(basephyspath,'/',subject,'/','Biopac/10577_20140325_08.resp.1D');
 
 puls_fid=fopen(pulsfile);
 puls=fscanf(puls_fid,'%f');

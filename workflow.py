@@ -494,81 +494,75 @@ class Workflow:
     
     def savebetweensubjectreproducibility_r(self,filename):
         f=open(filename,'w')
-        f.write(',')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(','+self.subjects[i].ID)
         f.write('\n')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(self.subjects[i].ID)
             for j in range(0,len(self.subjects)):
-                f.write(str(self.betweensubject[i,j].reproducibility_r)+',')
+                f.write(','+str(self.betweensubject[i,j].reproducibility_r))
             f.write('\n')
         f.close()
         
     def savebetweensubjectreproducibility_j(self,filename):
         f=open(filename,'w')
-        f.write(',')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(','+self.subjects[i].ID)
         f.write('\n')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(self.subjects[i].ID)
             for j in range(0,len(self.subjects)):
-                f.write(str(self.betweensubject[i,j].reproducibility_j)+',')
+                f.write(','+str(self.betweensubject[i,j].reproducibility_j))
             f.write('\n')
         f.close()
         
     def savebetweensubjectreproducibility_rj(self,filename):
         f=open(filename,'w')
-        f.write(',')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(','+self.subjects[i].ID)
         f.write('\n')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(self.subjects[i].ID)
             for j in range(0,len(self.subjects)):
-                f.write(str(self.betweensubject[i,j].reproducibility_rj)+',')
+                f.write(','+str(self.betweensubject[i,j].reproducibility_rj))
             f.write('\n')
         f.close()
         
     def savebetweensubjectoverlap_r(self,filename):
         f=open(filename,'w')
-        f.write(',')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(','+self.subjects[i].ID)
         f.write('\n')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(self.subjects[i].ID)
             for j in range(0,len(self.subjects)):
-                f.write(str(self.betweensubject[i,j].overlap_r)+',')
+                f.write(','+str(self.betweensubject[i,j].overlap_r))
             f.write('\n')
-        f.close()        
+        f.close()       
     
     def savebetweensubjectoverlap_j(self,filename):
         f=open(filename,'w')
-        f.write(',')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(','+self.subjects[i].ID)
         f.write('\n')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(self.subjects[i].ID)
             for j in range(0,len(self.subjects)):
-                f.write(str(self.betweensubject[i,j].overlap_j)+',')
+                f.write(','+str(self.betweensubject[i,j].overlap_j))
             f.write('\n')
-        f.close()
+        f.close()  
         
     def savebetweensubjectoverlap_rj(self,filename):
         f=open(filename,'w')
-        f.write(',')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(','+self.subjects[i].ID)
         f.write('\n')
         for i in range(0,len(self.subjects)):
-            f.write(self.subjects[i].ID+',')
+            f.write(self.subjects[i].ID)
             for j in range(0,len(self.subjects)):
-                f.write(str(self.betweensubject[i,j].overlap_rj)+',')
+                f.write(','+str(self.betweensubject[i,j].overlap_rj))
             f.write('\n')
-        f.close()
+        f.close()  
 
     def printbetweensubjectreproducibility(self):
         print('-----')
