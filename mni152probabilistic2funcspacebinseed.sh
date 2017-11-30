@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# THIS SCRIPT IS OBSOLETE. USE makeconnseed.py.
+# this script creates binary seed files in the subject-specific functional space, from a probabilistic seed file in the MNI space.
+
 function mni152probabilistic2funcspacebinseed {
 
 # this scripts transforms a probabilistic ROI (atlas) on MNI152 into a binary seed mask on the subject-specific functional space. Used, for example, for generating binary seed masks for OPPNI SCONN analysis.

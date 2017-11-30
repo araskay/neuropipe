@@ -8,6 +8,7 @@ from nipype.algorithms.confounds import (ACompCor, TCompCor)
 import shutil
 import numpy as np
 import scipy
+import scipy.signal
 
 class PreprocessingStep:
     def __init__(self,name,params):
@@ -276,9 +277,66 @@ class PreprocessingStep:
             onifti = nibabel.nifti1.Nifti1Image(img,affine)
             onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')
                         
-
+        elif self.name=='lpf':
+            img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
+            img=img_nib.get_data()
+            hdr=img_nib.header
+            affine=img_nib.affine # used to save the result in a NIFTI file
+            tr=hdr.get_zooms()[3]
+            fs=1/tr
             
+            Fstop=float(self.params[0])/(fs/2)
+            
+            (b,a)=scipy.signal.butter(5,Fstop,btype='lowpass')
+            
+            img = scipy.signal.filtfilt(b,a,img,axis=-1)
+            
+            # replace the firt time point with temporal mean
+            img[:,:,:,0]=np.mean(img,axis=-1)
+            
+            onifti = nibabel.nifti1.Nifti1Image(img,affine)
+            onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')            
+            
+        elif self.name=='hpf':
+            img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
+            img=img_nib.get_data()
+            hdr=img_nib.header
+            affine=img_nib.affine # used to save the result in a NIFTI file
+            tr=hdr.get_zooms()[3]
+            fs=1/tr
+            
+            Fstop=float(self.params[0])/(fs/2)
+            
+            (b,a)=scipy.signal.butter(5,Fstop,btype='highpass')
+            
+            img = scipy.signal.filtfilt(b,a,img,axis=-1)
+            
+            # replace the firt time point with temporal mean
+            img[:,:,:,0]=np.mean(img,axis=-1)
+            
+            onifti = nibabel.nifti1.Nifti1Image(img,affine)
+            onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')            
                         
+        elif self.name=='bpf':
+            img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
+            img=img_nib.get_data()
+            hdr=img_nib.header
+            affine=img_nib.affine # used to save the result in a NIFTI file
+            tr=hdr.get_zooms()[3]
+            fs=1/tr
+            
+            Fstop1=float(self.params[0])/(fs/2)
+            Fstop2=float(self.params[1])/(fs/2)
+            
+            (b,a)=scipy.signal.butter(5,(Fstop1,Fstop2),btype='bandpass')
+            
+            img = scipy.signal.filtfilt(b,a,img,axis=-1)
+            
+            # replace the firt time point with temporal mean
+            img[:,:,:,0]=np.mean(img,axis=-1)
+            
+            onifti = nibabel.nifti1.Nifti1Image(img,affine)
+            onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')
             
                     
         else:
@@ -314,6 +372,12 @@ class PreprocessingStep:
         elif (self.name == 'tcompcor'):
             os.remove(fileutils.addniigzext(self.obase))
         elif (self.name == 'fsl_motion_outliers'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'lpf'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'hpf'):
+            os.remove(fileutils.addniigzext(self.obase))
+        elif (self.name == 'bpf'):
             os.remove(fileutils.addniigzext(self.obase))
         else:
             sys.exit('Error: preprocessing step not defined')    
