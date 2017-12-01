@@ -18,6 +18,7 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     img_nib=nibabel.load(ifile)
     img=img_nib.get_data()
     affine=img_nib.affine # used to save the result in a NIFTI file
+    hdr=img_nib.header # also used to save the result
     
     seed_nib=nibabel.load(seedfile)
     seed=seed_nib.get_data()
@@ -69,19 +70,19 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     var=np.reshape(var,(img.shape[0],img.shape[1],img.shape[2]))
     
     # write covar to NIFTI file
-    onifti = nibabel.nifti1.Nifti1Image(covar,affine)
+    onifti = nibabel.nifti1.Nifti1Image(covar,affine,header=hdr)
     onifti.to_filename(fileutils.removeniftiext(obase)+'_cov.nii.gz')
     
     # write var to NIFTI file
-    onifti = nibabel.nifti1.Nifti1Image(var,affine)
+    onifti = nibabel.nifti1.Nifti1Image(var,affine,header=hdr)
     onifti.to_filename(fileutils.removeniftiext(obase)+'_var.nii.gz')
     
     # write r to NIFTI file
-    onifti = nibabel.nifti1.Nifti1Image(r,affine)
+    onifti = nibabel.nifti1.Nifti1Image(r,affine,header=hdr)
     onifti.to_filename(fileutils.removeniftiext(obase)+'_r.nii.gz')
 
     # write t to NIFTI file
-    onifti = nibabel.nifti1.Nifti1Image(z,affine)
+    onifti = nibabel.nifti1.Nifti1Image(z,affine,header=hdr)
     onifti.to_filename(fileutils.removeniftiext(obase)+'_z.nii.gz')
 
     # now threshold r and z
@@ -93,16 +94,16 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     z=np.reshape(z_1D,(img.shape[0],img.shape[1],img.shape[2]))
     
     # write r to NIFTI file
-    onifti = nibabel.nifti1.Nifti1Image(r,affine)
+    onifti = nibabel.nifti1.Nifti1Image(r,affine,header=hdr)
     onifti.to_filename(fileutils.removeniftiext(obase)+'_r_thresh.nii.gz')
 
     # write t to NIFTI file
-    onifti = nibabel.nifti1.Nifti1Image(z,affine)
+    onifti = nibabel.nifti1.Nifti1Image(z,affine,header=hdr)
     onifti.to_filename(fileutils.removeniftiext(obase)+'_z_thresh.nii.gz')
     
     
     # write p_adj to NIFTI file
-    onifti = nibabel.nifti1.Nifti1Image(p_adj,affine)
+    onifti = nibabel.nifti1.Nifti1Image(p_adj,affine,header=hdr)
     onifti.to_filename(fileutils.removeniftiext(obase)+'_p_adj.nii.gz')
     
     # write p to NIFTI file

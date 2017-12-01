@@ -274,7 +274,7 @@ class PreprocessingStep:
                         f=scipy.interpolate.interp1d(t_nonoutlier,sig_nonoutlier,fill_value="extrapolate")
                         img[x,y,z,np.where(outlier==1)]=f(t[np.where(outlier==1)])
 
-            onifti = nibabel.nifti1.Nifti1Image(img,affine)
+            onifti = nibabel.nifti1.Nifti1Image(img,affine,header=hdr)
             onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')
                         
         elif self.name=='lpf':
@@ -294,7 +294,7 @@ class PreprocessingStep:
             # replace the firt time point with temporal mean
             img[:,:,:,0]=np.mean(img,axis=-1)
             
-            onifti = nibabel.nifti1.Nifti1Image(img,affine)
+            onifti = nibabel.nifti1.Nifti1Image(img,affine,header=hdr)
             onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')            
             
         elif self.name=='hpf':
@@ -314,7 +314,7 @@ class PreprocessingStep:
             # replace the firt time point with temporal mean
             img[:,:,:,0]=np.mean(img,axis=-1)
             
-            onifti = nibabel.nifti1.Nifti1Image(img,affine)
+            onifti = nibabel.nifti1.Nifti1Image(img,affine,header=hdr)
             onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')            
                         
         elif self.name=='bpf':
@@ -324,9 +324,15 @@ class PreprocessingStep:
             affine=img_nib.affine # used to save the result in a NIFTI file
             tr=hdr.get_zooms()[3]
             fs=1/tr
+
+            print('TR=',tr)
+            print('Nq=',fs/2)            
             
             Fstop1=float(self.params[0])/(fs/2)
             Fstop2=float(self.params[1])/(fs/2)
+            
+            print(Fstop1)
+            print(Fstop2)
             
             (b,a)=scipy.signal.butter(5,(Fstop1,Fstop2),btype='bandpass')
             
@@ -335,7 +341,7 @@ class PreprocessingStep:
             # replace the firt time point with temporal mean
             img[:,:,:,0]=np.mean(img,axis=-1)
             
-            onifti = nibabel.nifti1.Nifti1Image(img,affine)
+            onifti = nibabel.nifti1.Nifti1Image(img,affine,header=hdr)
             onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')
             
                     

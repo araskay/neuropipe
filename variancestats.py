@@ -15,6 +15,7 @@ def calcvariance(ifile,ofile):
     img_nib=nibabel.load(ifile)
     img=img_nib.get_data()
     affine=img_nib.affine # used to save the result in a NIFTI file
+    hdr=img_nib.header # also used to save the result
     
     imgreshape=img.reshape((np.prod(img.shape[0:3]),img.shape[3]))
     
@@ -22,7 +23,7 @@ def calcvariance(ifile,ofile):
 
     # write v to file
     v=np.reshape(v,(img.shape[0],img.shape[1],img.shape[2]))
-    onifti = nibabel.nifti1.Nifti1Image(v,affine)
+    onifti = nibabel.nifti1.Nifti1Image(v,affine,header=hdr)
     onifti.to_filename(ofile)    
     
 
@@ -35,6 +36,7 @@ def prepostmatchedpairst(prespmfiles,postspmfiles,ofile):
     img_nib=nibabel.load(prespmfiles[0])
     img=img_nib.get_data()
     affine=img_nib.affine # used to save the result in a NIFTI file
+    hdr=img_nib.header # also used to save the result
 
     paireddiff=np.zeros((n,np.prod(img.shape)))
     t=np.zeros((1,np.prod(img.shape)))    
@@ -60,7 +62,7 @@ def prepostmatchedpairst(prespmfiles,postspmfiles,ofile):
 
     # write t to file
     t=np.reshape(t,(img.shape[0],img.shape[1],img.shape[2]))
-    onifti = nibabel.nifti1.Nifti1Image(t,affine)
+    onifti = nibabel.nifti1.Nifti1Image(t,affine,header=hdr)
     onifti.to_filename(ofile)
 
         
