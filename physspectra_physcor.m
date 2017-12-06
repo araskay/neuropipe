@@ -6,7 +6,13 @@
 % power in the cardiac pulsation and respiration bands
 % and saves the results into csv files. The code uses the
 % frequency bands identified manually on the cardiac pulsation and
-% respiration signals using power_spectra.m.
+% respiration signals using power_spectra.m. Unlike physspectra.m, this
+% version gets a centre (peak) frequency and calculates power over an
+% interval around the centre. This eliminates variations in relative
+% (normalized) power due to different interval lengths for different
+% subjects (which I just realized was an issue with the previous version)
+% in this version, all powers are normalized to the retroicor power on a
+% per subject basis
 
 
 basepath='/u1/work/hpc3820/data/healthyvolunteer/processed/physcor/';
@@ -14,18 +20,19 @@ ndiscard=10;
 TR=0.380; % seconds (for current fast EPI data)
 
 
-%% compute relative poweres
+%% compute relative powers
 % read the following frequencies on the resp and puls frequency specra
 
 fin=fopen('/home/hpc3820/data/healthyvolunteer/physio/physio.csv');
 fcardout=fopen('/u1/work/hpc3820/data/healthyvolunteer/processed/physcor/cardPowerSpectra.csv','w');
 frespout=fopen('/u1/work/hpc3820/data/healthyvolunteer/processed/physcor/respPowerSpectra.csv','w');
 flowout=fopen('/u1/work/hpc3820/data/healthyvolunteer/processed/physcor/lowPowerSpectra.csv','w');
+
 % read the header
-h=textscan(fin,'%s%s%s%s%s%s%s',1,'delimiter',',');
+h=textscan(fin,'%s%s%s%s%s',1,'delimiter',',');
 
 % read the rest
-phys=textscan(fin,'%s%s%f%f%s%f%f','delimiter',',');
+phys=textscan(fin,'%s%s%s%f%f','delimiter',',');
 
 fprintf(fcardout,'Subject,ret,comp,retcomp,compret,nophyscor\n');
 fprintf(frespout,'Subject,ret,comp,retcomp,compret,nophyscor\n');
@@ -42,6 +49,7 @@ for i=1:n
     retcompfile=strcat(basepath,subject,'/fepi/fepi_retcomp_slicetimer_mcflirt_fsl_motion_outliers_brainExtractAFNI_ssmooth_3dFourier_retroicor_tcompcor_meants_net.txt');
     compretfile=strcat(basepath,subject,'/fepi/fepi_compret_slicetimer_mcflirt_fsl_motion_outliers_brainExtractAFNI_ssmooth_3dFourier_tcompcor_retroicor_meants_net.txt');
     nophyscorfile=strcat(basepath,subject,'/fepi/fepi_nophyscor_slicetimer_mcflirt_fsl_motion_outliers_brainExtractAFNI_ssmooth_3dFourier_meants_net.txt');
+    lpffile=strcat(basepath,subject,'/fepi/fepi_lpf_slicetimer_mcflirt_fsl_motion_outliers_brainExtractAFNI_ssmooth_3dFourier_3dFourier_meants_net.txt');
     
 
     %% read mean time series
@@ -60,12 +68,16 @@ for i=1:n
     meants_nophyscor_fid=fopen(nophyscorfile);
     meants_nophyscor=fscanf(meants_nophyscor_fid,'%f');                
 
+    meants_lpf_fid=fopen(lpffile);
+    meants_lpf=fscanf(meants_lpf_fid,'%f');
+    
     %% discarding frames at the beginnig
     meants_ret=meants_ret(ndiscard+1:end);
     meants_comp=meants_comp(ndiscard+1:end);
     meants_retcomp=meants_retcomp(ndiscard+1:end);
     meants_compret=meants_compret(ndiscard+1:end);
     meants_nophyscor=meants_nophyscor(ndiscard+1:end);
+    meants_lpf=meants_lpf(ndiscard+1:end);
     
     %% plot power specra
     % compute FFTs
@@ -74,6 +86,7 @@ for i=1:n
     Fmeants_retcomp=fft(meants_retcomp);
     Fmeants_compret=fft(meants_compret);
     Fmeants_nophyscor=fft(meants_nophyscor);
+    Fmeants_lpf=fft(meants_lpf);
     
     %% plot
     l=length(Fmeants_ret);
@@ -82,46 +95,54 @@ for i=1:n
     
     figure(i)
     %% plot power spectra 
-    subplot(5,1,1)
+    subplot(6,1,1)
     plot(f,2*abs(Fmeants_ret(1:l/2+1))/l)
     title('RETROICOR');
     %xlabel('Frequency (Hz)')
     ylabel('PSD (I^2/Hz)')
     ylim([0, 0.05])
 
-    subplot(5,1,2)
+    subplot(6,1,2)
     plot(f,2*abs(Fmeants_comp(1:l/2+1))/l)
     title('CompCor');
     %xlabel('Frequency (Hz)')
     ylabel('PSD (I^2/Hz)')
     ylim([0, 0.05])
     
-    subplot(5,1,3)
+    subplot(6,1,3)
     plot(f,2*abs(Fmeants_retcomp(1:l/2+1))/l)
     title('RET > Comp');
     %xlabel('Frequency (Hz)')
     ylabel('PSD (I^2/Hz)')
     ylim([0, 0.05])
     
-    subplot(5,1,4)
+    subplot(6,1,4)
     plot(f,2*abs(Fmeants_compret(1:l/2+1))/l)
     title('Comp > RET');
     %xlabel('Frequency (Hz)')
     ylabel('PSD (I^2/Hz)')
     ylim([0, 0.05])
-    
-    subplot(5,1,5)
-    plot(f,2*abs(Fmeants_nophyscor(1:l/2+1))/l)
-    title('No Phys. Cor.');
+
+    subplot(6,1,5)
+    plot(f,2*abs(Fmeants_lpf(1:l/2+1))/l)
+    title('LPF');
     %xlabel('Frequency (Hz)')
     ylabel('PSD (I^2/Hz)')
     ylim([0, 0.05])
+        
+    subplot(6,1,6)
+    plot(f,2*abs(Fmeants_nophyscor(1:l/2+1))/l)
+    title('No Phys. Cor.');
+    xlabel('Frequency (Hz)')
+    ylabel('PSD (I^2/Hz)')
+    ylim([0, 0.05])
     
-
-    fresp_min=phys{6}(i);
-    fresp_max=phys{7}(i);
-    fcard_min=phys{3}(i);
-    fcard_max=phys{4}(i);
+    
+    inthalf=0.05;
+    fresp_min=phys{5}(i)-inthalf;
+    fresp_max=phys{5}(i)+inthalf;
+    fcard_min=phys{4}(i)-inthalf;
+    fcard_max=phys{4}(i)+inthalf;
     
     % looking at low frequency
     flow_min=0.01;
@@ -138,23 +159,25 @@ for i=1:n
     flow_max_ind=ceil(flow_max/(fs/2)*l/2);
     
     respRelativePower_ret=sum(abs(Fmeants_ret(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
-    respRelativePower_comp=sum(abs(Fmeants_comp(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_comp).^2);
-    respRelativePower_retcomp=sum(abs(Fmeants_retcomp(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_retcomp).^2);
-    respRelativePower_compret=sum(abs(Fmeants_compret(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_compret).^2);
-    respRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
+    respRelativePower_comp=sum(abs(Fmeants_comp(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    respRelativePower_retcomp=sum(abs(Fmeants_retcomp(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    respRelativePower_compret=sum(abs(Fmeants_compret(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    respRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    %respRelativePower_lpf=sum(abs(Fmeants_lpf(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
     
     cardRelativePower_ret=sum(abs(Fmeants_ret(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
-    cardRelativePower_comp=sum(abs(Fmeants_comp(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_comp).^2);
-    cardRelativePower_retcomp=sum(abs(Fmeants_retcomp(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_retcomp).^2);
-    cardRelativePower_compret=sum(abs(Fmeants_compret(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_compret).^2);
-    cardRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
+    cardRelativePower_comp=sum(abs(Fmeants_comp(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    cardRelativePower_retcomp=sum(abs(Fmeants_retcomp(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    cardRelativePower_compret=sum(abs(Fmeants_compret(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    cardRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    %cardRelativePower_lpf=sum(abs(Fmeants_lpf(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
     
     lowRelativePower_ret=sum(abs(Fmeants_ret(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
-    lowRelativePower_comp=sum(abs(Fmeants_comp(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_comp).^2);
-    lowRelativePower_retcomp=sum(abs(Fmeants_retcomp(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_retcomp).^2);
-    lowRelativePower_compret=sum(abs(Fmeants_compret(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_compret).^2);
-    lowRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    
+    lowRelativePower_comp=sum(abs(Fmeants_comp(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    lowRelativePower_retcomp=sum(abs(Fmeants_retcomp(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    lowRelativePower_compret=sum(abs(Fmeants_compret(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    lowRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
+    %lowRelativePower_lpf=sum(abs(Fmeants_lpf(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_ret).^2);
     
     card=[cardRelativePower_ret,cardRelativePower_comp,cardRelativePower_retcomp,cardRelativePower_compret,cardRelativePower_nophyscor];
     fprintf(fcardout,'%s,',subject);

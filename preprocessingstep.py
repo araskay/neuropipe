@@ -33,10 +33,7 @@ class PreprocessingStep:
         if (self.name == 'mcflirt'):
             process=subprocess.Popen(['mcflirt','-in',self.ibase,'-out',self.obase,'-plots'])
             (output,error)=process.communicate()
-            if self.data.motpar == '':
-                self.data.motpar=fileutils.removeniftiext(self.obase)+'.par'
-            else:
-                os.remove(fileutils.removeniftiext(self.obase)+'.par')
+            self.data.motpar=fileutils.removeniftiext(self.obase)+'.par'
         
         ## afni spatial smoothing
         elif (self.name == 'ssmooth'):
@@ -163,10 +160,7 @@ class PreprocessingStep:
                                 '-o',fileutils.removeniftiext(self.obase)+'__motglm',
                                 '--out_res='+self.obase])
             p.communicate()
-            if self.data.motglm=='':
-                self.data.motglm=fileutils.removeniftiext(self.obase)+'__motglm'
-            else:
-                os.remove(fileutils.removeniftiext(self.obase)+'__motglm.nii.gz')
+            self.data.motglm=fileutils.removeniftiext(self.obase)+'__motglm'
         
         elif self.name=='slicetimer':
             # get the TR from the data
