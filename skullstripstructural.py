@@ -4,6 +4,11 @@
 
 import workflow, getopt,sys,fileutils,shutil,os, subprocess
 
+def printhelp():
+    print('Note: it is recommended to use fsrecon.py instead of this script')
+    print('Usage: skullstripstructural.py -i <input subject file> -o <output subject file> [--skiprecon --keeprecon]')
+    print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
+
 ifile=''
 ofile=''
 skiprecon=False
@@ -14,11 +19,11 @@ try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',\
                                 ['help','input=', 'output=', 'skiprecon', 'keeprecon'])
 except getopt.GetoptError:
-    print('Usage: skullstripstructural.py -i <input subject file> -o <output subject file> [--skiprecon --keeprecon]\n Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
+    printhelp()
     sys.exit()
 for (opt,arg) in opts:
     if opt in ('-h', '--help'):
-        print('Usage: skullstripstructural.py -i <input subject file> -o <output subject file> [--skiprecon --keeprecon]\n Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
+        printhelp()
         sys.exit()
     elif opt in ('-i','--input'):
         ifile=arg
@@ -30,7 +35,8 @@ for (opt,arg) in opts:
         keeprecon=True
 
 if ifile=='' or ofile=='':
-    sys.exit('Usage: skullstripstructural.py -i <input subject file> -o <output subject file> [--skiprecon --keeprecon]\nReport bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
+    printhelp()
+    sys.exit()
         
 subjects=workflow.getsubjects(ifile)
 

@@ -1,7 +1,8 @@
 import workflow, getopt,sys,os,fileutils,subprocess,pipeline,copy,preprocessingstep
 
 def printhelp():
-    print('usage: makeconnseed.py --input <input subject file> --output <output subject file> --seed <seed file> --template <template file> [--binary[=FALSE] --boldregdof <dof> --structregdof <dof> --boldregcost <cost func> --structregcost <cost func>]\n<seed file> must be in the same space as the <template file> (e.g., both in MNI). Unless --binary used, by default the code assumes a probabilistic seed file with percentage values (i.e., 0< and <100).')
+    print('usage: makeconnseed.py --input <input subject file> --output <output subject file> --seed <seed file> --template <template file> [--pipeline <pipe file> --binary[=FALSE] --boldregdof <dof> --structregdof <dof> --boldregcost <cost func> --structregcost <cost func>]\n<seed file> must be in the same space as the <template file> (e.g., both in MNI). Unless --binary used, by default the code assumes a probabilistic seed file with percentage values (i.e., 0< and <100).')
+    print('If --pipeline specified, functional images will be preprocessed using the specified pipeline before co-registrations')
 
 ifile=''
 ofile=''
@@ -9,11 +10,12 @@ seedatlasfile=''
 binary=False
 
 envvars=workflow.EnvVars()
+runpipesteps=[] # this is a list
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:s:t:',\
-                                ['help','input=', 'output=', 'seed=' , 'template=', 'binary','boldregdof=','structregdof=','boldregcost=','structregcost='])
+                                ['help','input=', 'output=', 'seed=' , 'template=', 'pipeline=', 'binary','boldregdof=','structregdof=','boldregcost=','structregcost='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -39,6 +41,8 @@ for (opt,arg) in opts:
         envvars.boldregcost=arg
     elif opt in ('--structregcost'):
         envvars.structregcost=arg
+    elif opt in ('--pipeline'):
+        runpipesteps+=preprocessingstep.makesteps(arg)        
 
 if ifile=='' or ofile=='' or seedatlasfile=='' or envvars.mni152=='':
     printhelp()
@@ -56,9 +60,7 @@ for subj in subjects:
                 data=copy.deepcopy(run.data)
                 data.envvars=envvars
                 # first do motion correction (to make tmean, based on which registration parameters are found, more accurate)
-                mcflirt=preprocessingstep.PreprocessingStep('mcflirt',[])
-                be=preprocessingstep.PreprocessingStep('brainExtractAFNI',[])
-                pipe=pipeline.Pipeline('',[mcflirt,be])
+                pipe=pipeline.Pipeline('',runpipesteps)
                 pipe.setibase(data.bold)
                 pipe.setobase(data.opath)
                 pipe.setdata(data)
