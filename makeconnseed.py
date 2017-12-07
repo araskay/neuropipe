@@ -64,6 +64,7 @@ for subj in subjects:
                 pipe.setibase(data.bold)
                 pipe.setobase(data.opath)
                 pipe.setdata(data)
+                pipe.keepintermed=True
                 pipe.run()
                 # now find registration parameters
                 data.bold=pipe.output
