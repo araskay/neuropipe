@@ -16,8 +16,10 @@ s=img[32,32,4,:]
 # s=np.array(s,dtype=float)
 plt.figure(1)
 plt.hold(False)
-plt.plot(s)
+plt.plot(s, linewidth=1.0)
 plt.title('Original signal')
+
+plt.savefig('/home/mkayvanrad/scratch/test_pyplot.png',dpi=600)
 
 S=np.fft.fft(s)
 

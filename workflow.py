@@ -632,7 +632,7 @@ def getsubjects(subjectfile):
                                               'mni2func=',\
                                               'fsrecondir='])
         except getopt.GetoptError:
-            sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file (e.g., subjects.txt). Also please note that identifiers require double dash (--)')
+            sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file. Also please note that identifiers require double dash (--)')
         for (opt,arg) in opts:
             if opt in ('--subjectID'):
                 subjectID=arg

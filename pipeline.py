@@ -86,9 +86,14 @@ class Pipeline:
                     step.removeofiles()
                     stepibase=stepobase
         else:
-            p=subprocess.Popen(['fslchfiletype','NIFTI_GZ',self.ibase,self.obase+'_'+self.name])
-            p.communicate()
-            self.output=self.obase+'_'+self.name
+            if len(self.name)>0:
+                p=subprocess.Popen(['fslchfiletype','NIFTI_GZ',self.ibase,fileutils.removext(self.obase)+'_'+self.name])
+                p.communicate()
+                self.output=fileutils.removext(self.obase)+'_'+self.name
+            else:
+                p=subprocess.Popen(['fslchfiletype','NIFTI_GZ',self.ibase,fileutils.removext(self.obase)])
+                p.communicate()
+                self.output=fileutils.removext(self.obase)               
         self.pipelinerun=True
         self.data.bold=self.output        
         

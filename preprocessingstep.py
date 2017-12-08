@@ -42,7 +42,7 @@ class PreprocessingStep:
             else:
                 fwhm='5' #default
             process=subprocess.Popen(['3dmerge', \
-                                      '-prefix', fileutils.removeniftiext(self.obase), \
+                                      '-prefix', fileutils.removeniftiext(self.obase), '-overwrite',\
                                       '-doall', \
                                       '-quiet', \
                                       '-1blur_fwhm', fwhm, \
@@ -148,7 +148,7 @@ class PreprocessingStep:
             
         elif (self.name == '3dFourier'):
             p=subprocess.Popen(['3dFourier']+self.params+\
-                               ['-prefix',fileutils.removeniftiext(self.obase),'-overwrite',fileutils.addniigzext(self.ibase)])
+                               ['-prefix',fileutils.removeniftiext(self.obase),fileutils.addniigzext(self.ibase)])
             p.communicate()
             fileutils.afni2nifti(fileutils.removeniftiext(self.obase))                         
          
