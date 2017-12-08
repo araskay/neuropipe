@@ -9,6 +9,7 @@ import shutil
 import numpy as np
 import scipy
 import scipy.signal
+import copy
 
 class PreprocessingStep:
     def __init__(self,name,params):
@@ -338,7 +339,55 @@ class PreprocessingStep:
             onifti = nibabel.nifti1.Nifti1Image(img,affine,header=hdr)
             onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')
             
-                    
+        elif self.name=='globalsigreg':
+            if self.data.brainmask=='':
+                print('WARNING: globalsigreg must be preceded by brain extraction. Global signal not regressed')
+            else:
+                data=copy.deepcopy(self.data)
+                data.bold=self.ibase
+                data.calc_meants()
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',data.meants,\
+                                    '-o',fileutils.removext(self.obase)+'__globalsigglm',
+                                    '--out_res='+self.obase])
+                p.communicate()                
+
+        elif self.name=='csfreg':
+            if self.data.boldcsf=='':
+                self.data.parcellate_bold()
+            data=copy.deepcopy(self.data)
+            data.bold=self.ibase
+            data.calc_meants()
+            p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                '-d',data.meantscsf,\
+                                '-o',fileutils.removext(self.obase)+'__csfglm',
+                                '--out_res='+self.obase])
+            p.communicate()                 
+            
+        elif self.name=='wmreg':
+            if self.data.boldwm=='':
+                self.data.parcellate_bold()
+            data=copy.deepcopy(self.data)
+            data.bold=self.ibase
+            data.calc_meants()
+            p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                '-d',data.meantswm,\
+                                '-o',fileutils.removext(self.obase)+'__wmglm',
+                                '--out_res='+self.obase])
+            p.communicate()
+            
+        elif self.name=='csfwmreg':
+            if self.data.boldwm=='' or self.data.boldcsf=='':
+                self.data.parcellate_bold()
+            data=copy.deepcopy(self.data)
+            data.bold=self.ibase
+            data.calc_meants()
+            p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                '-d',data.meantscsfwm,\
+                                '-o',fileutils.removext(self.obase)+'__csfwmglm',
+                                '--out_res='+self.obase])
+            p.communicate()             
+            
         else:
             sys.exit('Error: preprocessing step not defined')      
          

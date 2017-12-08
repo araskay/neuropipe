@@ -232,80 +232,14 @@ class Pipeline:
     def parcellate(self):
         if not self.pipelinerun:
             self.run()
-        if self.data.structuralcsf=='' or self.data.structuralgm=='' or self.data.structuralwm=='':
-            self.data.parcellate_structural()
-        if self.data.struct2func=='':
-            self.data.transform_struct2func()
-        
-        p=subprocess.Popen(['flirt','-in',self.data.structuralcsf,\
-                            '-ref',self.output,\
-                            '-applyxfm','-init',self.data.struct2func,\
-                            '-out',fileutils.removext(self.output)+'_csf'])
-        p.communicate()
-        p=subprocess.Popen(['fslmaths',fileutils.removext(self.output)+'_csf','-thr','0.5','-bin',fileutils.removext(self.output)+'_csf'])
-        p.communicate()
-        
-        p=subprocess.Popen(['flirt','-in',self.data.structuralgm,\
-                            '-ref',self.output,\
-                            '-applyxfm','-init',self.data.struct2func,\
-                            '-out',fileutils.removext(self.output)+'_gm'])
-        p.communicate()
-        p=subprocess.Popen(['fslmaths',fileutils.removext(self.output)+'_gm','-thr','0.5','-bin',fileutils.removext(self.output)+'_gm'])
-        p.communicate()
-        
-        p=subprocess.Popen(['flirt','-in',self.data.structuralwm,\
-                            '-ref',self.output,\
-                            '-applyxfm','-init',self.data.struct2func,\
-                            '-out',fileutils.removext(self.output)+'_wm'])
-        p.communicate()         
-        p=subprocess.Popen(['fslmaths',fileutils.removext(self.output)+'_wm','-thr','0.5','-bin',fileutils.removext(self.output)+'_wm'])
-        p.communicate()
-        
-        self.data.boldcsf=fileutils.removext(self.output)+'_csf.nii.gz'
-        self.data.boldgm=fileutils.removext(self.output)+'_gm.nii.gz'
-        self.data.boldwm=fileutils.removext(self.output)+'_wm.nii.gz'        
-        
+        self.data.parcellate_bold()
         self.parcellated=True
         
         
     def meants(self):
         if self.data.boldcsf=='' or self.data.boldgm=='' or self.data.boldwm=='':
             self.parcellate()
-        # compute meant time series for the pipeline output
-        p=subprocess.Popen(['fslmeants','-i',self.output,\
-                            '-o',fileutils.removext(self.output)+'_meants_csf.txt',\
-                            '-m',self.data.boldcsf])
-        p.communicate()
-        p=subprocess.Popen(['fslmeants','-i',self.output,\
-                            '-o',fileutils.removext(self.output)+'_meants_gm.txt',\
-                            '-m',self.data.boldgm])
-        p.communicate()
-        p=subprocess.Popen(['fslmeants','-i',self.output,\
-                            '-o',fileutils.removext(self.output)+'_meants_wm.txt',\
-                            '-m',self.data.boldwm])
-        p.communicate()        
-
-        self.data.meantscsf=fileutils.removext(self.output)+'_meants_csf.txt'
-        self.data.meantsgm=fileutils.removext(self.output)+'_meants_gm.txt'
-        self.data.meantswm=fileutils.removext(self.output)+'_meants_wm.txt'         
-        
-        # while here, also compute meant time series for the pipeline input
-        p=subprocess.Popen(['fslmeants','-i',self.ibase,\
-                            '-o',fileutils.removext(self.ibase)+'_meants_csf.txt',\
-                            '-m',self.data.boldcsf])
-        p.communicate()
-        p=subprocess.Popen(['fslmeants','-i',self.ibase,\
-                            '-o',fileutils.removext(self.ibase)+'_meants_gm.txt',\
-                            '-m',self.data.boldgm])
-        p.communicate()
-        p=subprocess.Popen(['fslmeants','-i',self.ibase,\
-                            '-o',fileutils.removext(self.ibase)+'_meants_wm.txt',\
-                            '-m',self.data.boldwm])
-        p.communicate()        
-
-        self.data.imeantscsf=fileutils.removext(self.ibase)+'_meants_csf.txt'
-        self.data.imeantsgm=fileutils.removext(self.ibase)+'_meants_gm.txt'
-        self.data.imeantswm=fileutils.removext(self.ibase)+'_meants_wm.txt'        
+        self.data.calc_meants()
         
         if len(self.seedconnzthresh)>0:
             #fslmeants computes mean over pixels>0 on the mask, so first take abs
@@ -315,16 +249,8 @@ class Pipeline:
                                 '-o',fileutils.removext(self.output)+'_meants_net.txt',\
                                 '-m',fileutils.removext(self.seedconnzthresh)+'___'])
             p.communicate()
-            
-
-            p=subprocess.Popen(['fslmeants','-i',self.ibase,\
-                                '-o',fileutils.removext(self.ibase)+'_meants_net.txt',\
-                                '-m',fileutils.removext(self.seedconnzthresh)+'___'])
-            p.communicate()            
             # remove the temp abs mask
-            os.remove(fileutils.removext(self.seedconnzthresh)+'___.nii.gz')
-            
+            fileutils.removefile(fileutils.removext(self.seedconnzthresh)+'___.nii.gz')
             self.data.meantsnet=fileutils.removext(self.output)+'_meants_net.txt'
-            self.data.imeantsnet=fileutils.removext(self.ibase)+'_meants_net.txt'
             
         self.meantscomputed=True

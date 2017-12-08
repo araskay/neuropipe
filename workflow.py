@@ -55,14 +55,12 @@ class Data:
         self.mni2struct=''
         self.func2mni=''
         self.mni2func=''
+        self.meants=''
         self.meantscsf=''
         self.meantsgm=''
         self.meantswm=''
         self.meantsnet=''
-        self.imeantscsf=''
-        self.imeantsgm=''
-        self.imeantswm=''
-        self.imeantsnet=''
+        self.meantscsfwm=''
         self.aseg=''
         self.wmseg=''
         self.regintermed=''
@@ -103,6 +101,80 @@ class Data:
             self.structuralwm=fileutils.removext(self.structural)+'_wm.nii.gz'
             self.structuralgm=fileutils.removext(self.structural)+'_gm.nii.gz'
             
+    def parcellate_bold(self):
+        if self.structuralcsf=='' or self.structuralgm=='' or self.structuralwm=='':
+            self.parcellate_structural()
+        if self.struct2func=='':
+            self.transform_struct2func()
+        
+        p=subprocess.Popen(['flirt','-in',self.structuralcsf,\
+                            '-ref',self.bold,\
+                            '-applyxfm','-init',self.struct2func,\
+                            '-out',fileutils.removext(self.bold)+'_csf'])
+        p.communicate()
+        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_csf','-thr','0.5','-bin',fileutils.removext(self.bold)+'_csf'])
+        p.communicate()
+        self.boldcsf=fileutils.removext(self.bold)+'_csf.nii.gz'
+        
+        p=subprocess.Popen(['flirt','-in',self.structuralgm,\
+                            '-ref',self.bold,\
+                            '-applyxfm','-init',self.struct2func,\
+                            '-out',fileutils.removext(self.bold)+'_gm'])
+        p.communicate()
+        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_gm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_gm'])
+        p.communicate()
+        self.boldgm=fileutils.removext(self.bold)+'_gm.nii.gz'
+        
+        p=subprocess.Popen(['flirt','-in',self.structuralwm,\
+                            '-ref',self.bold,\
+                            '-applyxfm','-init',self.struct2func,\
+                            '-out',fileutils.removext(self.bold)+'_wm'])
+        p.communicate()         
+        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_wm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_wm'])
+        p.communicate()
+        self.boldwm=fileutils.removext(self.bold)+'_wm.nii.gz'          
+    
+    def calc_meants(self):
+        if len(self.brainmask)>0:
+            p=subprocess.Popen(['fslmeants','-i',self.bold,\
+                                '-o',fileutils.removext(self.bold)+'_meants.txt',\
+                                '-m',self.brainmask])
+            p.communicate()
+            self.meants=fileutils.removext(self.bold)+'_meants.txt'
+        
+        if len(self.boldcsf)>0:
+            p=subprocess.Popen(['fslmeants','-i',self.bold,\
+                                '-o',fileutils.removext(self.bold)+'_meants_csf.txt',\
+                                '-m',self.boldcsf])
+            p.communicate()
+            self.meantscsf=fileutils.removext(self.bold)+'_meants_csf.txt'
+            
+        if len(self.boldgm)>0:
+            p=subprocess.Popen(['fslmeants','-i',self.bold,\
+                                '-o',fileutils.removext(self.bold)+'_meants_gm.txt',\
+                                '-m',self.boldgm])
+            p.communicate()
+            self.meantsgm=fileutils.removext(self.bold)+'_meants_gm.txt'
+        
+        if len(self.boldwm)>0:
+            p=subprocess.Popen(['fslmeants','-i',self.bold,\
+                                '-o',fileutils.removext(self.bold)+'_meants_wm.txt',\
+                                '-m',self.boldwm])
+            p.communicate()        
+            self.meantswm=fileutils.removext(self.bold)+'_meants_wm.txt'         
+    
+        if len(self.boldcsf)>0 and len(self.boldwm)>0:
+            # csf and wm meants
+            # first add csf and wm rois into one roi
+            p=subprocess.Popen(['fslmaths',self.boldcsf,'-add',self.boldwm,'-bin',fileutils.removext(self.bold)+'_csfwm'])
+            p.communicate()
+            # now compute meants on this roi
+            p=subprocess.Popen(['fslmeants','-i',self.bold,\
+                                '-o',fileutils.removext(self.bold)+'_meants_csfwm.txt',\
+                                '-m',fileutils.removext(self.bold)+'_csfwm'])
+            p.communicate()        
+            self.meantscsfwm=fileutils.removext(self.bold)+'_meants_csfwm.txt'              
+    
     def calc_boldtmean(self):
         p=subprocess.Popen(['fslmaths',self.bold,'-Tmean',fileutils.removext(self.bold)+'_tmean'])
         p.communicate()
