@@ -84,8 +84,8 @@ class PreprocessingStep:
                                       fileutils.addniigzext(self.ibase)])
             (output,error)=process.communicate()
             fileutils.afni2nifti(fileutils.removeniftiext(self.obase))
-            os.remove(fileutils.removeniftiext(self.obase)+'_temp_brainmask.nii.gz')
-            os.remove(fileutils.removeniftiext(self.obase)+'_temp_mindisplacementInd_0ref_motbrick.txt')
+            fileutils.removefile(fileutils.removeniftiext(self.obase)+'_temp_brainmask.nii.gz')
+            fileutils.removefile(fileutils.removeniftiext(self.obase)+'_temp_mindisplacementInd_0ref_motbrick.txt')
             
         elif (self.name == 'retroicor'):
             physparams=[]
@@ -95,7 +95,7 @@ class PreprocessingStep:
             if self.data.resp != '':
                 physparams.append('-resp')
                 physparams.append(self.data.resp)            
-            process=subprocess.Popen(['3dretroicor', '-prefix', fileutils.removeniftiext(self.obase)]+ \
+            process=subprocess.Popen(['3dretroicor', '-prefix', fileutils.removeniftiext(self.obase),'-overwrite']+ \
                                      self.params + physparams + \
                                      [fileutils.addniigzext(self.ibase)])
             (output,error)=process.communicate()
@@ -104,7 +104,7 @@ class PreprocessingStep:
         elif (self.name == '3dSkullStrip'):
             process=subprocess.Popen(['3dSkullStrip',\
                                       '-input',fileutils.addniigzext(self.ibase),\
-                                      '-prefix', fileutils.removeniftiext(self.obase)])
+                                      '-prefix', fileutils.removeniftiext(self.obase),'-overwrite'])
             process.communicate()
             fileutils.afni2nifti(fileutils.removeniftiext(self.obase))
         
@@ -119,7 +119,7 @@ class PreprocessingStep:
         elif (self.name == 'brainExtractAFNI'):
             # first use 3dAutomask to create a brain mask
             process=subprocess.Popen(['3dAutomask', '-q', \
-                                      '-prefix',fileutils.removeniftiext(self.obase)+'__brainmask', \
+                                      '-prefix',fileutils.removeniftiext(self.obase)+'__brainmask','-overwrite', \
                                       fileutils.addniigzext(self.ibase)])
             (output,error)=process.communicate()
             fileutils.afni2nifti(fileutils.removeniftiext(self.obase)+'__brainmask')
@@ -143,12 +143,12 @@ class PreprocessingStep:
                                 '-mas',fileutils.removeniftiext(self.obase)+'__tmean_mask',\
                                 self.obase])
             p.communicate()
-            os.remove(fileutils.removeniftiext(self.obase)+'__tmean.nii.gz')
+            fileutils.removefile(fileutils.removeniftiext(self.obase)+'__tmean.nii.gz')
             self.data.brainmask=fileutils.removeniftiext(self.obase)+'__tmean_mask.nii.gz'
             
         elif (self.name == '3dFourier'):
             p=subprocess.Popen(['3dFourier']+self.params+\
-                               ['-prefix',fileutils.removeniftiext(self.obase),fileutils.addniigzext(self.ibase)])
+                               ['-prefix',fileutils.removeniftiext(self.obase),'-overwrite',fileutils.addniigzext(self.ibase)])
             p.communicate()
             fileutils.afni2nifti(fileutils.removeniftiext(self.obase))                         
          
@@ -178,7 +178,7 @@ class PreprocessingStep:
             tr=str(hdr.get_zooms()[3]*1000)
             if len(self.data.slicetiming)>0:
                 p=subprocess.Popen(['3dTshift','-TR',tr,'-tpattern','@'+self.data.slicetiming,\
-                                    '-prefix',fileutils.removext(self.obase), fileutils.addniigzext(self.ibase)])
+                                    '-prefix',fileutils.removext(self.obase), '-overwrite', fileutils.addniigzext(self.ibase)])
                 p.communicate()
                 fileutils.afni2nifti(fileutils.removeniftiext(self.obase))
             else:
@@ -213,8 +213,8 @@ class PreprocessingStep:
                                       'quit;'])
             (output,error)=process.communicate()
             # remove unzipped nifti files
-            os.remove(fileutils.removext(self.ibase)+'.nii')
-            os.remove(fileutils.removext(self.data.brainmask)+'.nii')
+            fileutils.removefile(fileutils.removext(self.ibase)+'.nii')
+            fileutils.removefile(fileutils.removext(self.data.brainmask)+'.nii')
             # zip phycaa output to produce nii.gz file
             fileutils.zipnifti(fileutils.removext(self.obase))
         
@@ -344,41 +344,41 @@ class PreprocessingStep:
          
     def removeofiles(self):
         if (self.name == 'mcflirt'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'ssmooth'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'motcor'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'retroicor'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == '3dSkullStrip'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'bet'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'fslreorient2std'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'brainExtractAFNI'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'brainExtractFSL'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == '3dFourier'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'motreg'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'slicetimer'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'stcor'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'tcompcor'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'fsl_motion_outliers'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'lpf'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'hpf'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'bpf'):
-            os.remove(fileutils.addniigzext(self.obase))
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         else:
             sys.exit('Error: preprocessing step not defined')    
 

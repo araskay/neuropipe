@@ -3,6 +3,10 @@
 import os, shutil
 import subprocess
 
+def removefile(filename):
+    if os.path.exists(filename):
+        os.remove(filename)
+
 def removext(filename):
     noext=os.path.splitext(filename)[0]
     if noext==filename:
@@ -32,26 +36,26 @@ def afni2nifti(filename):
     # input: file name without extension or +orig/+tlrc
     # also removes the afni after conversion
     if os.path.exists(filename+'+orig.HEAD'):
-        process=subprocess.Popen(['3dAFNItoNIFTI', '-prefix', filename, filename+'+orig'])
+        process=subprocess.Popen(['3dAFNItoNIFTI', '-prefix', filename, '-overwrite', filename+'+orig'])
         (output,error)=process.communicate()
         process=subprocess.Popen(['gzip', '-f', filename+'.nii'])
         (output,error)=process.communicate()
         # remove afni files- it is important since most AFNI functions do not overwrite existing files
-        os.remove(filename+'+orig.HEAD')
-        os.remove(filename+'+orig.BRIK')
+        removefile(filename+'+orig.HEAD')
+        removefile(filename+'+orig.BRIK')
     elif os.path.exists(filename+'+tlrc.HEAD'):
-        process=subprocess.Popen(['3dAFNItoNIFTI', '-prefix', filename, filename+'+tlrc'])
+        process=subprocess.Popen(['3dAFNItoNIFTI', '-prefix', filename, '-overwrite', filename+'+tlrc'])
         (output,error)=process.communicate()
         process=subprocess.Popen(['gzip', '-f', filename+'.nii'])
         (output,error)=process.communicate()
         # remove afni files- it is important since most AFNI functions do not overwrite existing files
-        os.remove(filename+'+tlrc.HEAD')
-        os.remove(filename+'+tlrc.BRIK')
+        removefile(filename+'+tlrc.HEAD')
+        removefile(filename+'+tlrc.BRIK')
         
 def mgztonifti(filename):
     p=subprocess.Popen(['mri_convert',filename,removext(filename)+'.nii.gz'])
     p.communicate()
-    os.remove(filename)
+    removefile(filename)
     
 def unzipnifti(filename):
     p=subprocess.Popen(['fslchfiletype','NIFTI',filename,removext(filename)+'.nii'])
