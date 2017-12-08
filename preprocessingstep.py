@@ -341,7 +341,7 @@ class PreprocessingStep:
             
         elif self.name=='globalsigreg':
             if self.data.brainmask=='':
-                print('WARNING: globalsigreg must be preceded by brain extraction. Global signal not regressed')
+                sys.exit('ERROR: globalsigreg must be preceded by brain extraction.')
             else:
                 data=copy.deepcopy(self.data)
                 data.bold=self.ibase
@@ -427,6 +427,14 @@ class PreprocessingStep:
         elif (self.name == 'hpf'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'bpf'):
+            fileutils.removefile(fileutils.addniigzext(self.obase))
+        elif (self.name == 'globalsigreg'):
+            fileutils.removefile(fileutils.addniigzext(self.obase))
+        elif (self.name == 'csfreg'):
+            fileutils.removefile(fileutils.addniigzext(self.obase))
+        elif (self.name == 'wmreg'):
+            fileutils.removefile(fileutils.addniigzext(self.obase))
+        elif (self.name == 'csfwmreg'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
         else:
             sys.exit('Error: preprocessing step not defined')    
