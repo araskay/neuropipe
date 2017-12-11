@@ -480,7 +480,10 @@ def permonoff(l):
         for q in permutations(p):
             yield(q)
         
-
+def select(l):
+    for p in l:
+        yield([p])
+    
 def concatstepslists(l1,l2):
     # NOTE: inputs must be lists of lists NOT generators
     if len(l1)==0 and len(l2)>0:

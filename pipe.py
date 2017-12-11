@@ -7,7 +7,8 @@ def printhelp():
     print('--const <pipe file>: specify a pipeline file to be used to form constant section of the optimized pipeline')
     print('--perm <pipe file>: specify a pipeline file to be used to form permutations section of the optimized pipeline')
     print('--onoff <pipe file>: specify a pipeline file to be used to form on/off section of the optimized pipeline')
-    print('--permonoff <pipe file>: on/off combinations and their permutations')    
+    print('--permonoff <pipe file>: on/off combinations and their permutations')
+    print('--select <pipe file>: select one step from the pipe file at a time')
     print('--combine: flag specifying that all new (permutation/on-off/constant) steps are combined with the previous ones from this point on (Default) (See example below)')
     print('--add: flag specifying that all new (permutation/on-off/constant) steps are added to the previous pipelines from this point on (Default is combine) (See example below)')
     print('--fixed <pipe file>: specify a fixed pipeline for the calculation of between subject metrics')
@@ -60,7 +61,7 @@ envvars=workflow.EnvVars()
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=', 'outputsubjects=', 'keepintermed', 'runpipename=', 'fixpipename=', 'optpipename='])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'select=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=', 'outputsubjects=', 'keepintermed', 'runpipename=', 'fixpipename=', 'optpipename='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -98,6 +99,14 @@ for (opt,arg) in opts:
             optimalpipesteps=list(preprocessingstep.concatstepslists(optimalpipesteps,\
                                                                      list(preprocessingstep.permonoff(steps))))
 
+    elif opt in ('--select'):
+        steps=preprocessingstep.makesteps(arg)
+        if addsteps:
+            optimalpipesteps+=list(preprocessingstep.select(steps))
+        else:
+            optimalpipesteps=list(preprocessingstep.concatstepslists(optimalpipesteps,\
+                                                                     list(preprocessingstep.select(steps))))
+        
     elif opt in ('--const'):
         steps=preprocessingstep.makesteps(arg)
         if addsteps:
