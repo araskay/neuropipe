@@ -15,7 +15,7 @@
 % per subject basis
 
 
-basepath='/u1/work/hpc3820/data/healthyvolunteer/processed/physcor/';
+basepath='/global/home/hpc3820/data/healthyvolunteer/processed/physcor/';
 ndiscard=10;
 TR=0.380; % seconds (for current fast EPI data)
 
@@ -23,10 +23,10 @@ TR=0.380; % seconds (for current fast EPI data)
 %% compute relative powers
 % read the following frequencies on the resp and puls frequency specra
 
-fin=fopen('/home/hpc3820/data/healthyvolunteer/physio/physio.csv');
-fcardout=fopen('/u1/work/hpc3820/data/healthyvolunteer/processed/physcor/cardPowerSpectra.csv','w');
-frespout=fopen('/u1/work/hpc3820/data/healthyvolunteer/processed/physcor/respPowerSpectra.csv','w');
-flowout=fopen('/u1/work/hpc3820/data/healthyvolunteer/processed/physcor/lowPowerSpectra.csv','w');
+fin=fopen('/global/home/hpc3820/data/healthyvolunteer/physio/physio.csv');
+fcardout=fopen('/global/home/hpc3820/data/healthyvolunteer/processed/physcor/cardPowerSpectra.csv','w');
+frespout=fopen('/global/home/hpc3820/data/healthyvolunteer/processed/physcor/respPowerSpectra.csv','w');
+flowout=fopen('/global/home/hpc3820/data/healthyvolunteer/processed/physcor/lowPowerSpectra.csv','w');
 
 % read the header
 h=textscan(fin,'%s%s%s%s%s',1,'delimiter',',');
