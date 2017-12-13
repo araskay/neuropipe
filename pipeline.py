@@ -159,7 +159,6 @@ class Pipeline:
     def calcseedconn(self,p_thresh):
         if not self.pipelinerun:
             self.run()
-        # do not threshold
         (self.seedconnr,self.seedconnz,self.seedconrthresh,self.seedconnzthresh,padj,self.seedcov,self.variance)=seedcorr.calcseedcorr(fileutils.addniigzext(self.output), fileutils.addniigzext(self.data.connseed),self.output, p_thresh)
         
         self.seedconnrmni152=''
