@@ -156,10 +156,18 @@ class PreprocessingStep:
         elif (self.name == 'motreg'):
             if self.data.motpar=='':
                 sys.exit('Cannot run regmot- no motion parameters available. Need to either provide motion parameters or have mcflirt run before regmot')
-            p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
-                                '-d',self.data.motpar,\
-                                '-o',fileutils.removeniftiext(self.obase)+'__motglm',
-                                '--out_res='+self.obase])
+            if self.data.brainmask=='':
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',self.data.motpar,\
+                                    '-o',fileutils.removeniftiext(self.obase)+'__motglm',\
+                                    '--out_res='+self.obase])
+            else:
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',self.data.motpar,\
+                                    '-m',self.data.brainmask,\
+                                    '-o',fileutils.removeniftiext(self.obase)+'__motglm',\
+                                    '--out_res='+self.obase])
+                
             p.communicate()
             self.data.motglm=fileutils.removeniftiext(self.obase)+'__motglm'
         
@@ -238,7 +246,18 @@ class PreprocessingStep:
             ccor.run()
             shutil.move('mask_000.nii.gz',fileutils.removext(self.obase)+'__hivarmask.nii.gz') # cannot set output path for high variance mask
             
-            p=subprocess.Popen(['fsl_glm','-i',self.ibase,'-d',fileutils.removext(self.obase)+'__components.txt','-o',fileutils.removext(self.obase)+'__regmodel','--out_res='+self.obase,'-m',self.data.brainmask])
+            if self.data.brainmask=='':
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',fileutils.removext(self.obase)+'__components.txt',\
+                                    '-o',fileutils.removext(self.obase)+'__regmodel',\
+                                    '--out_res='+self.obase])
+            else:
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',fileutils.removext(self.obase)+'__components.txt',\
+                                    '-m',self.data.brainmask,\
+                                    '-o',fileutils.removext(self.obase)+'__regmodel',\
+                                    '--out_res='+self.obase])
+                
             p.communicate()
 
         elif self.name=='fsl_motion_outliers':
@@ -346,10 +365,17 @@ class PreprocessingStep:
                 data=copy.deepcopy(self.data)
                 data.bold=self.ibase
                 data.calc_meants()
-                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
-                                    '-d',data.meants,\
-                                    '-o',fileutils.removext(self.obase)+'__globalsigglm',
-                                    '--out_res='+self.obase])
+                if self.data.brainmask=='':
+                    p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                        '-d',data.meants,\
+                                        '-o',fileutils.removext(self.obase)+'__globalsigglm',\
+                                        '--out_res='+self.obase])
+                else:
+                    p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                        '-d',data.meants,\
+                                        '-m',self.data.brainmask,\
+                                        '-o',fileutils.removext(self.obase)+'__globalsigglm',\
+                                        '--out_res='+self.obase])                    
                 p.communicate()                
 
         elif self.name=='csfreg':
@@ -358,10 +384,18 @@ class PreprocessingStep:
             data=copy.deepcopy(self.data)
             data.bold=self.ibase
             data.calc_meants()
-            p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
-                                '-d',data.meantscsf,\
-                                '-o',fileutils.removext(self.obase)+'__csfglm',
-                                '--out_res='+self.obase])
+            if self.data.brainmask=='':
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',data.meantscsf,\
+                                    '-o',fileutils.removext(self.obase)+'__csfglm',\
+                                    '--out_res='+self.obase])
+            else:
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',data.meantscsf,\
+                                    '-m',self.data.brainmask,\
+                                    '-o',fileutils.removext(self.obase)+'__csfglm',\
+                                    '--out_res='+self.obase])
+        
             p.communicate()                 
             
         elif self.name=='wmreg':
@@ -370,10 +404,17 @@ class PreprocessingStep:
             data=copy.deepcopy(self.data)
             data.bold=self.ibase
             data.calc_meants()
-            p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
-                                '-d',data.meantswm,\
-                                '-o',fileutils.removext(self.obase)+'__wmglm',
-                                '--out_res='+self.obase])
+            if self.data.brainmask=='':
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',data.meantswm,\
+                                    '-o',fileutils.removext(self.obase)+'__wmglm',\
+                                    '--out_res='+self.obase])
+            else:
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',data.meantswm,\
+                                    '-m',self.data.brainmask,\
+                                    '-o',fileutils.removext(self.obase)+'__wmglm',\
+                                    '--out_res='+self.obase])                
             p.communicate()
             
         elif self.name=='csfwmreg':
@@ -382,10 +423,17 @@ class PreprocessingStep:
             data=copy.deepcopy(self.data)
             data.bold=self.ibase
             data.calc_meants()
-            p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
-                                '-d',data.meantscsfwm,\
-                                '-o',fileutils.removext(self.obase)+'__csfwmglm',
-                                '--out_res='+self.obase])
+            if self.data.brainmask=='':
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',data.meantscsfwm,\
+                                    '-o',fileutils.removext(self.obase)+'__csfwmglm',\
+                                    '--out_res='+self.obase])
+            else:
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',data.meantscsfwm,\
+                                    '-m',self.data.brainmask,\
+                                    '-o',fileutils.removext(self.obase)+'__csfwmglm',\
+                                    '--out_res='+self.obase])                
             p.communicate()             
             
         else:
