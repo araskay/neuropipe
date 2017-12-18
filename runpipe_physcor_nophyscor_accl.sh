@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH -c 1
-#SBATCH --mem=64000
+#SBATCH -c 8
+#SBATCH --mem=128000
 #SBATCH -t 72:0:0
 #SBATCH -o runpipe_physcor_nophyscor_accl.o
 #SBATCH -e runpipe_physcor_nophyscor_accl.e

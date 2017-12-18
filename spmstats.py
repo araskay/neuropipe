@@ -37,8 +37,8 @@ def prepostmatchedpairst(prespmfiles,postspmfiles,ofile):
     
     # adjust for multiple comparisons    
     p_fdr=mtest.multipletests(p,p_thresh,'fdr_bh')    
-    #t[~p_fdr[0]]=0
-    t[p>p_thresh]=np.nan
+    t[~p_fdr[0]]=np.nan
+    #t[p>p_thresh]=np.nan
 
     # write t to file
     t=np.reshape(t,(img.shape[0],img.shape[1],img.shape[2]))

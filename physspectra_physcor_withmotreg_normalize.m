@@ -25,9 +25,9 @@ TR=0.380; % seconds (for current fast EPI data)
 % read the following frequencies on the resp and puls frequency specra
 
 fin=fopen('/global/home/hpc3820/data/healthyvolunteer/physio/physio.csv');
-fcardout=fopen('/global/home/hpc3820/data/healthyvolunteer/processed/physcor/cardPowerSpectra_withmotreg_allsubjs.csv','w');
-frespout=fopen('/global/home/hpc3820/data/healthyvolunteer/processed/physcor/respPowerSpectra_withmotreg_allsubjs.csv','w');
-flowout=fopen('/global/home/hpc3820/data/healthyvolunteer/processed/physcor/lowPowerSpectra_withmotreg_allsubjs.csv','w');
+fcardout=fopen('/global/home/hpc3820/data/healthyvolunteer/processed/physcor/cardPowerSpectra_withmotreg_normalize_allsubjs.csv','w');
+frespout=fopen('/global/home/hpc3820/data/healthyvolunteer/processed/physcor/respPowerSpectra_withmotreg_normalize_allsubjs.csv','w');
+flowout=fopen('/global/home/hpc3820/data/healthyvolunteer/processed/physcor/lowPowerSpectra_withmotreg_normalize_allsubjs.csv','w');
 
 % read the header
 h=textscan(fin,'%s%s%s%s%s',1,'delimiter',',');
@@ -95,6 +95,25 @@ for i=1:n
     Fmeants_globalsigreg=fft(meants_globalsigreg);
     Fmeants_csfwmreg=fft(meants_csfwmreg);
     
+    % normalize such that the area under psd above 0.01 Hz equals 1
+
+    f_min=0.01;
+    
+    l=length(Fmeants_ret);
+    fs=1/TR;
+
+    f_min_ind=ceil(f_min/(fs/2)*l/2);
+
+    Fmeants_ret=Fmeants_ret/sum(abs(Fmeants_ret(f_min_ind:end)));
+    Fmeants_comp=Fmeants_comp/sum(abs(Fmeants_comp(f_min_ind:end)));
+    Fmeants_retcomp=Fmeants_retcomp/sum(abs(Fmeants_retcomp(f_min_ind:end)));
+    Fmeants_compret=Fmeants_compret/sum(abs(Fmeants_compret(f_min_ind:end)));
+    Fmeants_globalsigreg=Fmeants_globalsigreg/sum(abs(Fmeants_globalsigreg(f_min_ind:end)));
+    Fmeants_csfwmreg=Fmeants_csfwmreg/sum(abs(Fmeants_csfwmreg(f_min_ind:end)));
+    Fmeants_nophyscor=Fmeants_nophyscor/sum(abs(Fmeants_nophyscor(f_min_ind:end)));
+
+
+
     %% plot
     l=length(Fmeants_ret);
     fs=1/TR;
@@ -172,29 +191,29 @@ for i=1:n
     flow_min_ind=ceil(flow_min/(fs/2)*l/2);
     flow_max_ind=ceil(flow_max/(fs/2)*l/2);
     
-    respRelativePower_ret=sum(abs(Fmeants_ret(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    respRelativePower_comp=sum(abs(Fmeants_comp(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    respRelativePower_retcomp=sum(abs(Fmeants_retcomp(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    respRelativePower_compret=sum(abs(Fmeants_compret(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    respRelativePower_globalsigreg=sum(abs(Fmeants_globalsigreg(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    respRelativePower_csfwmreg=sum(abs(Fmeants_csfwmreg(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    respRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(fresp_min_ind:fresp_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
+    respRelativePower_ret=sum(abs(Fmeants_ret(fresp_min_ind:fresp_max_ind)).^2);
+    respRelativePower_comp=sum(abs(Fmeants_comp(fresp_min_ind:fresp_max_ind)).^2);
+    respRelativePower_retcomp=sum(abs(Fmeants_retcomp(fresp_min_ind:fresp_max_ind)).^2);
+    respRelativePower_compret=sum(abs(Fmeants_compret(fresp_min_ind:fresp_max_ind)).^2);
+    respRelativePower_globalsigreg=sum(abs(Fmeants_globalsigreg(fresp_min_ind:fresp_max_ind)).^2);
+    respRelativePower_csfwmreg=sum(abs(Fmeants_csfwmreg(fresp_min_ind:fresp_max_ind)).^2);
+    respRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(fresp_min_ind:fresp_max_ind)).^2);
 
-    cardRelativePower_ret=sum(abs(Fmeants_ret(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    cardRelativePower_comp=sum(abs(Fmeants_comp(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    cardRelativePower_retcomp=sum(abs(Fmeants_retcomp(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    cardRelativePower_compret=sum(abs(Fmeants_compret(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    cardRelativePower_globalsigreg=sum(abs(Fmeants_globalsigreg(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    cardRelativePower_csfwmreg=sum(abs(Fmeants_csfwmreg(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    cardRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(fcard_min_ind:fcard_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
+    cardRelativePower_ret=sum(abs(Fmeants_ret(fcard_min_ind:fcard_max_ind)).^2);
+    cardRelativePower_comp=sum(abs(Fmeants_comp(fcard_min_ind:fcard_max_ind)).^2);
+    cardRelativePower_retcomp=sum(abs(Fmeants_retcomp(fcard_min_ind:fcard_max_ind)).^2);
+    cardRelativePower_compret=sum(abs(Fmeants_compret(fcard_min_ind:fcard_max_ind)).^2);
+    cardRelativePower_globalsigreg=sum(abs(Fmeants_globalsigreg(fcard_min_ind:fcard_max_ind)).^2);
+    cardRelativePower_csfwmreg=sum(abs(Fmeants_csfwmreg(fcard_min_ind:fcard_max_ind)).^2);
+    cardRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(fcard_min_ind:fcard_max_ind)).^2);
     
-    lowRelativePower_ret=sum(abs(Fmeants_ret(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    lowRelativePower_comp=sum(abs(Fmeants_comp(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    lowRelativePower_retcomp=sum(abs(Fmeants_retcomp(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    lowRelativePower_compret=sum(abs(Fmeants_compret(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    lowRelativePower_globalsigreg=sum(abs(Fmeants_globalsigreg(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    lowRelativePower_csfwmreg=sum(abs(Fmeants_csfwmreg(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
-    lowRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(flow_min_ind:flow_max_ind)).^2)/sum(abs(Fmeants_nophyscor).^2);
+    lowRelativePower_ret=sum(abs(Fmeants_ret(flow_min_ind:flow_max_ind)).^2);
+    lowRelativePower_comp=sum(abs(Fmeants_comp(flow_min_ind:flow_max_ind)).^2);
+    lowRelativePower_retcomp=sum(abs(Fmeants_retcomp(flow_min_ind:flow_max_ind)).^2);
+    lowRelativePower_compret=sum(abs(Fmeants_compret(flow_min_ind:flow_max_ind)).^2);
+    lowRelativePower_globalsigreg=sum(abs(Fmeants_globalsigreg(flow_min_ind:flow_max_ind)).^2);
+    lowRelativePower_csfwmreg=sum(abs(Fmeants_csfwmreg(flow_min_ind:flow_max_ind)).^2);
+    lowRelativePower_nophyscor=sum(abs(Fmeants_nophyscor(flow_min_ind:flow_max_ind)).^2);
     
     card=[cardRelativePower_ret,cardRelativePower_comp,cardRelativePower_retcomp,cardRelativePower_compret,cardRelativePower_globalsigreg,cardRelativePower_csfwmreg,cardRelativePower_nophyscor];
     fprintf(fcardout,'%s,',subject);
