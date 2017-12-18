@@ -192,9 +192,11 @@ class Pipeline:
         if self.seedconnr=='' or self.seedconnz=='':
             sys.exit('Error in seedconn2mni: Seed connectivity not computed. Need to call calcseedconn first')
         # first get transformation parameters on the output of the pipeline
+      
         self.data.transform_func2mni()
 
         # then use the parameters to transform the SPMs
+
         p=subprocess.Popen(['flirt','-in',self.seedconnz,\
                             '-ref',self.data.envvars.mni152,\
                             '-applyxfm','-init',self.data.func2mni,\

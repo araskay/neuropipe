@@ -90,17 +90,34 @@ class PreprocessingStep:
             
         elif (self.name == 'retroicor'):
             physparams=[]
+            otherparams=[]
             if self.data.card != '':
                 physparams.append('-card')
                 physparams.append(self.data.card)
             if self.data.resp != '':
                 physparams.append('-resp')
-                physparams.append(self.data.resp)            
-            process=subprocess.Popen(['3dretroicor', '-prefix', fileutils.removeniftiext(self.obase),'-overwrite']+ \
-                                     self.params + physparams + \
+                physparams.append(self.data.resp)
+            if '-ignore' in self.params:
+                otherparams.append('-ignore')
+                otherparams.append(self.params[self.params.index('-ignore')+1])
+            if '-threshold' in self.params:
+                otherparams.append('-threshold')
+                otherparams.append(self.params[self.params.index('-threshold')+1])
+            if '-order' in self.params:
+                otherparams.append('-order')
+                otherparams.append(self.params[self.params.index('-order')+1])
+            if '-cardphase' in self.params:
+                otherparams.append('-cardphase')
+                otherparams.append(fileutils.removext(self.obase)+'_cardphase.txt')
+            if '-respphase' in self.params:
+                otherparams.append('-respphase')
+                otherparams.append(fileutils.removext(self.obase)+'_respphase.txt')
+            
+            process=subprocess.Popen(['3dretroicor', '-prefix', fileutils.removext(self.obase),'-overwrite']+ \
+                                     physparams + otherparams + \
                                      [fileutils.addniigzext(self.ibase)])
             (output,error)=process.communicate()
-            fileutils.afni2nifti(fileutils.removeniftiext(self.obase))           
+            fileutils.afni2nifti(fileutils.removext(self.obase))           
         
         elif (self.name == '3dSkullStrip'):
             process=subprocess.Popen(['3dSkullStrip',\
@@ -230,19 +247,20 @@ class PreprocessingStep:
         elif self.name=='tcompcor':
             # currently ignore does not work, since nipype's TCompCor does not recognize ignore_initial_volumes
             if '-ignore' in self.params:
-                ignore=float(self.params[self.params.index('-ignore')+1])
+                ignore=int(self.params[self.params.index('-ignore')+1])
             else:
                 ignore=0
             ccor = TCompCor()
             ccor.inputs.realigned_file = fileutils.addniigzext(self.ibase)
-            ccor.inputs.mask_files = self.data.brainmask
+            if self.data.brainmask != '':
+                ccor.inputs.mask_files = self.data.brainmask
 
             ccor.inputs.components_file=fileutils.removext(self.obase)+'__components.txt'
-            #cc.inputs.header_prefix=''
+            #ccor.inputs.header_prefix='' # not sure what this does
             ccor.inputs.num_components=6 # based on Behzadi's paper, also nipype default
             ccor.inputs.percentile_threshold=0.02 # based on Behzadi's paper, also nipype default
-            #ccor.inputs.ignore_initial_volumes=ignore
-            #cc.inputs.pre_filter = False # just remove mean, do not do further detrending
+            ccor.inputs.ignore_initial_volumes=ignore
+            ccor.inputs.pre_filter = False # just remove mean, do not do further detrending
             ccor.run()
             shutil.move('mask_000.nii.gz',fileutils.removext(self.obase)+'__hivarmask.nii.gz') # cannot set output path for high variance mask
             

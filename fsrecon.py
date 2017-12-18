@@ -5,6 +5,7 @@ import workflow, getopt,sys,fileutils,shutil,os, subprocess
 def printhelp():
     print('Usage: fsrecon.py --input <input subject file> --output <output subject file> [--directive <freesurfer recon-all directive to be used>]')
     print('Unless input subjects file specifies fsrecondir, freesurfer recon-all is performed and fsrecondir updated in the output subjects file.')
+    print('The structural field of the subjects file is updated to the nifti-converted fs recon-all brain extracted structural.')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 ifile=''
@@ -14,7 +15,7 @@ directive=''
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',\
-                                ['help','input=', 'output=', 'directive'])
+                                ['help','input=', 'output=', 'directive='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -45,7 +46,7 @@ for subj in subjects:
                 p=subprocess.Popen(['recon-all','-sd',opath,'-subjid','__fsrecon','-i',run.data.structural,'-'+directive])
                 p.communicate()
                 run.data.fsrecondir=opath+'/__fsrecon'
-            fsrecondir=recondir=os.path.abspath(run.data.fsrecondir) # just to remove possible end slash (/) for consistency
+            fsrecondir=os.path.abspath(run.data.fsrecondir) # just to remove possible end slash (/) for consistency
             p=subprocess.Popen(['mri_convert',fsrecondir+'/mri/brainmask.mgz',\
                                 opath+'/'+fileutils.removext(oname)+'_brainmask.nii.gz'])
             p.communicate()

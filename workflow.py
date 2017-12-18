@@ -255,7 +255,7 @@ class Data:
                             '-ref',self.envvars.mni152,\
                             '-applyxfm','-init',self.func2mni,\
                             '-out',fileutils.removext(self.bold)+'_func2mni'])
-        p.communicate()     
+        p.communicate()
 
     def transform_mni2func(self):
         if self.mni2func=='':

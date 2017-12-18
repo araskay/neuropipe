@@ -274,16 +274,14 @@ if len(runpipesteps)>0:
     runwf.run()
     if len(outputsubjectsfile)>0:
         workflow.savesubjects(outputsubjectsfile,runwf.subjects)
+
 if len(optimalpipesteps)>0:
     seqname=optimalwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
     optimalwf.computebetweensubjectreproducibility(seqname)
-    if len(outputsubjectsfile)>0:
-        workflow.savesubjects(outputsubjectsfile,optimalwf.subjects)    
+  
 if len(fixedpipesteps)>0:
     seqname=fixedwf.subjects[0].sessions[0].runs[0].seqname # pick the 1st subject's 1st session's 1st run's sequnce
-    fixedwf.computebetweensubjectreproducibility(seqname)
-    if len(outputsubjectsfile)>0:
-        workflow.savesubjects(outputsubjectsfile,fixedwf.subjects)    
+    fixedwf.computebetweensubjectreproducibility(seqname)  
 
 # save the results
 if len(optimalpipesteps)>0:

@@ -1,7 +1,10 @@
 import workflow, getopt,sys,os,fileutils,subprocess,pipeline,copy,preprocessingstep
 
 def printhelp():
-    print('usage: makeconnseed.py --input <input subject file> --output <output subject file> --seed <seed file> --template <template file> [--pipeline <pipe file> --binary[=FALSE] --boldregdof <dof> --structregdof <dof> --boldregcost <cost func> --structregcost <cost func>]\n<seed file> must be in the same space as the <template file> (e.g., both in MNI). Unless --binary used, by default the code assumes a probabilistic seed file with percentage values (i.e., 0< and <100).')
+    print('usage: makeconnseed.py --input <input subject file> --output <output subject file> --seed <seed file> --template <template file> [--pipeline <pipe file> --binary[=FALSE] --boldregdof <dof> --structregdof <dof> --boldregcost <cost func> --structregcost <cost func>]')
+    print('<seed file> must be in the same space as the <template file> (e.g., both in MNI).')
+    print('Unless --binary used, by default the code assumes a probabilistic seed file with percentage values (i.e., 0< and <100).')
+    print('If the subjects files provides func2mni registration parameters, those parameters are used for registration unless --pipeline is specified, in which case registration parameters will be computed and updated.')
     print('If --pipeline specified, functional images will be preprocessed using the specified pipeline before co-registrations')
 
 ifile=''
@@ -56,7 +59,7 @@ namebase=fileutils.removext(namebase)
 for subj in subjects:
     for sess in subj.sessions:
         for run in sess.runs:
-            if run.data.mni2func=='':
+            if run.data.mni2func=='' or len(runpipesteps)>0:
                 data=copy.deepcopy(run.data)
                 data.envvars=envvars
                 # first do motion correction (to make tmean, based on which registration parameters are found, more accurate)
