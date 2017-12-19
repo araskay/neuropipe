@@ -59,7 +59,14 @@ namebase=fileutils.removext(namebase)
 for subj in subjects:
     for sess in subj.sessions:
         for run in sess.runs:
-            if run.data.mni2func=='' or len(runpipesteps)>0:
+            if len(runpipesteps)>0:
+                run.data.func2struct=''
+                run.data.struct2func=''
+                run.data.struct2mni=''
+                run.data.mni2struct=''
+                run.data.func2mni=''
+                run.data.mni2func=''
+            if run.data.mni2func=='':
                 data=copy.deepcopy(run.data)
                 data.envvars=envvars
                 # first do motion correction (to make tmean, based on which registration parameters are found, more accurate)
