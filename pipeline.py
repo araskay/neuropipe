@@ -241,17 +241,4 @@ class Pipeline:
         if self.data.boldcsf=='' or self.data.boldgm=='' or self.data.boldwm=='':
             self.parcellate()
         self.data.calc_meants()
-        
-        if len(self.seedconnzthresh)>0:
-            #fslmeants computes mean over pixels>0 on the mask, so first take abs
-            p=subprocess.Popen(['fslmaths',self.output,'-abs',fileutils.removext(self.seedconnzthresh)+'___'])
-            p.communicate()
-            p=subprocess.Popen(['fslmeants','-i',self.output,\
-                                '-o',fileutils.removext(self.output)+'_meants_net.txt',\
-                                '-m',fileutils.removext(self.seedconnzthresh)+'___'])
-            p.communicate()
-            # remove the temp abs mask
-            fileutils.removefile(fileutils.removext(self.seedconnzthresh)+'___.nii.gz')
-            self.data.meantsnet=fileutils.removext(self.output)+'_meants_net.txt'
-            
         self.meantscomputed=True
