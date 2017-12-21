@@ -60,7 +60,7 @@ envvars=workflow.EnvVars()
 
 # parse command-line arguments
 try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'hp:s:',\
+    (opts,args) = getopt.getopt(sys.argv[1:],'h',\
                                 ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'select=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=', 'outputsubjects=', 'keepintermed', 'runpipename=', 'fixpipename=', 'optpipename='])
 except getopt.GetoptError:
     printhelp()
@@ -69,7 +69,7 @@ for (opt,arg) in opts:
     if opt in ('-h', '--help'):
         printhelp()
         sys.exit()
-    elif opt in ('-p','--pipeline'):
+    elif opt in ('--pipeline'):
         runpipesteps+=preprocessingstep.makesteps(arg)
         #(directory,namebase)=os.path.split(arg)
         #namebase=fileutils.removext(namebase)
@@ -113,7 +113,7 @@ for (opt,arg) in opts:
             optimalpipesteps+=[steps]
         else:
             optimalpipesteps=list(preprocessingstep.concatstepslists(optimalpipesteps,[steps]))
-    elif opt in ('-s','--subjects'):
+    elif opt in ('--subjects'):
         subjectsfiles.append(arg)
     elif opt in ('--add'):
         addsteps=True

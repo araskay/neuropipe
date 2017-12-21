@@ -6,9 +6,7 @@ import scipy.stats
 import statsmodels.stats.multitest as mtest
 import getopt, os, fileutils
 
-p_thresh=0.05
-
-def prepostmatchedpairst(prespmfiles,postspmfiles,ofile):
+def prepostmatchedpairst(prespmfiles,postspmfiles,ofile,p_thresh,correction):
     
     n=len(prespmfiles)
     
@@ -35,17 +33,20 @@ def prepostmatchedpairst(prespmfiles,postspmfiles,ofile):
          
     (t,p)=scipy.stats.ttest_1samp(paireddiff,0.0)
     
-    # adjust for multiple comparisons    
-    p_fdr=mtest.multipletests(p,p_thresh,'fdr_bh')    
-    t[~p_fdr[0]]=np.nan
-    #t[p>p_thresh]=np.nan
+    # adjust for multiple comparisons
+    if correction=='none':
+        t[p>p_thresh]=np.nan
+    else:  
+        p_fdr=mtest.multipletests(p,p_thresh,correction)    
+        t[~p_fdr[0]]=np.nan
+
 
     # write t to file
     t=np.reshape(t,(img.shape[0],img.shape[1],img.shape[2]))
     onifti = nibabel.nifti1.Nifti1Image(t,affine,header=hdr)
     onifti.to_filename(ofile)
 
-def groupnetwork(spmfiles,ofile):
+def groupnetwork(spmfiles,ofile,p_thresh,correction):
 
     n=len(spmfiles)
     
@@ -69,9 +70,12 @@ def groupnetwork(spmfiles,ofile):
     (t,p)=scipy.stats.ttest_1samp(stats,0.0)
     
     # adjust for multiple comparisons    
-    p_fdr=mtest.multipletests(p,p_thresh,'fdr_bh')    
-    t[~p_fdr[0]]=np.nan
-    #t[p>p_thresh]=np.nan
+    if correction=='none':
+        t[p>p_thresh]=np.nan
+    else:  
+        p_fdr=mtest.multipletests(p,p_thresh,correction)    
+        t[~p_fdr[0]]=np.nan
+
 
     # write t to file
     t=np.reshape(t,(img.shape[0],img.shape[1],img.shape[2]))
@@ -79,10 +83,23 @@ def groupnetwork(spmfiles,ofile):
     onifti.to_filename(ofile)
 
 def printhelp():
-    print('Usage: spmstats --set1 <text file> --set2 <text file> --obase <output base>')
+    print('Usage: spmstats --set1 <text file> --set2 <text file> --obase <output base> [--p <p-value> (default=0.05) --correction <correction method> (default=bonferroni]')
     print('If two spm sets provided, group inference for each set, and group inference for variations between the two sets (set2-set1) are performed. If only one spm set provided, group inference for that set is performed.')
- 
+    print('correction methods:')
+    print('bonferroni: one-step correction')
+    print('sidak: one-step correction')
+    print('holm-sidak: step down method using Sidak adjustments')
+    print('holm: step-down method using Bonferroni adjustments')
+    print('simes-hochberg: step-up method  (independent)')
+    print('hommel: closed method based on Simes tests (non-negative)')
+    print('fdr_bh: Benjamini/Hochberg  (non-negative)')
+    print('fdr_by: Benjamini/Yekutieli (negative)')
+    print('fdr_tsbh: two stage fdr correction (non-negative)')
+    print('fdr_tsbky: two stage fdr correction (non-negative)')
+    print('none: no correction (only threshold p-values)')
 
+p_thresh=0.05 
+correction='bonferroni'
 set1=''
 set2=''
 obase=''
@@ -90,7 +107,7 @@ obase=''
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'h',\
-                                ['help','set1=', 'set2=','obase='])
+                                ['help','set1=', 'set2=','obase=', 'p=', 'correction='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -104,6 +121,10 @@ for (opt,arg) in opts:
         set2=arg
     elif opt in ('--obase'):
         obase=arg
+    elif opt in ('--p'):
+        p_thresh=float(arg)
+    elif opt in ('--correction'):
+        correction=arg
 
 if obase=='':
     printhelp()
@@ -144,8 +165,8 @@ if len(set2)>0:
         spm2=spm2.rstrip()
 
 if len(set1)>0 and len(set2)>0:
-    prepostmatchedpairst(prefiles,postfiles,obase+'_matchedpairs_'+set1namebase+'_'+set2namebase+'.nii.gz')
+    prepostmatchedpairst(prefiles,postfiles,obase+'_matchedpairs_'+set1namebase+'_'+set2namebase+'.nii.gz',p_thresh,correction)
 if len(set1)>0:
-    groupnetwork(prefiles,obase+'_group_'+set1namebase+'.nii.gz')
+    groupnetwork(prefiles,obase+'_group_'+set1namebase+'.nii.gz',p_thresh,correction)
 if len(set2)>0:
-    groupnetwork(postfiles,obase+'_group_'+set2namebase+'.nii.gz')
+    groupnetwork(postfiles,obase+'_group_'+set2namebase+'.nii.gz',p_thresh,correction)
