@@ -31,6 +31,9 @@ def calcseedcorr(ifile, seedfile, obase, p_thresh):
     imgreshape=img.reshape((np.prod(img.shape[0:3]),img.shape[3]))
     seedreshape=seed.reshape((np.prod(seed.shape[0:3]),1))
     
+    if len(np.where(seedreshape == 1)[0])==0:
+        sys.exit('In calcseedcorr: Seedfile {} must contain a binary mask. No ROI was found.'.format(seedfile))
+
     # compute mean time series
     meants=np.mean(imgreshape[np.where(seedreshape == 1)[0], :], axis=0)
     
