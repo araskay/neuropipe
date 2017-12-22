@@ -318,6 +318,11 @@ class PreprocessingStep:
             fs=1/tr
             
             Fstop=float(self.params[0])/(fs/2)
+
+            print('LPF:')
+            print('TR=',tr)
+            print('Nq=',fs/2)
+            print('Fstop=',Fstop)
             
             (b,a)=scipy.signal.butter(5,Fstop,btype='lowpass')
             
@@ -339,6 +344,11 @@ class PreprocessingStep:
             
             Fstop=float(self.params[0])/(fs/2)
             
+            print('HPF:')
+            print('TR=',tr)
+            print('Nq=',fs/2)
+            print('Fstop=',Fstop)
+            
             (b,a)=scipy.signal.butter(5,Fstop,btype='highpass')
             
             img = scipy.signal.filtfilt(b,a,img,axis=-1)
@@ -357,14 +367,14 @@ class PreprocessingStep:
             tr=hdr.get_zooms()[3]
             fs=1/tr
 
-            print('TR=',tr)
-            print('Nq=',fs/2)            
-            
             Fstop1=float(self.params[0])/(fs/2)
             Fstop2=float(self.params[1])/(fs/2)
-            
-            print(Fstop1)
-            print(Fstop2)
+
+            print('BPF:'
+            print('TR=',tr)
+            print('Nq=',fs/2)              
+            print('Fstop1=',Fstop1)
+            print('Fstop2=',Fstop2)
             
             (b,a)=scipy.signal.butter(5,(Fstop1,Fstop2),btype='bandpass')
             
