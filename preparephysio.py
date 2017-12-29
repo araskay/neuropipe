@@ -1,6 +1,6 @@
 # this code gets a subject file and runs prepphysio and respbiopac2resp1d.m on the subjects.
 
-import workflow, getopt,sys,fileutils, subprocess,os
+import workflow, getopt,sys,fileutils, subprocess,os, shutil
 
 def printhelp():
     print('usage: prepaerphysio.py --input <input subject file> --output <output subject file>.')
@@ -37,8 +37,8 @@ for subj in subjects:
             p=subprocess.Popen(['prepphysio',run.data.siemensphysio])
             p.communicate()
             (directory,namebase)=os.path.split(run.data.siemensphysio)
-            os.rename(namebase+'.resp.1D',directory+'/'+namebase+'.resp.1D')
-            os.rename(namebase+'.puls.1D',directory+'/'+namebase+'.puls.1D')
+            shutil.move(namebase+'.resp.1D',directory+'/'+namebase+'.resp.1D') # do not use os.rename, as it may cause an error if source and destination ore on different disks
+            shutil.move(namebase+'.puls.1D',directory+'/'+namebase+'.puls.1D')
             run.data.card=directory+'/'+namebase+'.puls.1D'
             
             (d,n)=os.path.split(run.data.biopacphysio)

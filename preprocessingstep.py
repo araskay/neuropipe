@@ -322,7 +322,10 @@ class PreprocessingStep:
             print('LPF:')
             print('TR=',tr)
             print('Nq=',fs/2)
-            print('Fstop=',Fstop)
+            print('Fstop=',Fstop, '(Normalized Frequency)')
+            
+            if Fstop>1:
+                sys.exit('ERROR in lpf: Cut-off frequency is beyond Nyquist rate.')
             
             (b,a)=scipy.signal.butter(5,Fstop,btype='lowpass')
             
@@ -347,7 +350,10 @@ class PreprocessingStep:
             print('HPF:')
             print('TR=',tr)
             print('Nq=',fs/2)
-            print('Fstop=',Fstop)
+            print('Fstop=',Fstop, '(Normalized Frequency)')
+
+            if Fstop>1:
+                sys.exit('ERROR in hpf: Cut-off frequency is beyond Nyquist rate.')
             
             (b,a)=scipy.signal.butter(5,Fstop,btype='highpass')
             
@@ -370,12 +376,15 @@ class PreprocessingStep:
             Fstop1=float(self.params[0])/(fs/2)
             Fstop2=float(self.params[1])/(fs/2)
 
-            print('BPF:'
+            print('BPF:')
             print('TR=',tr)
             print('Nq=',fs/2)              
-            print('Fstop1=',Fstop1)
-            print('Fstop2=',Fstop2)
+            print('Fstop1=',Fstop1, '(Normalized Frequency)')
+            print('Fstop2=',Fstop2, '(Normalized Frequency)')
             
+            if Fstop1>1 or Fstop2>0:
+                sys.exit('ERROR in bpf: Cut-off frequency is beyond Nyquist rate.')
+
             (b,a)=scipy.signal.butter(5,(Fstop1,Fstop2),btype='bandpass')
             
             img = scipy.signal.filtfilt(b,a,img,axis=-1)

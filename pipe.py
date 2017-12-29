@@ -19,15 +19,15 @@ def printhelp():
     print('--meants: compute mean time series over CSF, GM, and WM for the pipeline output. This automatically parcellates the output. If used with --seedconn, mean time series over the network is also computed.')
     print('--seedconn: compute seed-connectivity network on the pipeline output. Need to provide a seed file in subjects file.')
     print('--tomni: transform pipeline output and seed connectivity (if used --seedconn) to standard MNI space.')
+    print('--keepintermed: keep results of the intermediate steps')
     print('--boldregdof <dof>: degrees of freedom to be used for bold registration (Default = 12).')
     print('--structregdof <dof>: degrees of freedom to be used for structural registration (Default = 12).')
     print('--boldregcost <cost function>: cost fuction to be used for bold registration (Default = \'corratio\').')
     print('--structregcost <cost function>: cost fuction to be used for structural registration (Default = \'corratio\').')
-    print('--outputsubjects <subj file>: specify a subject file, which is populated based on the results of the pipeline run on all subjects. Only applicable with --pipeline.')
-    print('--keepintermed: keep results of the intermediate steps')
     print('--runpipename <name>: prefix to precede name of steps in the run pipeline output files. (Default=\'\')')
     print('--fixpipename <name>: prefix to precede name of steps in the fixed pipeline output files. (Default=\'fix\')')
     print('--optpipename <name>: prefix to precede name of steps in the optimal pipeline output files. (Default=\'opt\')')
+    print('--outputsubjects <subj file>: specify a subject file, which is populated based on the results of the pipeline run on all subjects. Only applicable with --pipeline.')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 import workflow
