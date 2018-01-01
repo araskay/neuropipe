@@ -48,7 +48,8 @@ class Data:
         #self.boldwmseg=''
         self.boldcsf=''
         self.boldgm=''
-        self.boldwm=''        
+        self.boldwm=''
+        self.boldcsfwm=''      
         self.func2struct=''
         self.struct2func=''
         self.struct2mni=''
@@ -121,8 +122,8 @@ class Data:
                             '-applyxfm','-init',self.struct2func,\
                             '-out',fileutils.removext(self.bold)+'_gm'])
         p.communicate()
-        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_gm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_gm'])
-        p.communicate()
+        #p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_gm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_gm'])
+        #p.communicate()
         self.boldgm=fileutils.removext(self.bold)+'_gm.nii.gz'
         
         p=subprocess.Popen(['flirt','-in',self.structuralwm,\
@@ -130,9 +131,14 @@ class Data:
                             '-applyxfm','-init',self.struct2func,\
                             '-out',fileutils.removext(self.bold)+'_wm'])
         p.communicate()         
-        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_wm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_wm'])
-        p.communicate()
+        #p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_wm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_wm'])
+        #p.communicate()
         self.boldwm=fileutils.removext(self.bold)+'_wm.nii.gz'          
+
+        # combine csf and wm rois into one roi
+        p=subprocess.Popen(['fslmaths',self.boldcsf,'-add',self.boldwm,'-bin',fileutils.removext(self.bold)+'_csfwm'])
+        p.communicate()
+        self.boldcsfwm=fileutils.removext(self.bold)+'_csfwm.nii.gz'
     
     def calc_meants(self):
         if len(self.brainmask)>0:
@@ -163,15 +169,10 @@ class Data:
             p.communicate()        
             self.meantswm=fileutils.removext(self.bold)+'_meants_wm.txt'         
     
-        if len(self.boldcsf)>0 and len(self.boldwm)>0:
-            # csf and wm meants
-            # first add csf and wm rois into one roi
-            p=subprocess.Popen(['fslmaths',self.boldcsf,'-add',self.boldwm,'-bin',fileutils.removext(self.bold)+'_csfwm'])
-            p.communicate()
-            # now compute meants on this roi
+        if len(self.boldcsfwm)>0:
             p=subprocess.Popen(['fslmeants','-i',self.bold,\
                                 '-o',fileutils.removext(self.bold)+'_meants_csfwm.txt',\
-                                '-m',fileutils.removext(self.bold)+'_csfwm'])
+                                '-m',self.boldcsfwm])
             p.communicate()        
             self.meantscsfwm=fileutils.removext(self.bold)+'_meants_csfwm.txt'              
     
@@ -211,7 +212,12 @@ class Data:
                                 self.func2struct])
             p.communicate()
             self.struct2func=fileutils.removext(self.bold)+'_struct2func.mat'         
-            
+
+        p=subprocess.Popen(['flirt','-in',self.structural,\
+                            '-ref',self.bold,\
+                            '-applyxfm','-init',self.struct2func,\
+                            '-out',fileutils.removext(self.bold)+'_struct2func'])
+        p.communicate()             
     
     def transform_struct2mni(self):
         if self.envvars.mni152=='':

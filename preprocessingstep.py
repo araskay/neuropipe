@@ -245,7 +245,6 @@ class PreprocessingStep:
             fileutils.zipnifti(fileutils.removext(self.obase))
         
         elif self.name=='tcompcor':
-            # currently ignore does not work, since nipype's TCompCor does not recognize ignore_initial_volumes
             if '-ignore' in self.params:
                 ignore=int(self.params[self.params.index('-ignore')+1])
             else:
@@ -264,6 +263,57 @@ class PreprocessingStep:
             ccor.run()
             shutil.move('mask_000.nii.gz',fileutils.removext(self.obase)+'__hivarmask.nii.gz') # cannot set output path for high variance mask
             
+            if self.data.brainmask=='':
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',fileutils.removext(self.obase)+'__components.txt',\
+                                    '-o',fileutils.removext(self.obase)+'__regmodel',\
+                                    '--out_res='+self.obase])
+            else:
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',fileutils.removext(self.obase)+'__components.txt',\
+                                    '-m',self.data.brainmask,\
+                                    '-o',fileutils.removext(self.obase)+'__regmodel',\
+                                    '--out_res='+self.obase])
+                
+            p.communicate()
+
+        elif self.name=='acompcor':
+            if not '-mask' in self.params:
+                sys.exit('ERROR in acompcor: need to provide mask for acompcor. Available options are csf, wm, and csfwm.')
+            ccor = ACompCor()
+
+            mask=self.params[self.params.index('-mask')+1]
+            if mask=='csf':
+                if self.data.boldcsf=='':
+                    self.data.parcellate_bold()
+                ccor.inputs.mask_files=self.data.boldcsf
+            elif mask=='wm':
+                if self.data.boldwm=='':
+                    self.data.parcellate_bold()
+                ccor.inputs.mask_files=self.data.boldwm
+            elif mask=='csfwm':
+                if self.data.boldcsfwm=='':
+                    self.data.parcellate_bold()
+                ccor.inputs.mask_files=self.data.boldcsfwm
+            else:
+                sys.exit('ERROR in acompcor: given mask not known. Available options are csf, wm, and csfwm.')
+
+            if '-ignore' in self.params:
+                ignore=int(self.params[self.params.index('-ignore')+1])
+            else:
+                ignore=0
+            
+            ccor.inputs.realigned_file = fileutils.addniigzext(self.ibase)
+            if self.data.brainmask != '':
+                ccor.inputs.mask_files = self.data.brainmask
+
+            ccor.inputs.components_file=fileutils.removext(self.obase)+'__components.txt'
+            #ccor.inputs.header_prefix='' # not sure what this does
+            ccor.inputs.num_components=6 # based on Behzadi's paper, also nipype default
+            ccor.inputs.ignore_initial_volumes=ignore
+            ccor.inputs.pre_filter = False # just remove mean, do not do further detrending
+            ccor.run()
+
             if self.data.brainmask=='':
                 p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
                                     '-d',fileutils.removext(self.obase)+'__components.txt',\
@@ -308,7 +358,7 @@ class PreprocessingStep:
 
             onifti = nibabel.nifti1.Nifti1Image(img,affine,header=hdr)
             onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')
-                        
+ 
         elif self.name=='lpf':
             img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
             img=img_nib.get_data()
@@ -455,7 +505,7 @@ class PreprocessingStep:
             p.communicate()
             
         elif self.name=='csfwmreg':
-            if self.data.boldwm=='' or self.data.boldcsf=='':
+            if self.data.boldcsfwm=='':
                 self.data.parcellate_bold()
             data=copy.deepcopy(self.data)
             data.bold=self.ibase
