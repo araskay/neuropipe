@@ -432,7 +432,7 @@ class PreprocessingStep:
             print('Fstop1=',Fstop1, '(Normalized Frequency)')
             print('Fstop2=',Fstop2, '(Normalized Frequency)')
             
-            if Fstop1>1 or Fstop2>0:
+            if Fstop1>1 or Fstop2>1:
                 sys.exit('ERROR in bpf: Cut-off frequency is beyond Nyquist rate.')
 
             (b,a)=scipy.signal.butter(5,(Fstop1,Fstop2),btype='bandpass')
@@ -554,6 +554,8 @@ class PreprocessingStep:
         elif (self.name == 'stcor'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'tcompcor'):
+            fileutils.removefile(fileutils.addniigzext(self.obase))
+        elif (self.name == 'acompcor'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'fsl_motion_outliers'):
             fileutils.removefile(fileutils.addniigzext(self.obase))

@@ -764,6 +764,12 @@ def getsubjects(subjectfile):
                 data.mni2func=arg
             elif opt in ('--fsrecondir'):
                 data.fsrecondir=arg
+            elif opt in ('--structuralcsf'):
+                data.structuralcsf=arg
+            elif opt in ('--structuralgm'):
+                data.structuralgm=arg
+            elif opt in ('--structuralwm'):
+                data.structuralwm=arg
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if s.ID==subjectID]
         if len(matchsubj)>0:
@@ -813,6 +819,9 @@ def savesubjects(filename,subjects):
                         '--mni2struct \''+run.data.mni2struct+'\' '+\
                         '--func2mni \''+run.data.func2mni+'\' '+\
                         '--mni2func \''+run.data.mni2func+'\' '+\
+                        '--structuralcsf \''+run.data.structuralcsf+'\' '+\
+                        '--structuralgm \''+run.data.structuralgm+'\' '+\
+                        '--structuralwm \''+run.data.structuralwm+'\' '+\
                         '\n')
     f.close()
     
