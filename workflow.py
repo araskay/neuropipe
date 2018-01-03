@@ -708,7 +708,10 @@ def getsubjects(subjectfile):
                                               'mni2struct=',\
                                               'func2mni=',\
                                               'mni2func=',\
-                                              'fsrecondir='])
+                                              'fsrecondir=',\
+                                              'structuralcsf=',\
+                                              'structuralgm=',\
+                                              'structuralwm='])
         except getopt.GetoptError:
             sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file. Also please note that identifiers require double dash (--)')
         for (opt,arg) in opts:

@@ -1,5 +1,5 @@
 % use this code to manually identify cardiac pulsation and respiration
-% frequency bands for each subject. Put all the subjects and the correspoindin
+% frequency bands for each subject. Put all the subjects and the corresponding
 % puls and resp files in a csv file (list_physio.csv)
 % Run. Read frequency bands on the plots and (manually) enter them on physio.csv.
 
