@@ -55,6 +55,7 @@ optpipename='opt'
 fixpipename='fix'
 outputsubjectsfile=''
 keepintermed=False
+runpipe=False
 
 envvars=workflow.EnvVars()
 
@@ -71,6 +72,7 @@ for (opt,arg) in opts:
         sys.exit()
     elif opt in ('--pipeline'):
         runpipesteps+=preprocessingstep.makesteps(arg)
+        runpipe=True
         #(directory,namebase)=os.path.split(arg)
         #namebase=fileutils.removext(namebase)
         #runpipename+=namebase
@@ -157,7 +159,7 @@ if subjectsfiles==[]:
 
         
 # run workflow
-if len(runpipesteps)>0:
+if runpipe:
     subjects=[]
     for sfile in subjectsfiles:
         subjects+=workflow.getsubjects(sfile)
@@ -270,7 +272,7 @@ if showpipes:
     sys.exit()
     
 # now process    
-if len(runpipesteps)>0:
+if runpipe:
     runwf.run()
     if len(outputsubjectsfile)>0:
         workflow.savesubjects(outputsubjectsfile,runwf.subjects)

@@ -27,7 +27,7 @@ def groupaverage(spmfiles):
 
 
 def printhelp():
-    print('Usage: fcspecificity --spms <text file> --targetrois <text file> --referencerois <text file> --ofile <text file> [--n=1000 <number of bootstrap iterations>]')
+    print('Usage: fcspecificity --spms <text file> --targetrois <text file> --referencerois <text file> --ofile <text file> [--n=1000 <number of bootstrap iterations> --grpavg <nii file name>]')
 
 
 n=1000
@@ -35,11 +35,12 @@ spmsfile=''
 targetroisfile=''
 referenceroisfile=''
 ofile=''
+grpavgfile=''
     
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'h',\
-                                ['help','spms=', 'targetrois=','referencerois=', 'ofile=','n='])
+                                ['help','spms=', 'targetrois=','referencerois=', 'ofile=','n=','grpavg='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -57,6 +58,8 @@ for (opt,arg) in opts:
         ofile=arg
     elif opt in ('--n'):
         n=float(arg)
+    elif opt in ('--grpavg'):
+        grpavgfile=arg
 
 #spmsfile='/rri_disks/liberatrix/chen_lab/aras/data/healthyvolunteer/processed/physcor-nomotreg/fepi/motorseed/spmlist_nocor_z.txt'
 #targetroisfile='/rri_disks/liberatrix/chen_lab/aras/data/healthyvolunteer/processed/physcor-nomotreg/fepi/motorseed/target_rois.txt'
@@ -107,13 +110,22 @@ for j in np.arange(len(targetrois)):
     fout.write(oname)
 fout.write('\n')
 
+ref_nib=nibabel.load(referencerois[0])
+ref=ref_nib.get_data()
+affine=ref_nib.affine # used to save the result in a NIFTI file
+hdr=ref_nib.header # also used to save the result
+    
+
+# while here, save the group average
+if len(grpavgfile)>0:
+    grp=groupaverage(spms)
+    onifti = nibabel.nifti1.Nifti1Image(grp,affine,header=hdr)
+    onifti.to_filename(grpavgfile)
+
 for i in np.arange(n):
     resamp=np.random.choice(spms,size=len(spms),replace=True)
     grp=groupaverage(resamp)
-    
-    ref_nib=nibabel.load(referencerois[0])
-    ref=ref_nib.get_data()
-    
+   
     for j in np.arange(len(targetrois)):
         target_nib=nibabel.load(targetrois[j])
         target=target_nib.get_data()
