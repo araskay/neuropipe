@@ -216,18 +216,8 @@ class PreprocessingStep:
             img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
             hdr=img_nib.header
             tr=str(hdr.get_zooms()[3])
-            # change NIFTI_GZ to NIFTI (aparently phycaa cannot handle nifti_gz)
             
-            # run phycaa
-
-            print(['matlab', \
-                                      '-nodisplay','-nosplash', \
-                                      '-r', 'run_phycaa('+ \
-                                      '\''+fileutils.addniigzext(self.ibase)+'\',' + \
-                                      '\''+self.data.brainmask+'\',' + \
-                                      tr+ \
-                                      ',\''+fileutils.removeniftiext(self.obase)+'\'); '+ \
-                                      'quit;'])
+            # need to change NIFTI_GZ to NIFTI (aparently phycaa cannot handle nifti_gz)
 
             process=subprocess.Popen(['matlab', \
                                       '-nodisplay','-nosplash', \
@@ -238,6 +228,8 @@ class PreprocessingStep:
                                       ',\''+fileutils.removext(self.obase)+'\'); '+ \
                                       'quit;'])
             (output,error)=process.communicate()
+            print('DEBUG: phycaa done')
+
             # remove unzipped nifti files
             fileutils.removefile(fileutils.removext(self.ibase)+'.nii')
             fileutils.removefile(fileutils.removext(self.data.brainmask)+'.nii')
