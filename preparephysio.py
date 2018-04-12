@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # this code gets a subject file and runs prepphysio and respbiopac2resp1d.m on the subjects.
 
 import workflow, getopt,sys,fileutils, subprocess,os, shutil

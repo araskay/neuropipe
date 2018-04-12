@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 def printhelp():
     print('USAGE:')
     print('pipe.py  --subjects <subjects file> --pipeline <pipeline file> --perm <pipeline file> --onoff <pipeline file> --const <pipeline file> --add --combine --fixed <pipeline file> --showpipes --template <template file> --resout <base name>')

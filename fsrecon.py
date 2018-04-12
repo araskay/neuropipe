@@ -6,11 +6,12 @@ def printhelp():
     print('Usage: fsrecon.py --input <input subject file> --output <output subject file> [--directive <freesurfer recon-all directive to be used>]')
     print('Unless input subjects file specifies fsrecondir, freesurfer recon-all is performed and fsrecondir updated in the output subjects file.')
     print('The structural field of the subjects file is updated to the nifti-converted fs recon-all brain extracted structural.')
+    print('Default directive is autorecon-all')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 ifile=''
 ofile=''
-directive=''
+directive='all'
 
 # parse command-line arguments
 try:
