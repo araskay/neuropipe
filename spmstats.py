@@ -81,9 +81,32 @@ def groupnetwork(spmfiles,ofile,p_thresh,correction):
     t=np.reshape(t,(img.shape[0],img.shape[1],img.shape[2]))
     onifti = nibabel.nifti1.Nifti1Image(t,affine,header=hdr)
     onifti.to_filename(ofile)
+    
+def groupaverage(spmfiles,ofile):
+
+    n=len(spmfiles)
+    
+    # the following just to get the size of the SPMs
+    img_nib=nibabel.load(spmfiles[0])
+    img=img_nib.get_data()
+    affine=img_nib.affine # used to save the result in a NIFTI file
+    hdr=img_nib.header # also used to save the result
+
+    stats=np.zeros(img.shape)
+    
+    for i in np.arange(n):
+        spm1_nib=nibabel.load(spmfiles[i])
+        spm1=spm1_nib.get_data()
+        spm1=spm1.reshape((1,np.prod(spm1.shape)))
+                
+        stats+=spm1
+
+    # write t to file
+    onifti = nibabel.nifti1.Nifti1Image(stats,affine,header=hdr)
+    onifti.to_filename(ofile)    
 
 def printhelp():
-    print('Usage: spmstats --set1 <text file> --set2 <text file> --obase <output base> [--p <p-value> (default=0.05) --correction <correction method> (default=bonferroni]')
+    print('Usage: spmstats --set1 <text file> --set2 <text file> --obase <output base> [--p <p-value> (default=0.05) --correction <correction method> (default=bonferroni) --groupaverage]')
     print('If two spm sets provided, group inference for each set, and group inference for variations between the two sets (set2-set1) are performed. If only one spm set provided, group inference for that set is performed.')
     print('correction methods:')
     print('bonferroni: one-step correction')
@@ -103,11 +126,12 @@ correction='bonferroni'
 set1=''
 set2=''
 obase=''
+groupaverage=False
     
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'h',\
-                                ['help','set1=', 'set2=','obase=', 'p=', 'correction='])
+                                ['help','set1=', 'set2=','obase=', 'p=', 'correction=', 'groupaverage'])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -125,6 +149,8 @@ for (opt,arg) in opts:
         p_thresh=float(arg)
     elif opt in ('--correction'):
         correction=arg
+    elif opt in ('--groupaverage')"
+        groupaverage=True
 
 if obase=='':
     printhelp()
@@ -168,5 +194,9 @@ if len(set1)>0 and len(set2)>0:
     prepostmatchedpairst(prefiles,postfiles,obase+'_matchedpairs_'+set1namebase+'_'+set2namebase+'.nii.gz',p_thresh,correction)
 if len(set1)>0:
     groupnetwork(prefiles,obase+'_group_'+set1namebase+'.nii.gz',p_thresh,correction)
+    if groupaverage:
+        groupaverage(prefiles,obase+'_groupaverage_'+set1namebase+'.nii.gz')
 if len(set2)>0:
     groupnetwork(postfiles,obase+'_group_'+set2namebase+'.nii.gz',p_thresh,correction)
+    if groupaverage:
+        groupaverage(postfiles,obase+'_groupaverage_'+set2namebase+'.nii.gz')
