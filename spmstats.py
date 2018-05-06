@@ -63,8 +63,7 @@ def groupnetwork(spmfiles,ofile,p_thresh,correction):
     for i in np.arange(n):
         spm1_nib=nibabel.load(spmfiles[i])
         spm1=spm1_nib.get_data()
-        spm1=spm1.reshape((1,np.prod(spm1.shape)))
-                
+        spm1=spm1.reshape((1,np.prod(spm1.shape)))        
         stats[i,:]=spm1
          
     (t,p)=scipy.stats.ttest_1samp(stats,0.0)
@@ -97,8 +96,6 @@ def groupaverage(spmfiles,ofile):
     for i in np.arange(n):
         spm1_nib=nibabel.load(spmfiles[i])
         spm1=spm1_nib.get_data()
-        spm1=spm1.reshape((1,np.prod(spm1.shape)))
-                
         stats+=spm1
 
     # write t to file
@@ -126,7 +123,7 @@ correction='bonferroni'
 set1=''
 set2=''
 obase=''
-groupaverage=False
+grpavg=False
     
 # parse command-line arguments
 try:
@@ -149,8 +146,8 @@ for (opt,arg) in opts:
         p_thresh=float(arg)
     elif opt in ('--correction'):
         correction=arg
-    elif opt in ('--groupaverage')"
-        groupaverage=True
+    elif opt in ('--groupaverage'):
+        grpavg=True
 
 if obase=='':
     printhelp()
@@ -194,9 +191,9 @@ if len(set1)>0 and len(set2)>0:
     prepostmatchedpairst(prefiles,postfiles,obase+'_matchedpairs_'+set1namebase+'_'+set2namebase+'.nii.gz',p_thresh,correction)
 if len(set1)>0:
     groupnetwork(prefiles,obase+'_group_'+set1namebase+'.nii.gz',p_thresh,correction)
-    if groupaverage:
+    if grpavg:
         groupaverage(prefiles,obase+'_groupaverage_'+set1namebase+'.nii.gz')
 if len(set2)>0:
     groupnetwork(postfiles,obase+'_group_'+set2namebase+'.nii.gz',p_thresh,correction)
-    if groupaverage:
+    if grpavg:
         groupaverage(postfiles,obase+'_groupaverage_'+set2namebase+'.nii.gz')
