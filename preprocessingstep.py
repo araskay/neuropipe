@@ -514,6 +514,12 @@ class PreprocessingStep:
                                     '-o',fileutils.removext(self.obase)+'__csfwmglm',\
                                     '--out_res='+self.obase])                
             p.communicate()             
+
+        elif (self.name == '3dDetrent'):
+            p=subprocess.Popen(['3dDetrend']+self.params+\
+                               ['-prefix',fileutils.removeniftiext(self.obase),fileutils.addniigzext(self.ibase)])
+            p.communicate()
+            fileutils.afni2nifti(fileutils.removeniftiext(self.obase)) 
             
         else:
             sys.exit('Error: preprocessing step not defined')      
@@ -565,6 +571,8 @@ class PreprocessingStep:
             fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'csfwmreg'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
+        elif (self.name == '3dDetrend'):
+            fileutils.removefile(fileutils.addniigzext(self.obase))            
         else:
             sys.exit('Error: preprocessing step not defined')    
 
