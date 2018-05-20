@@ -515,7 +515,7 @@ class PreprocessingStep:
                                     '--out_res='+self.obase])                
             p.communicate()             
 
-        elif (self.name == '3dDetrent'):
+        elif (self.name == '3dDetrend'):
             p=subprocess.Popen(['3dDetrend']+self.params+\
                                ['-prefix',fileutils.removeniftiext(self.obase),fileutils.addniigzext(self.ibase)])
             p.communicate()
