@@ -30,7 +30,9 @@ def printhelp():
     print('--fixpipename <name>: prefix to precede name of steps in the fixed pipeline output files. (Default=\'fix\')')
     print('--optpipename <name>: prefix to precede name of steps in the optimal pipeline output files. (Default=\'opt\')')
     print('--outputsubjects <subj file>: specify a subject file, which is populated based on the results of the pipeline run on all subjects. Only applicable with --pipeline.')
+    print('--showsubjects: print the list of all subjects to be processed and exit.')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
+
 
 import workflow
 from pipeline import Pipeline
@@ -58,13 +60,14 @@ fixpipename='fix'
 outputsubjectsfile=''
 keepintermed=False
 runpipe=False
+showsubjects=False
 
 envvars=workflow.EnvVars()
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'h',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'select=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=', 'outputsubjects=', 'keepintermed', 'runpipename=', 'fixpipename=', 'optpipename='])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'select=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=', 'outputsubjects=', 'keepintermed', 'runpipename=', 'fixpipename=', 'optpipename=','showsubjects'])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -155,11 +158,31 @@ for (opt,arg) in opts:
         fixpipename=arg
     elif opt in ('--optpipename'):
         optpipename=arg
+    elif opt in ('--showsubjects'):
+        showsubjects=True
 
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
 
-        
+if showsubjects:
+    subjects=[]
+    for sfile in subjectsfiles:
+        subjects+=workflow.getsubjects(sfile)
+    subjcount=0
+    sesscount=0
+    runcount=0
+    for subj in subjects:
+        subjcount += 1
+        for sess in subj.sessions:
+            sesscount += 1
+            for run in sess.runs:
+                runcount += 1
+                print(subj.ID, sess.ID, run.data.bold, run.data.opath)
+    print('Total # subjects =',subjcount)
+    print('Total # sessions =',sesscount)
+    print('Total # runs =', runcount)
+    sys.exit()
+
 # run workflow
 if runpipe:
     subjects=[]

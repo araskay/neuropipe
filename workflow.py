@@ -774,13 +774,13 @@ def getsubjects(subjectfile):
             elif opt in ('--structuralwm'):
                 data.structuralwm=arg
         run=Run(sequence,data)
-        matchsubj=[s for s in subjects if s.ID==subjectID]
+        matchsubj=[s for s in subjects if len(s.ID)>0 and s.ID==subjectID ] # only match if there is actually a subjectID, i.e., len(s.ID)>0
         if len(matchsubj)>0:
             subject=matchsubj[0]
         else:
             subject=Subject(subjectID)
             subjects.append(subject)
-        matchsess=[s for s in subject.sessions if s.ID==sessionID]
+        matchsess=[s for s in subject.sessions if len(s.ID)>0 and s.ID==sessionID] # only match if there is actually a sessionID, i.e., len(s.ID)>0
         if len(matchsess)>0:
             session=matchsess[0]
         else:

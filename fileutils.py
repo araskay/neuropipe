@@ -36,7 +36,7 @@ def afni2nifti(filename):
     # input: file name without extension or +orig/+tlrc
     # also removes the afni after conversion
     if os.path.exists(filename+'+orig.HEAD'):
-        process=subprocess.Popen(['3dAFNItoNIFTI', '-prefix', filename, '-overwrite', filename+'+orig'])
+        process=subprocess.Popen(['3dAFNItoNIFTI', '-prefix', filename+'.nii', '-overwrite', filename+'+orig'])
         (output,error)=process.communicate()
         process=subprocess.Popen(['gzip', '-f', filename+'.nii'])
         (output,error)=process.communicate()
@@ -44,7 +44,7 @@ def afni2nifti(filename):
         removefile(filename+'+orig.HEAD')
         removefile(filename+'+orig.BRIK')
     elif os.path.exists(filename+'+tlrc.HEAD'):
-        process=subprocess.Popen(['3dAFNItoNIFTI', '-prefix', filename, '-overwrite', filename+'+tlrc'])
+        process=subprocess.Popen(['3dAFNItoNIFTI', '-prefix', filename+'.nii', '-overwrite', filename+'+tlrc'])
         (output,error)=process.communicate()
         process=subprocess.Popen(['gzip', '-f', filename+'.nii'])
         (output,error)=process.communicate()
