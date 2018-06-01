@@ -9,44 +9,13 @@ Created on Thu May  3 13:48:29 2018
 #!/usr/bin/env python
 
 def printhelp():
-    print('USAGE:')
-    print('pipe.py  --subjects <subjects file> --pipeline <pipeline file> --perm <pipeline file> --onoff <pipeline file> --const <pipeline file> --add --combine --fixed <pipeline file> --showpipes --template <template file> --resout <base name>')
-    print('ARGUMENTS:')
-    print('--subjects <subj file>: specify subjects file (required)')
-    print('--pipeline <pipe file>: specify a pipeline file to be run on all subjects without optimization and/or calculation of between subject metrics')
-    print('--const <pipe file>: specify a pipeline file to be used to form constant section of the optimized pipeline')
-    print('--perm <pipe file>: specify a pipeline file to be used to form permutations section of the optimized pipeline')
-    print('--onoff <pipe file>: specify a pipeline file to be used to form on/off section of the optimized pipeline')
-    print('--permonoff <pipe file>: on/off combinations and their permutations')
-    print('--select <pipe file>: select one step from the pipe file at a time')
-    print('--combine: flag specifying that all new (permutation/on-off/constant) steps are combined with the previous ones from this point on (Default) (See example below)')
-    print('--add: flag specifying that all new (permutation/on-off/constant) steps are added to the previous pipelines from this point on (Default is combine) (See example below)')
-    print('--fixed <pipe file>: specify a fixed pipeline for the calculation of between subject metrics')
-    print('--showpipes: show all pipelines to be run/optimized/validated without running. Only use to see a list of pipelines to be run/optimized. This will NOT run/optimize the pipelines. Remove the flag to run/optimize.')
-    print('--template <temp file>: template file to be used for between subject calculations, e.g., MNI template. Required with --perm, --onoff, --const, --fixed, unless using --showpipes.')
-    print('--resout <base name>: base path/name to save results in csv format. Extension (.csv) and suffixed are added to the base name.')
-    print('--parcellate: parcellate the output of the run/optimal/fixed pipeline(s).')
-    print('--meants: compute mean time series over CSF, GM, and WM for the pipeline output. This automatically parcellates the output. If used with --seedconn, mean time series over the network is also computed.')
-    print('--seedconn: compute seed-connectivity network on the pipeline output. Need to provide a seed file in subjects file.')
-    print('--tomni: transform pipeline output and seed connectivity (if used --seedconn) to standard MNI space.')
-    print('--keepintermed: keep results of the intermediate steps')
-    print('--boldregdof <dof>: degrees of freedom to be used for bold registration (Default = 12).')
-    print('--structregdof <dof>: degrees of freedom to be used for structural registration (Default = 12).')
-    print('--boldregcost <cost function>: cost fuction to be used for bold registration (Default = \'corratio\').')
-    print('--structregcost <cost function>: cost fuction to be used for structural registration (Default = \'corratio\').')
-    print('--runpipename <name>: prefix to precede name of steps in the run pipeline output files. (Default=\'\')')
-    print('--fixpipename <name>: prefix to precede name of steps in the fixed pipeline output files. (Default=\'fix\')')
-    print('--optpipename <name>: prefix to precede name of steps in the optimal pipeline output files. (Default=\'opt\')')
-    print('--outputsubjects <subj file>: specify a subject file, which is populated based on the results of the pipeline run on all subjects. Only applicable with --pipeline.')
-    print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
+    p=subprocess.Popen(['pipe.py','-h'])
+    p.communicate()
 
 import workflow
-from pipeline import Pipeline
-from preprocessingstep import PreprocessingStep
-import fileutils
 import preprocessingstep
-import sys, getopt, os
-import copy
+import sys, getopt
+import subprocess
 
 subjectsfiles=[]
 combs=[]
@@ -131,20 +100,35 @@ for (opt,arg) in opts:
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
 
+
+base_command = 'python pipe.py'
+
 if runpipe:
+
     subjects=[]
     count=0
-    qbatch_fname = 'qbatch_jobs.job'
-    qbatch_file = open(qbatch_fname, 'w')
-    base_command = 'python pipe.py'
 
     for sfile in subjectsfiles:
         subjects=workflow.getsubjects(sfile)
 
         for s in subjects:
+            # first create individual subjects files and job bash scripts to be
+            # submitted to the job manager
             count+=1
             subject_fname = '__temp_subj_file_'+str(count)+'.txt'
+            qbatch_fname = '__temp_job_'+str(count)+'.sh'
+            qbatch_file = open(qbatch_fname, 'w')
+            
             workflow.savesubjects(subject_fname,[s])
+            
+            # write the header stuff
+            qbatch_file.write('#!/bin/bash\n\n')
+            qbatch_file.write('#SBATCH -c 1\n')
+            qbatch_file.write('#SBATCH --mem=64g\n')
+            qbatch_file.write('#SBATCH -t 48:0:0\n')
+            qbatch_file.write('#SBATCH -o __temp_job_'+str(count)+'.o'+'\n')
+            qbatch_file.write('#SBATCH -e __temp_job_'+str(count)+'.e'+'\n\n')
+                              
             qbatch_file.write(base_command + ' ')
             #Just re-use the arguments given here
             pipe_args = sys.argv[1:]
@@ -161,6 +145,10 @@ if runpipe:
             command_str  = ' '.join(pipe_args)
             qbatch_file.write(command_str)
             qbatch_file.write('\n')
+            
+            qbatch_file.close()
+            
+            # now submit job
+            p=subprocess.Popen(['sbatch',qbatch_fname])
+            p.communicate()            
 
-
-    qbatch_file.close()
