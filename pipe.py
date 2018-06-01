@@ -29,7 +29,7 @@ def printhelp():
     print('--runpipename <name>: prefix to precede name of steps in the run pipeline output files. (Default=\'\')')
     print('--fixpipename <name>: prefix to precede name of steps in the fixed pipeline output files. (Default=\'fix\')')
     print('--optpipename <name>: prefix to precede name of steps in the optimal pipeline output files. (Default=\'opt\')')
-    print('--outputsubjects <subj file>: specify a subject file, which is populated based on the results of the pipeline run on all subjects. Only applicable with --pipeline.')
+    print('--outputsubjects <subj file>: specify a subject file, to which the results of the pipeline run on all subjects is appended. Only applicable with --pipeline.')
     print('--showsubjects: print the list of all subjects to be processed and exit.')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 

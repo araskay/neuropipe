@@ -791,8 +791,11 @@ def getsubjects(subjectfile):
         l=shlex.split(line)
     return(subjects)
 
-def savesubjects(filename,subjects):
-    f=open(filename, 'w')
+def savesubjects(filename,subjects,append=True):
+    if append:
+        f=open(filename, 'a')
+    else:
+        f=open(filename, 'w')
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
