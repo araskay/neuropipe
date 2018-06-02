@@ -101,7 +101,7 @@ if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
 
 
-base_command = 'python pipe.py'
+base_command = 'pipe.py'
 
 if runpipe:
 
@@ -119,12 +119,12 @@ if runpipe:
             qbatch_fname = '__temp_job_'+str(count)+'.sh'
             qbatch_file = open(qbatch_fname, 'w')
             
-            workflow.savesubjects(subject_fname,[s])
+            workflow.savesubjects(subject_fname,[s],append=False)
             
             # write the header stuff
             qbatch_file.write('#!/bin/bash\n\n')
             qbatch_file.write('#SBATCH -c 1\n')
-            qbatch_file.write('#SBATCH --mem=64g\n')
+            qbatch_file.write('#SBATCH --mem=32g\n')
             qbatch_file.write('#SBATCH -t 48:0:0\n')
             qbatch_file.write('#SBATCH -o __temp_job_'+str(count)+'.o'+'\n')
             qbatch_file.write('#SBATCH -e __temp_job_'+str(count)+'.e'+'\n\n')
