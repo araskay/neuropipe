@@ -517,7 +517,24 @@ class PreprocessingStep:
 
         elif (self.name == '3dDetrend'):
             p=subprocess.Popen(['3dDetrend']+self.params+\
-                               ['-prefix',fileutils.removeniftiext(self.obase),fileutils.addniigzext(self.ibase)])
+                               ['-prefix',fileutils.removeniftiext(self.obase),\
+                                fileutils.addniigzext(self.ibase)])
+            p.communicate()
+            fileutils.afni2nifti(fileutils.removeniftiext(self.obase)) 
+            
+        elif (self.name == 'remove_spatial_structure_3dDeconvolve'):
+            p=subprocess.Popen(['3dDeconvolve']+self.params+\
+                               ['-input',fileutils.addniigzext(self.ibase),\
+                                '-prefix',fileutils.removeniftiext(self.obase)+'_3dDecon',\
+                                '-errts',fileutils.removeniftiext(self.obase)])
+            p.communicate()
+            fileutils.afni2nifti(fileutils.removeniftiext(self.obase)) 
+            fileutils.afni2nifti(fileutils.removeniftiext(self.obase)+'_3dDecon')
+
+        elif (self.name == '3dBlurToFWHM'):
+            p=subprocess.Popen(['3dBlurToFWHM']+self.params+\
+                               ['-prefix',fileutils.removeniftiext(self.obase),\
+                                '-input',fileutils.addniigzext(self.ibase)])
             p.communicate()
             fileutils.afni2nifti(fileutils.removeniftiext(self.obase)) 
             
@@ -572,7 +589,12 @@ class PreprocessingStep:
         elif (self.name == 'csfwmreg'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == '3dDetrend'):
-            fileutils.removefile(fileutils.addniigzext(self.obase))            
+            fileutils.removefile(fileutils.addniigzext(self.obase))
+        elif (self.name == 'remove_spatial_structure_3dDeconvolve'):
+            fileutils.removefile(fileutils.addniigzext(self.obase))
+            # there are other files though, which can also be removed.
+        elif (self.name == '3dBlurToFWHM'):
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         else:
             sys.exit('Error: preprocessing step not defined')    
 
