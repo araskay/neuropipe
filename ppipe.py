@@ -6,8 +6,6 @@ Created on Thu May  3 13:48:29 2018
 @author: aras
 """
 
-#!/usr/bin/env python
-
 def printhelp():
     p=subprocess.Popen(['pipe.py','-h'])
     p.communicate()
