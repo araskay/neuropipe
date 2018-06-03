@@ -128,6 +128,12 @@ if runpipe:
             qbatch_file.write('#SBATCH -t 48:0:0\n')
             qbatch_file.write('#SBATCH -o __temp_job_'+str(count)+'.o'+'\n')
             qbatch_file.write('#SBATCH -e __temp_job_'+str(count)+'.e'+'\n\n')
+
+            qbatch_file.write('module load anaconda/3.5.3\n')
+            qbatch_file.write('module load afni\n')
+            qbatch_file.write('module load fsl\n')
+            qbatch_file.write('module load freesurfer\n')
+            qbatch_file.write('module load anaconda/3.5.3\n\n')
                               
             qbatch_file.write(base_command + ' ')
             #Just re-use the arguments given here
