@@ -36,6 +36,24 @@ runpipe=False
 
 envvars=workflow.EnvVars()
 
+# the getopt libraray somehow "guesses" the arguments- for example if given
+# '--subject' it will automatically produce '--subjects'. This can cause problems
+# later when arguments from sys.argv are passed to pipe.py. The following checks
+# in advance to avoid such problems
+pipe_args = sys.argv[1:]
+for arg in pipe_args:
+    if '--' in arg:
+        if not arg in ['--help','--pipeline', '--subjects', '--perm', '--onoff',\
+                       '--permonoff', '--const', '--select', '--add',\
+                       '--combine', '--fixed', '--showpipes', '--template',\
+                       '--resout', '--parcellate', '--meants', '--seedconn',\
+                       '--tomni', '--boldregdof', '--structregdof',\
+                       '--boldregcost', '--structregcost', '--outputsubjects',\
+                       '--keepintermed', '--runpipename', '--fixpipename',\
+                       '--optpipename']:
+            printhelp()
+            sys.exit()
+
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'h',\
