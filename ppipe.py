@@ -9,10 +9,13 @@ Created on Thu May  3 13:48:29 2018
 def printhelp():
     p=subprocess.Popen(['pipe.py','-h'])
     p.communicate()
+    print('---------------------------------')
+    print('Additional job scheduler options:')
+    print('--mem <amount in GB> = 16')
 
 import workflow
 import preprocessingstep
-import sys, getopt
+import sys, getopt, os
 import subprocess
 
 subjectsfiles=[]
@@ -54,10 +57,15 @@ for arg in pipe_args:
             printhelp()
             sys.exit()
 
+
+runpipefile=''
+subjfile=''
+mem='16'
+
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'h',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'select=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=', 'outputsubjects=', 'keepintermed', 'runpipename=', 'fixpipename=', 'optpipename='])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'select=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=', 'outputsubjects=', 'keepintermed', 'runpipename=', 'fixpipename=', 'optpipename=','mem='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -68,6 +76,7 @@ for (opt,arg) in opts:
     elif opt in ('--pipeline'):
         runpipesteps+=preprocessingstep.makesteps(arg)
         runpipe=True
+        (directory,runpipefile)=os.path.split(arg)
         #(directory,namebase)=os.path.split(arg)
         #namebase=fileutils.removext(namebase)
         #runpipename+=namebase
@@ -112,6 +121,9 @@ for (opt,arg) in opts:
             optimalpipesteps=list(preprocessingstep.concatstepslists(optimalpipesteps,[steps]))
     elif opt in ('--subjects'):
         subjectsfiles.append(arg)
+        (directory,subjfile)=os.path.split(arg) # this is inconsistent with the idea of having multiple subject files- maybe just get one subjects file?
+    elif opt in ('--mem'):
+        mem=arg
 
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')
@@ -131,8 +143,8 @@ if runpipe:
             # first create individual subjects files and job bash scripts to be
             # submitted to the job manager
             count+=1
-            subject_fname = '__temp_subj_file_'+str(count)+'.txt'
-            qbatch_fname = '__temp_job_'+str(count)+'.sh'
+            subject_fname = '__temp_subj_'+subjfile+'_'+runpipefile+str(count)+'.txt'
+            qbatch_fname = '__temp_job_'+subjfile+'_'+runpipefile+str(count)+'.sh'
             qbatch_file = open(qbatch_fname, 'w')
             
             workflow.savesubjects(subject_fname,[s],append=False)
@@ -140,10 +152,10 @@ if runpipe:
             # write the header stuff
             qbatch_file.write('#!/bin/bash\n\n')
             qbatch_file.write('#SBATCH -c 1\n')
-            qbatch_file.write('#SBATCH --mem=32g\n')
+            qbatch_file.write('#SBATCH --mem='+mem+'g\n')
             qbatch_file.write('#SBATCH -t 48:0:0\n')
-            qbatch_file.write('#SBATCH -o __temp_job_'+str(count)+'.o'+'\n')
-            qbatch_file.write('#SBATCH -e __temp_job_'+str(count)+'.e'+'\n\n')
+            qbatch_file.write('#SBATCH -o __temp_job_'+subjfile+'_'+runpipefile+str(count)+'.o'+'\n')
+            qbatch_file.write('#SBATCH -e __temp_job_'+subjfile+'_'+runpipefile+str(count)+'.e'+'\n\n')
 
             qbatch_file.write('module load anaconda/3.5.3\n')
             qbatch_file.write('module load afni\n')

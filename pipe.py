@@ -192,10 +192,13 @@ if runpipe:
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
+                (directory,namebase)=os.path.split(run.data.bold)
+                namebase=fileutils.removext(namebase)
+                opath=os.path.abspath(run.data.opath) # just to remove possible end slash (/) for consistency                
                 run.data.envvars=envvars
                 pipe=Pipeline(runpipename,runpipesteps)
                 pipe.setibase(run.data.bold)
-                pipe.setobase(run.data.opath)
+                pipe.setobase(opath+'/'+namebase)
                 pipe.setdata(run.data) # when running pipeline do not deepcopy so that results can be recorded if needed
                 pipe.keepintermed=keepintermed
                 run.addpipeline(pipe)

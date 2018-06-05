@@ -3,18 +3,19 @@
 import workflow, getopt,sys,fileutils,shutil,os, subprocess
 
 def printhelp():
-    print('Usage: updateopath.py --input <input subject file> --output <output subject file> --opath <opath> [--prefix <prefix>]')
-    print('Each subject\'s opath is updated as <opath>/<subjID>/<sessID>/[<prefix>]')
+    print('Usage: updateopath.py --input <input subject file> --output <output subject file> --opath <opath> [--prefix <prefix> --addsessions]')
+    print('If --addsessions, each subject\'s opath is updated as <opath>/<subjID>/<sessID>/[<prefix>]')
     
 ifile=''
 ofile=''
 opath=''
 prefix=''
+addsessions=False
 
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'h',\
-                                ['help','input=', 'output=', 'opath='])
+                                ['help','input=', 'output=', 'opath=','addsessions'])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -30,6 +31,8 @@ for (opt,arg) in opts:
         opath=arg
     elif opt in ('--prefix'):
         prefix=arg
+    elif opt in ('--addsessions'):
+        addsessions=True
 
 if ifile=='' or ofile=='' or opath=='':
     printhelp()
@@ -42,6 +45,9 @@ subjects=workflow.getsubjects(ifile)
 for subj in subjects:
     for sess in subj.sessions:
         for run in sess.runs:
-            run.data.opath=opath+'/'+subj.ID+'/'+sess.ID+'/'+prefix
+            if addsessions:
+                run.data.opath=opath+'/'+subj.ID+'/'+sess.ID+'/'+prefix
+            else:
+                run.data.opath=opath
                 
-workflow.savesubjects(ofile,subjects)
+workflow.savesubjects(ofile,subjects,append=False)
