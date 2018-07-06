@@ -98,6 +98,8 @@ def groupaverage(spmfiles,ofile):
         spm1=spm1_nib.get_data()
         stats+=spm1
 
+    stats = stats/n
+
     # write t to file
     onifti = nibabel.nifti1.Nifti1Image(stats,affine,header=hdr)
     onifti.to_filename(ofile)    
