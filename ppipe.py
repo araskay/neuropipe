@@ -11,7 +11,7 @@ def printhelp():
     p.communicate()
     print('---------------------------------')
     print('Additional job scheduler options:')
-    print('--mem <amount in GB> = 16')
+    print('--mem <amount in GB = 16>')
 
 import workflow
 import preprocessingstep
@@ -143,8 +143,8 @@ if runpipe:
             # first create individual subjects files and job bash scripts to be
             # submitted to the job manager
             count+=1
-            subject_fname = '__temp_subj_'+subjfile+'_'+runpipefile+str(count)+'.txt'
-            qbatch_fname = '__temp_job_'+subjfile+'_'+runpipefile+str(count)+'.sh'
+            subject_fname = '.temp_subj_'+subjfile+'_'+runpipefile+str(count)+'.txt'
+            qbatch_fname = '.temp_job_'+subjfile+'_'+runpipefile+str(count)+'.sh'
             qbatch_file = open(qbatch_fname, 'w')
             
             workflow.savesubjects(subject_fname,[s],append=False)
@@ -154,8 +154,8 @@ if runpipe:
             qbatch_file.write('#SBATCH -c 1\n')
             qbatch_file.write('#SBATCH --mem='+mem+'g\n')
             qbatch_file.write('#SBATCH -t 48:0:0\n')
-            qbatch_file.write('#SBATCH -o __temp_job_'+subjfile+'_'+runpipefile+str(count)+'.o'+'\n')
-            qbatch_file.write('#SBATCH -e __temp_job_'+subjfile+'_'+runpipefile+str(count)+'.e'+'\n\n')
+            qbatch_file.write('#SBATCH -o .temp_job_'+subjfile+'_'+runpipefile+str(count)+'.o'+'\n')
+            qbatch_file.write('#SBATCH -e .temp_job_'+subjfile+'_'+runpipefile+str(count)+'.e'+'\n\n')
 
             qbatch_file.write('module load anaconda/3.5.3\n')
             qbatch_file.write('module load afni\n')
