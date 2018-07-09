@@ -15,7 +15,7 @@ directive='all'
 
 # parse command-line arguments
 try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',\
+    (opts,args) = getopt.getopt(sys.argv[1:],'h',\
                                 ['help','input=', 'output=', 'directive='])
 except getopt.GetoptError:
     printhelp()
@@ -24,9 +24,9 @@ for (opt,arg) in opts:
     if opt in ('-h', '--help'):
         printhelp()
         sys.exit()
-    elif opt in ('-i','--input'):
+    elif opt in ('--input'):
         ifile=arg
-    elif opt in ('-o','--output'):
+    elif opt in ('--output'):
         ofile=arg
     elif opt in ('--directive'):
         directive=arg
