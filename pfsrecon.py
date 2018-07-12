@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys,getopt,subprocess,os
+import workflow
+
 def printhelp():
     p=subprocess.Popen(['fsrecon.py','-h'])
     p.communicate()
@@ -47,8 +50,6 @@ if ifile=='' or ofile=='':
     sys.exit()
 
 base_command = 'fsrecon.py'
-
-import workflow
 
 count=0
 
