@@ -176,6 +176,8 @@ if runpipe:
 #                        pipe_args[indx + 1] = subject_fname
 #                indx += 1
             pipe_args[pipe_args.index('--subjects')+1] = subject_fname
+            del pipe_args[pipe_args.index('--mem')+1]
+            del pipe_args[pipe_args.index('--mem')]
             command_str  = ' '.join(pipe_args)
             qbatch_file.write(command_str)
             qbatch_file.write('\n')

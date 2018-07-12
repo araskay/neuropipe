@@ -86,6 +86,8 @@ for s in subjects:
     #Just re-use the arguments given here
     pipe_args = sys.argv[1:]
     pipe_args[pipe_args.index('--input')+1] = subject_fname
+    del pipe_args[pipe_args.index('--mem')+1]
+    del pipe_args[pipe_args.index('--mem')]
     command_str  = ' '.join(pipe_args)
     qbatch_file.write(command_str)
     qbatch_file.write('\n')
