@@ -39,8 +39,14 @@ for subj in subjects:
             p=subprocess.Popen(['prepphysio',run.data.siemensphysio])
             p.communicate()
             (directory,namebase)=os.path.split(run.data.siemensphysio)
-            shutil.move(namebase+'.resp.1D',directory+'/'+namebase+'.resp.1D') # do not use os.rename, as it may cause an error if source and destination ore on different disks
-            shutil.move(namebase+'.puls.1D',directory+'/'+namebase+'.puls.1D')
+            #shutil.move(namebase+'.resp.1D',directory+'/'+namebase+'.resp.1D') # do not use os.rename, as it may cause an error if source and destination ore on different disks
+            # use mv instead of the line above
+            p=subprocess.Popen(['mv',namebase+'.resp.1D',directory+'/'+namebase+'.resp.1D'])
+            p.communicate()
+            #shutil.move(namebase+'.puls.1D',directory+'/'+namebase+'.puls.1D')
+            # use mv instead of the line above
+            p=subprocess.Popen(['mv',namebase+'.puls.1D',directory+'/'+namebase+'.puls.1D'])
+            p.communicate()
             run.data.card=directory+'/'+namebase+'.puls.1D'
             
             (d,n)=os.path.split(run.data.biopacphysio)
