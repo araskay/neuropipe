@@ -21,7 +21,7 @@ ofile=''
 pipe_args = sys.argv[1:]
 for arg in pipe_args:
     if '--' in arg:
-        if not arg in ['--help','--input', '--output', '--directive']:
+        if not arg in ['--help','--input', '--output', '--directive','--mem']:
             printhelp()
             sys.exit()
 
@@ -29,7 +29,7 @@ mem='16'
 
 # parse command-line arguments
 try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',['help','input=', 'output=', 'directive='])
+    (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',['help','input=', 'output=', 'directive=','mem='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -86,8 +86,9 @@ for s in subjects:
     #Just re-use the arguments given here
     pipe_args = sys.argv[1:]
     pipe_args[pipe_args.index('--input')+1] = subject_fname
-    del pipe_args[pipe_args.index('--mem')+1]
-    del pipe_args[pipe_args.index('--mem')]
+    if '--mem' in pipe_args:
+        del pipe_args[pipe_args.index('--mem')+1]
+        del pipe_args[pipe_args.index('--mem')]
     command_str  = ' '.join(pipe_args)
     qbatch_file.write(command_str)
     qbatch_file.write('\n')
