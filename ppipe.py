@@ -53,7 +53,7 @@ for arg in pipe_args:
                        '--tomni', '--boldregdof', '--structregdof',\
                        '--boldregcost', '--structregcost', '--outputsubjects',\
                        '--keepintermed', '--runpipename', '--fixpipename',\
-                       '--optpipename']:
+                       '--optpipename','--mem']:
             printhelp()
             sys.exit()
 

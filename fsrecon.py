@@ -47,10 +47,15 @@ for subj in subjects:
                 p=subprocess.Popen(['recon-all','-sd',opath,'-subjid',fileutils.removext(oname)+'_fsrecon','-i',run.data.structural,'-'+directive])
                 p.communicate()
                 run.data.fsrecondir=opath+'/'+fileutils.removext(oname)+'_fsrecon'
+            elif not os.path.exists(run.data.fsrecondir):
+                sys.exit('Error in Subject '+subj.ID+' Session '+sess.ID+': fsrecondir is not empty but point to a non-existet directory.')
             fsrecondir=os.path.abspath(run.data.fsrecondir) # just to remove possible end slash (/) for consistency
             p=subprocess.Popen(['mri_convert',fsrecondir+'/mri/brainmask.mgz',\
                                 opath+'/'+fileutils.removext(oname)+'_brainmask.nii.gz'])
             p.communicate()
             run.data.structural=opath+'/'+fileutils.removext(oname)+'_brainmask.nii.gz'
-            
+            run.data.aseg=run.data.fsrecondir+'/mri/aseg.mgz'
+            if not os.path.exists(run.data.aseg):
+                sys.exit('Error in Subject '+subj.ID+' Session '+sess.ID+': aseg is not empty but point to a non-existet file.')
+
 workflow.savesubjects(ofile,subjects)
