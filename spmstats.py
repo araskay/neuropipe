@@ -106,7 +106,8 @@ def groupaverage(spmfiles,ofile):
 
 def printhelp():
     print('Usage: spmstats --set1 <text file> --set2 <text file> --obase <output base> [--p <p-value> (default=0.05) --correction <correction method> (default=bonferroni) --groupaverage]')
-    print('If two spm sets provided, group inference for each set, and group inference for variations between the two sets (set2-set1) are performed. If only one spm set provided, group inference for that set is performed.')
+    print('If two spm sets provided, group inference for each set (t-test), and group inference for variations between the two sets (set2-set1), i.e., matched-pairs t-test, are performed. If only one spm set provided, group inference for that set is performed.')
+    print('If --groupaverage used, in addition to group inference (t-test), group average is calculated for each set given.')
     print('correction methods:')
     print('bonferroni: one-step correction')
     print('sidak: one-step correction')
