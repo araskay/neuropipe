@@ -162,7 +162,10 @@ for (opt,arg) in opts:
         showsubjects=True
 
 if subjectsfiles==[]:
-    print('Please specify subjects file. Get help using -h or --help.')
+    sys.exit('Please specify subjects file. Get help using -h or --help.')
+
+if tomni and envvars.mni152=='':
+    sys.exit('--tomni used but template not specified. Need to provide --template to use --tomni.')
 
 if showsubjects:
     subjects=[]
