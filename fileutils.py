@@ -58,6 +58,8 @@ def mgztonifti(filename):
     removefile(filename)
     
 def unzipnifti(filename):
+    if os.path.exists(removext(filename)+'.nii.gz') and os.path.exists(removext(filename)+'.nii'):
+        removefile(removext(filename)+'.nii')
     p=subprocess.Popen(['fslchfiletype','NIFTI',filename,removext(filename)+'.nii'])
     p.communicate()
     return(removext(filename)+'.nii')
