@@ -228,16 +228,14 @@ class PreprocessingStep:
                                       ',\''+fileutils.removext(self.obase)+'\'); '+ \
                                       'quit;'])
             (output,error)=process.communicate()
-            print('DEBUG: phycaa done')
+            print('PHYCAA+ done.')
 
-            # remove unzipped nifti files
+            # remove unzipped nifti files (aparently phycaa produces nii files from zipped nii files)
             fileutils.removefile(fileutils.removext(self.ibase)+'.nii')
             fileutils.removefile(fileutils.removext(self.data.brainmask)+'.nii')
             # move phycaa main output to self.obase
-            print('DEBUG: moving output file')
             shutil.move(fileutils.removext(self.ibase)+'_PHYCAA_step1+2.nii',fileutils.removext(self.obase)+'.nii')
             # zip phycaa output to produce nii.gz file
-            print('DEBUG: chaning file type to nii.gz')
             fileutils.zipnifti(fileutils.removext(self.obase))
         
         elif self.name=='tcompcor':
