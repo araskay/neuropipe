@@ -122,8 +122,8 @@ class Data:
                             '-applyxfm','-init',self.struct2func,\
                             '-out',fileutils.removext(self.bold)+'_gm'])
         p.communicate()
-        #p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_gm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_gm'])
-        #p.communicate()
+        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_gm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_gm'])
+        p.communicate()
         self.boldgm=fileutils.removext(self.bold)+'_gm.nii.gz'
         
         p=subprocess.Popen(['flirt','-in',self.structuralwm,\
@@ -131,8 +131,8 @@ class Data:
                             '-applyxfm','-init',self.struct2func,\
                             '-out',fileutils.removext(self.bold)+'_wm'])
         p.communicate()         
-        #p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_wm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_wm'])
-        #p.communicate()
+        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_wm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_wm'])
+        p.communicate()
         self.boldwm=fileutils.removext(self.bold)+'_wm.nii.gz'          
 
         # combine csf and wm rois into one roi
