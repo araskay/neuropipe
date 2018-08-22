@@ -11,7 +11,7 @@ def printhelp():
     p.communicate()
     print('---------------------------------')
     print('Additional job scheduler options:')
-    print('--mem <amount in GB = 32>')
+    print('--mem <amount in GB = 16>')
 
 import workflow
 import preprocessingstep
@@ -60,7 +60,7 @@ for arg in pipe_args:
 
 runpipefile=''
 subjfile=''
-mem='32'
+mem='16'
 
 # parse command-line arguments
 try:

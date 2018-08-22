@@ -211,14 +211,15 @@ class PreprocessingStep:
                 sys.exit('Please provide slice timing offsets for slice timing correction.')                
                 
         elif self.name=='phycaa':
-            # INCOMPLETE. ONCE COMPLETE, ADD TO removefiles
             # get the TR from the data
             img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
             hdr=img_nib.header
             tr=str(hdr.get_zooms()[3])
+
+            if self.data.brainmask=='':
+                sys.exit('Error in phycaa: no brainmask available. Consider adding brainExtractAfni or brainExtractFSL or providing brainmask in the subjects file')
             
             # need to change NIFTI_GZ to NIFTI (aparently phycaa cannot handle nifti_gz)
-
             process=subprocess.Popen(['matlab', \
                                       '-nodisplay','-nosplash', \
                                       '-r', 'run_phycaa('+ \
@@ -230,7 +231,7 @@ class PreprocessingStep:
             (output,error)=process.communicate()
             print('PHYCAA+ done.')
 
-            # remove unzipped nifti files (aparently phycaa produces nii files from zipped nii files)
+            # remove unzipped nifti files
             fileutils.removefile(fileutils.removext(self.ibase)+'.nii')
             fileutils.removefile(fileutils.removext(self.data.brainmask)+'.nii')
             # move phycaa main output to self.obase
@@ -539,6 +540,51 @@ class PreprocessingStep:
                                 '-input',fileutils.addniigzext(self.ibase)])
             p.communicate()
             fileutils.afni2nifti(fileutils.removeniftiext(self.obase)) 
+
+        elif self.name=='spikecor':
+            # get OUT_PARAM
+            out_param='volume' # default
+            if len(self.params)>0:
+                if self.params[0] == 'none':
+                    out_param=self.params[0]
+                elif self.params[0] == 'motion':
+                    out_param=self.params[0]
+                elif self.params[0] == 'volume':
+                    out_param=self.params[0]
+                elif self.params[0] == 'volume+motion':
+                    out_param=self.params[0]
+                elif self.params[0] == 'slice':
+                    out_param=self.params[0]
+                elif self.params[0] == 'slice+motion':
+                    out_param=self.params[0]
+                else:
+                    sys.exit('Error: spikecor interpolation parameter (OUT_PARAM) is not valid. OUT_PARAM can be one of the followin: none, motion, volume, volume+motion, slice, slice+motion.')
+            
+            if self.data.brainmask=='':
+                sys.exit('Error in spikecor: no brainmask available. Consider adding brainExtractAfni or brainExtractFSL or providing brainmask in the subjects file')
+            
+            if self.data.motpar=='':
+                sys.exit('Error in SpikeCor: motion parameters not available. Consider adding mcflirt or providing motpar in the subjects file.')
+                
+            # need to change NIFTI_GZ to NIFTI (aparently spikecore cannot handle nifti_gz)
+            process=subprocess.Popen(['matlab', \
+                                      '-nodisplay','-nosplash', \
+                                      '-r', 'run_spikecor('+ \
+                                      '\''+fileutils.unzipnifti(self.ibase)+'\',' + \
+                                      '\''+fileutils.unzipnifti(self.data.brainmask)+'\',' + \
+                                      '\''+self.data.motpar+'\',' + \
+                                      '\''+fileutils.removext(self.obase)+'\','+ \
+                                      '\''+out_param+'\',' + \
+                                      '\''+fileutils.removext(self.obase)+'.nii\'); '+ \
+                                      'quit;'])
+            (output,error)=process.communicate()
+            print('SpikeCor done.')
+
+            # remove unzipped nifti files
+            fileutils.removefile(fileutils.removext(self.ibase)+'.nii')
+            fileutils.removefile(fileutils.removext(self.data.brainmask)+'.nii')
+            # zip output to produce nii.gz file
+            fileutils.zipnifti(fileutils.removext(self.obase))
             
         else:
             sys.exit('Error: preprocessing step not defined')      
@@ -570,6 +616,8 @@ class PreprocessingStep:
             fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'stcor'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
+        elif (self.name == 'phycaa'):
+            fileutils.removefile(fileutils.addniigzext(self.obase))            
         elif (self.name == 'tcompcor'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'acompcor'):
@@ -597,6 +645,8 @@ class PreprocessingStep:
             # there are other files though, which can also be removed.
         elif (self.name == '3dBlurToFWHM'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
+        elif (self.name == '3dBlurToFWHM'):
+                        fileutils.removefile(fileutils.addniigzext(self.obase))
         else:
             sys.exit('Error: preprocessing step not defined')    
 
