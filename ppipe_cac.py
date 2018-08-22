@@ -161,6 +161,7 @@ if runpipe:
             qbatch_file.write('module load afni\n')
             qbatch_file.write('module load fsl\n')
             qbatch_file.write('module load freesurfer\n')
+            qbatch_file.write('module load matlab\n')
             qbatch_file.write('module load anaconda/3.5.3\n\n')
                               
             qbatch_file.write(base_command + ' ')
