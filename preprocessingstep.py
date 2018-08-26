@@ -1,8 +1,6 @@
 import subprocess # used to run bash commands
 import sys
-import seedcorr
 import fileutils
-import os
 import nibabel
 from nipype.algorithms.confounds import (ACompCor, TCompCor)
 import shutil
