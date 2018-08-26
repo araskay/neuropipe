@@ -1,0 +1,71 @@
+
+===========================================================================
+     UPDATE_HISTORY:  PHYCAA+ physiological correction scripts (2014/09/11)  
+===========================================================================
+     Author: Nathan Churchill, University of Toronto
+      email: nchurchill@research.baycrest.org
+===========================================================================
+
+This document lists updates to pipeine scripts for each archived version.
+Can be used to track changes in code, and identify ongoing issues.
+
+---------------------------------------------------------------------------
+
+[UPDATES 2014/09/11]
+* fixed output NIFTI data formatting, which lost header information and mis-cast output data types
+> Modified code:
+    [run_PHYCAA_plus.m, run_PHYCAA_plus_group.m]: for all instances of saved .nii
+    outputs (e.g. "save_untouch_nii"); changed header definitions (in preceding 4 lines)
+    so that we enforce correct data-type and preserve original header info
+* minor modifications for improved efficiency
+> Modified code:
+    [PHYCAA_plus_step1.m, PHYCAA_plus_step2.m]: replaced instances of "repmat" with "bsxfun" and
+    converted all svds into 'econ'
+
+[UPDATES 2014/04/10]
+* revised to README file for improved clarity
+
+[UPDATES 2014/03/27]
+* fixed step-1 to correctly use "prior" maps
+> Modified code:
+	[PHYCAA_plus_step1.m]: now takes prior (dataInfo.priorMask) and finds NN_map that maximizes overlap with it
+* updated wrapper scripts to denoise a single run of data
+> Modified code:
+	[run_PHYCAA_plus.m]: conditional statement to identify cases where only 1 run available, and split in half
+	[run_PHYCAA_plus_group.m]: conditional statement to identify cases where only 1 run available, and split in half
+
+[UPDATES 2013/12/10]
+* minor bug fix: PHYCAA_plus_step2.m at line 307, error with estimating 
+  reproducibility for >2 splits.
+
+[UPDATES 2013/09/05]
+* significant modifications to:
+	  run_PHYCAA_plus.m  
+	  run_PHYCAA_plus_group.m  
+      PHYCAA_plus_step2.m
+
+> runPHYCAA_plus(_group).m:corrected error in headers of output to NIFTI 
+  that was incompatible with FSL programs.
+
+> PHYCAA_plus_step2.m: dataInfo.max_PC_dim
+
+[UPDATES 2013/08/13]
+* significant modifications to:
+	  PHYCAA_plus_step2.m  
+
+> added new option "dataInfo.dataInfo.max_PC_dim", which specifies a hard upper 
+  bound on explored PCA subspace size, with default =50.
+  This reduces compute time and potential overfitting for larger datasets
+
+[UPDATES 2013/08/05]
+* significant modifications to:
+	  run_PHYCAA_plus_group.m  
+
+> corrected error in Step-1 of group-level PHYCAA+; NIFTI output after
+  step-1 was not being spatially downweighted (modified line 244)
+
+[UPDATES 2013/07/21]
+* first release of PHYCAA+ code
+
+---------------------------------------------------------------------------
+
