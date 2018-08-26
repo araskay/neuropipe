@@ -44,6 +44,12 @@ for subj in subjects:
             if run.data.fsrecondir=='':
                 if directive=='':
                     sys.exit('Please specify freesurfer recon-all directive.')
+                
+                # if output directory exists, delete it first, otherwise recon-all throws an error
+                if os.path.exists(opath+'/'+fileutils.removext(oname)+'_fsrecon'):
+                    p=subprocess.Popen(['rm','-r',opath+'/'+fileutils.removext(oname)+'_fsrecon'])
+                    p.communicate()
+
                 p=subprocess.Popen(['recon-all','-sd',opath,'-subjid',fileutils.removext(oname)+'_fsrecon','-i',run.data.structural,'-'+directive])
                 p.communicate()
                 run.data.fsrecondir=opath+'/'+fileutils.removext(oname)+'_fsrecon'
