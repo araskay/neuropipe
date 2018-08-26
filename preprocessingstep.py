@@ -587,7 +587,7 @@ class PreprocessingStep:
             fileutils.zipnifti(fileutils.removext(self.obase))
             
         else:
-            sys.exit('Error: preprocessing step not defined')      
+            sys.exit('Error: preprocessing step '+self.name+' not defined')      
          
     def removeofiles(self):
         if (self.name == 'mcflirt'):
@@ -645,10 +645,10 @@ class PreprocessingStep:
             # there are other files though, which can also be removed.
         elif (self.name == '3dBlurToFWHM'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
-        elif (self.name == '3dBlurToFWHM'):
-                        fileutils.removefile(fileutils.addniigzext(self.obase))
+        elif (self.name == 'spikecor'):
+            fileutils.removefile(fileutils.addniigzext(self.obase))
         else:
-            sys.exit('Error: preprocessing step not defined')    
+            sys.exit('Error: preprocessing step '+self.name+' not defined')    
 
 
 def makesteps(pipelinefile):
