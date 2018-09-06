@@ -216,7 +216,7 @@ class Data:
         p=subprocess.Popen(['flirt','-in',self.structural,\
                             '-ref',self.bold,\
                             '-applyxfm','-init',self.struct2func,\
-                            '-out',fileutils.removext(self.bold)+'_struct2func'])
+                            '-out',fileutils.removext(self.structural)+'_struct2func'])
         p.communicate()             
     
     def transform_struct2mni(self):
