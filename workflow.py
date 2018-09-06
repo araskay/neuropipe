@@ -2,8 +2,7 @@ import sys
 import spmsim
 import fileutils
 import getopt,shlex
-import os,subprocess,nibabel, copy
-from preprocessingstep import PreprocessingStep
+import subprocess
 import numpy as np
 
 pthresh=0.05 # significance level for thresholding seed connectivity maps
@@ -15,6 +14,7 @@ class EnvVars:
         self.structregdof='12'
         self.boldregcost='corratio' # flirt default
         self.structregcost='corratio' #flirt default
+        self.maskthresh='0.5'
 
 class Data:
     def __init__(self):
@@ -113,7 +113,7 @@ class Data:
                             '-applyxfm','-init',self.struct2func,\
                             '-out',fileutils.removext(self.bold)+'_csf'])
         p.communicate()
-        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_csf','-thr','0.5','-bin',fileutils.removext(self.bold)+'_csf'])
+        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_csf','-thr',self.envvars.maskthresh,'-bin',fileutils.removext(self.bold)+'_csf'])
         p.communicate()
         self.boldcsf=fileutils.removext(self.bold)+'_csf.nii.gz'
         
@@ -122,7 +122,7 @@ class Data:
                             '-applyxfm','-init',self.struct2func,\
                             '-out',fileutils.removext(self.bold)+'_gm'])
         p.communicate()
-        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_gm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_gm'])
+        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_gm','-thr',self.envvars.maskthresh,'-bin',fileutils.removext(self.bold)+'_gm'])
         p.communicate()
         self.boldgm=fileutils.removext(self.bold)+'_gm.nii.gz'
         
@@ -131,7 +131,7 @@ class Data:
                             '-applyxfm','-init',self.struct2func,\
                             '-out',fileutils.removext(self.bold)+'_wm'])
         p.communicate()         
-        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_wm','-thr','0.5','-bin',fileutils.removext(self.bold)+'_wm'])
+        p=subprocess.Popen(['fslmaths',fileutils.removext(self.bold)+'_wm','-thr',self.envvars.maskthresh,'-bin',fileutils.removext(self.bold)+'_wm'])
         p.communicate()
         self.boldwm=fileutils.removext(self.bold)+'_wm.nii.gz'          
 

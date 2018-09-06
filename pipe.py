@@ -31,12 +31,12 @@ def printhelp():
     print('--optpipename <name>: prefix to precede name of steps in the optimal pipeline output files. (Default=\'opt\')')
     print('--outputsubjects <subj file>: specify a subject file, to which the results of the pipeline run on all subjects is appended. Only applicable with --pipeline.')
     print('--showsubjects: print the list of all subjects to be processed and exit.')
+    print('--maskthresh: threshold for binarizing functional masks transformed from structural masks (Default=0.5)')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 
 import workflow
 from pipeline import Pipeline
-from preprocessingstep import PreprocessingStep
 import fileutils
 import preprocessingstep
 import sys, getopt, os
@@ -67,7 +67,7 @@ envvars=workflow.EnvVars()
 # parse command-line arguments
 try:
     (opts,args) = getopt.getopt(sys.argv[1:],'h',\
-                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'select=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=', 'outputsubjects=', 'keepintermed', 'runpipename=', 'fixpipename=', 'optpipename=','showsubjects'])
+                                ['help','pipeline=', 'subjects=', 'perm=', 'onoff=', 'permonoff=', 'const=', 'select=', 'add', 'combine', 'fixed=', 'showpipes', 'template=', 'resout=', 'parcellate', 'meants', 'seedconn', 'tomni', 'boldregdof=', 'structregdof=', 'boldregcost=', 'structregcost=', 'outputsubjects=', 'keepintermed', 'runpipename=', 'fixpipename=', 'optpipename=','showsubjects','maskthresh='])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
@@ -160,6 +160,8 @@ for (opt,arg) in opts:
         optpipename=arg
     elif opt in ('--showsubjects'):
         showsubjects=True
+    elif opt in ('--maskthresh'):
+        envvars.maskthresh=arg
 
 if subjectsfiles==[]:
     sys.exit('Please specify subjects file. Get help using -h or --help.')
