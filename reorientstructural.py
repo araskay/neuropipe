@@ -34,4 +34,4 @@ for subj in subjects:
             run.data.structural=fileutils.removext(run.data.structural)+'_reorient.nii.gz'
             
             
-workflow.savesubjects(ofile,subjects)
+workflow.savesubjects(ofile,subjects,append=False)

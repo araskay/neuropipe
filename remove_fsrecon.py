@@ -37,4 +37,4 @@ for subj in subjects:
             run.data.fsrecondir=''
             run.data.aseg=''
                 
-workflow.savesubjects(ofile,subjects)
+workflow.savesubjects(ofile,subjects,append=False)

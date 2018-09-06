@@ -56,4 +56,4 @@ for subj in subjects:
                 shutil.rmtree(opath+'/__recon-all')
             
             
-workflow.savesubjects(ofile,subjects)
+workflow.savesubjects(ofile,subjects,append=False)

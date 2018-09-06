@@ -39,4 +39,4 @@ for subj in subjects:
             run.data.sliceorder=sliceorder
             
             
-workflow.savesubjects(ofile,subjects)
+workflow.savesubjects(ofile,subjects,append=False)

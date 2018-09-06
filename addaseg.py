@@ -49,4 +49,4 @@ for subj in subjects:
             if not os.path.exists(run.data.aseg):
                 run.data.aseg+=attentionstr
                 
-workflow.savesubjects(ofile,subjects)
+workflow.savesubjects(ofile,subjects,append=False)

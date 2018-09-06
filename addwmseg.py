@@ -45,4 +45,4 @@ for subj in subjects:
             if (not os.path.exists(run.data.wmseg)) or (not os.path.exists(wmseg)):
                 run.data.wmseg+=attentionstr
                 
-workflow.savesubjects(ofile,subjects)
+workflow.savesubjects(ofile,subjects,append=False)
