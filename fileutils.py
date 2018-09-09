@@ -56,17 +56,27 @@ def mgztonifti(filename):
     p=subprocess.Popen(['mri_convert',filename,removext(filename)+'.nii.gz'])
     p.communicate()
     removefile(filename)
-    
+
+def remove_nifti_duplicate(filename,removeunzip=True):
+    if removeunzip:
+        if os.path.exists(removext(filename)+'.nii.gz') and os.path.exists(removext(filename)+'.nii'):
+            removefile(removext(filename)+'.nii')
+    else:
+        if os.path.exists(removext(filename)+'.nii.gz') and os.path.exists(removext(filename)+'.nii'):
+            removefile(removext(filename)+'.nii.gz')
+   
 def unzipnifti(filename):
-    if os.path.exists(removext(filename)+'.nii.gz') and os.path.exists(removext(filename)+'.nii'):
-        removefile(removext(filename)+'.nii')
+    remove_nifti_duplicate(filename)
+#    if os.path.exists(removext(filename)+'.nii.gz') and os.path.exists(removext(filename)+'.nii'):
+#        removefile(removext(filename)+'.nii')
     p=subprocess.Popen(['fslchfiletype','NIFTI',filename,removext(filename)+'.nii'])
     p.communicate()
     return(removext(filename)+'.nii')
     
 def zipnifti(filename):
-    if not os.path.exists(removext(filename)+'.nii'):
-        sys.exit('Error in zipnifti: file '+removext(filename)+'.nii does not exist.')
+    remove_nifti_duplicate(filename,removeunzip=False)
+#    if not os.path.exists(removext(filename)+'.nii'):
+#        sys.exit('Error in zipnifti: file '+removext(filename)+'.nii does not exist.')
     if os.path.exists(removext(filename)+'.nii.gz') and os.path.exists(removext(filename)+'.nii'):
         removefile(removext(filename)+'.nii.gz')
     p=subprocess.Popen(['gzip',removext(filename)+'.nii'])

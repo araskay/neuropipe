@@ -60,6 +60,8 @@ class Pipeline:
         # first create output directory if necessary
         (directory,namebase)=os.path.split(self.obase)
         fileutils.createdir(directory)
+        # remove duplicate inputs (if both nii and nii.gz exist)
+        fileutils.remove_nifti_duplicate(self.ibase)
         if len(self.steps)>0:
             stepibase=self.ibase
             stepobase=self.obase

@@ -244,8 +244,8 @@ class PreprocessingStep:
                 ignore=0
             ccor = TCompCor()
             ccor.inputs.realigned_file = fileutils.addniigzext(self.ibase)
-            if self.data.brainmask != '':
-                ccor.inputs.mask_files = self.data.brainmask
+#            if self.data.brainmask != '':
+#                ccor.inputs.mask_files = self.data.brainmask
 
             ccor.inputs.components_file=fileutils.removext(self.obase)+'__components.txt'
             #ccor.inputs.header_prefix='' # not sure what this does
@@ -254,7 +254,8 @@ class PreprocessingStep:
             ccor.inputs.ignore_initial_volumes=ignore
             ccor.inputs.pre_filter = False # just remove mean, do not do further detrending
             ccor.run()
-            shutil.move('mask_000.nii.gz',fileutils.removext(self.obase)+'__hivarmask.nii.gz') # cannot set output path for high variance mask
+            # the following commented to run in parallel
+            #shutil.move('mask_000.nii.gz',fileutils.removext(self.obase)+'__hivarmask.nii.gz') # cannot set output path for high variance mask
             
             if self.data.brainmask=='':
                 p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
@@ -297,8 +298,8 @@ class PreprocessingStep:
                 ignore=0
             
             ccor.inputs.realigned_file = fileutils.addniigzext(self.ibase)
-            if self.data.brainmask != '':
-                ccor.inputs.mask_files = self.data.brainmask
+#            if self.data.brainmask != '':
+#                ccor.inputs.mask_files = self.data.brainmask
 
             ccor.inputs.components_file=fileutils.removext(self.obase)+'__components.txt'
             #ccor.inputs.header_prefix='' # not sure what this does
