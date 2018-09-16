@@ -1,12 +1,11 @@
 # to implement: the option to keep/discard intermediate steps
 import sys
 import nibabel
-import numpy as np
 import seedcorr
 import fileutils
 import subprocess # used to run bash commands
 import os
-import spmsim, preprocessingstep
+import spmsim
 import copy
 
 p_thresh=0.05 # significance level for thresholding seed connectivity maps
