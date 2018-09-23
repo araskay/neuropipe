@@ -141,6 +141,10 @@ class Data:
         self.boldcsfwm=fileutils.removext(self.bold)+'_csfwm.nii.gz'
     
     def calc_meants(self):
+        
+        if self.boldcsf=='' or self.boldgm=='' or self.boldwm=='':
+            self.parcellate()
+            
         if len(self.brainmask)>0:
             p=subprocess.Popen(['fslmeants','-i',self.bold,\
                                 '-o',fileutils.removext(self.bold)+'_meants.txt',\
@@ -711,7 +715,12 @@ def getsubjects(subjectfile):
                                               'fsrecondir=',\
                                               'structuralcsf=',\
                                               'structuralgm=',\
-                                              'structuralwm='])
+                                              'structuralwm=',\
+                                              'meants=',\
+                                              'meantswm=',\
+                                              'meantsgm=',\
+                                              'meantscsf=',\
+                                              'meantscsfwm='])
         except getopt.GetoptError:
             sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file. Also please note that identifiers require double dash (--)')
         for (opt,arg) in opts:
@@ -773,6 +782,16 @@ def getsubjects(subjectfile):
                 data.structuralgm=arg
             elif opt in ('--structuralwm'):
                 data.structuralwm=arg
+            elif opt in ('--meants'):
+                data.meants=arg
+            elif opt in ('--meantsgm'):
+                data.meantsgm=arg 
+            elif opt in ('--meantswm'):
+                data.meantswm=arg 
+            elif opt in ('--meantscsf'):
+                data.meantscsf=arg
+            elif opt in ('--meantscsfwm'):
+                data.meantscsfwm=arg                 
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if len(s.ID)>0 and s.ID==subjectID ] # only match if there is actually a subjectID, i.e., len(s.ID)>0
         if len(matchsubj)>0:
@@ -828,6 +847,11 @@ def savesubjects(filename,subjects,append=True):
                         '--structuralcsf \''+run.data.structuralcsf+'\' '+\
                         '--structuralgm \''+run.data.structuralgm+'\' '+\
                         '--structuralwm \''+run.data.structuralwm+'\' '+\
+                        '--meants \''+run.data.meants+'\' '+\
+                        '--meantsgm \''+run.data.meantsgm+'\' '+\
+                        '--meantswm \''+run.data.meantswm+'\' '+\
+                        '--meantscsf \''+run.data.meantscsf+'\' '+\
+                        '--meantscsfwm \''+run.data.meantscsfwm+'\' '+\
                         '\n')
     f.close()
     

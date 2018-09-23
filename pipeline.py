@@ -239,7 +239,7 @@ class Pipeline:
         
         
     def meants(self):
-        if self.data.boldcsf=='' or self.data.boldgm=='' or self.data.boldwm=='':
-            self.parcellate()
+        if not self.pipelinerun:
+            self.run()
         self.data.calc_meants()
         self.meantscomputed=True

@@ -440,31 +440,36 @@ class PreprocessingStep:
             onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')
             
         elif self.name=='globalsigreg':
-            if self.data.brainmask=='':
-                sys.exit('ERROR: globalsigreg must be preceded by brain extraction.')
+            if self.data.meants=='':
+                if self.data.brainmask=='':
+                    sys.exit('ERROR: to run globalsigreg either it must be preceded by brain extraction or meants should be provided in the subjects file.')
+                else:
+                    data=copy.deepcopy(self.data)
+                    data.bold=self.ibase
+                    data.calc_meants()
             else:
+                print('DEBUG: meants already exists')
+                data=copy.deepcopy(self.data)
+            if self.data.brainmask=='':
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',data.meants,\
+                                    '-o',fileutils.removext(self.obase)+'__globalsigglm',\
+                                    '--out_res='+self.obase])
+            else:
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',data.meants,\
+                                    '-m',self.data.brainmask,\
+                                    '-o',fileutils.removext(self.obase)+'__globalsigglm',\
+                                    '--out_res='+self.obase])                    
+            p.communicate()                
+
+        elif self.name=='csfreg':
+            if self.data.meantscsf=='':
                 data=copy.deepcopy(self.data)
                 data.bold=self.ibase
                 data.calc_meants()
-                if self.data.brainmask=='':
-                    p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
-                                        '-d',data.meants,\
-                                        '-o',fileutils.removext(self.obase)+'__globalsigglm',\
-                                        '--out_res='+self.obase])
-                else:
-                    p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
-                                        '-d',data.meants,\
-                                        '-m',self.data.brainmask,\
-                                        '-o',fileutils.removext(self.obase)+'__globalsigglm',\
-                                        '--out_res='+self.obase])                    
-                p.communicate()                
-
-        elif self.name=='csfreg':
-            if self.data.boldcsf=='':
-                self.data.parcellate_bold()
-            data=copy.deepcopy(self.data)
-            data.bold=self.ibase
-            data.calc_meants()
+            else:
+                data=copy.deepcopy(self.data)
             if self.data.brainmask=='':
                 p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
                                     '-d',data.meantscsf,\
@@ -480,11 +485,12 @@ class PreprocessingStep:
             p.communicate()                 
             
         elif self.name=='wmreg':
-            if self.data.boldwm=='':
-                self.data.parcellate_bold()
-            data=copy.deepcopy(self.data)
-            data.bold=self.ibase
-            data.calc_meants()
+            if self.data.meantswm=='':
+                data=copy.deepcopy(self.data)
+                data.bold=self.ibase
+                data.calc_meants()
+            else:
+                data=copy.deepcopy(self.data)
             if self.data.brainmask=='':
                 p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
                                     '-d',data.meantswm,\
@@ -499,11 +505,13 @@ class PreprocessingStep:
             p.communicate()
             
         elif self.name=='csfwmreg':
-            if self.data.boldcsfwm=='':
-                self.data.parcellate_bold()
-            data=copy.deepcopy(self.data)
-            data.bold=self.ibase
-            data.calc_meants()
+            if self.data.meantscsfwm=='':
+                data=copy.deepcopy(self.data)
+                data.bold=self.ibase
+                data.calc_meants()
+            else:
+                print('DEBUG: meantscsfwm already exists')
+                data=copy.deepcopy(self.data)
             if self.data.brainmask=='':
                 p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
                                     '-d',data.meantscsfwm,\
