@@ -716,6 +716,10 @@ def getsubjects(subjectfile):
                                               'structuralcsf=',\
                                               'structuralgm=',\
                                               'structuralwm=',\
+                                              'boldgm=',\
+                                              'boldwm=',\
+                                              'boldcsf=',\
+                                              'boldcsfwm=',\
                                               'meants=',\
                                               'meantswm=',\
                                               'meantsgm=',\
@@ -782,6 +786,14 @@ def getsubjects(subjectfile):
                 data.structuralgm=arg
             elif opt in ('--structuralwm'):
                 data.structuralwm=arg
+            elif opt in ('--boldgm'):
+                data.boldgm=arg
+            elif opt in ('--boldwm'):
+                data.boldwm=arg
+            elif opt in ('--boldcsf'):
+                data.boldcsf=arg
+            elif opt in ('--boldcsfwm'):
+                data.boldcsfwm=arg                
             elif opt in ('--meants'):
                 data.meants=arg
             elif opt in ('--meantsgm'):
@@ -847,6 +859,10 @@ def savesubjects(filename,subjects,append=True):
                         '--structuralcsf \''+run.data.structuralcsf+'\' '+\
                         '--structuralgm \''+run.data.structuralgm+'\' '+\
                         '--structuralwm \''+run.data.structuralwm+'\' '+\
+                        '--boldgm \''+run.data.boldgm+'\' '+\
+                        '--boldwm \''+run.data.boldwm+'\' '+\
+                        '--boldcsf \''+run.data.boldcsf+'\' '+\
+                        '--boldcsfwm \''+run.data.boldcsfwm+'\' '+\
                         '--meants \''+run.data.meants+'\' '+\
                         '--meantsgm \''+run.data.meantsgm+'\' '+\
                         '--meantswm \''+run.data.meantswm+'\' '+\
