@@ -143,7 +143,7 @@ class Data:
     def calc_meants(self):
         
         if self.boldcsf=='' or self.boldgm=='' or self.boldwm=='':
-            self.parcellate()
+            self.parcellate_bold()
             
         if len(self.brainmask)>0:
             p=subprocess.Popen(['fslmeants','-i',self.bold,\
