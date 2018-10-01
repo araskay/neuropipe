@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import workflow, getopt,sys,fileutils,shutil,os, subprocess
+import workflow, getopt,sys,os
 
 def printhelp():
     print('Usage: addaseg.py --input <input subject file> --output <output subject file> --recondir <recon directory>')
