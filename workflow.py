@@ -692,6 +692,7 @@ def getsubjects(subjectfile):
                                               'sessionID=',\
                                               'bold=',\
                                               'structural=',\
+                                              'structuralbrainmask=',\
                                               'card=',\
                                               'resp=',\
                                               'opath=',\
