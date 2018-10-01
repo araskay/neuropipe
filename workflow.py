@@ -20,6 +20,7 @@ class Data:
     def __init__(self):
         self.bold=''
         self.structural=''
+        self.structuralbrainmask=''
         self.card=''
         self.resp=''
         self.opath=''
@@ -92,7 +93,7 @@ class Data:
             print('In parcellate_structural: aseg not given. Stepping back to FSL FAST segmentation.')
             self.parcellate_mprage()
         else:
-            p=subprocess.Popen(['mri_binarize','--i',self.aseg,'--o',fileutils.removext(self.structural)+'_csf.nii.gz','--ventricles'])
+            p=subprocess.Popen(['mri_binarize','--i',self.aseg,'--o',fileutils.removext(self.structural)+'_csf.nii.gz','--match','0','--ventricles','--mask',self.structuralbrainmask])
             p.communicate()
             p=subprocess.Popen(['mri_binarize','--i',self.aseg,'--o',fileutils.removext(self.structural)+'_wm.nii.gz','--ctx-wm'])
             p.communicate()
@@ -738,6 +739,8 @@ def getsubjects(subjectfile):
                 data.bold=arg
             elif opt in ('--structural'):
                 data.structural=arg
+            elif opt in ('--structuralbrainmask'):
+                data.structuralbrainmask=arg
             elif opt in ('--card'):
                 data.card=arg
             elif opt in ('--resp'):
@@ -835,6 +838,7 @@ def savesubjects(filename,subjects,append=True):
                         '--sequence \''+run.seqname+'\' '+\
                         '--bold \''+run.data.bold+'\' '+\
                         '--structural \''+run.data.structural+'\' '+\
+                        '--structuralbrainmask \''+run.data.structuralbrainmask+'\' '+\
                         '--card \''+run.data.card+'\' '+\
                         '--resp \''+run.data.resp+'\' '+\
                         '--opath \''+run.data.opath+'\' '+\
