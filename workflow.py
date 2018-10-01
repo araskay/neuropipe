@@ -818,10 +818,11 @@ def getsubjects(subjectfile):
         matchsess=[s for s in subject.sessions if len(s.ID)>0 and s.ID==sessionID] # only match if there is actually a sessionID, i.e., len(s.ID)>0
         if len(matchsess)>0:
             session=matchsess[0]
+            session.addrun(run)
         else:
             session=Session(sessionID)
-        session.addrun(run)
-        subject.addsession(session)
+            session.addrun(run)
+            subject.addsession(session)
         line=f.readline()
         l=shlex.split(line)
     return(subjects)
