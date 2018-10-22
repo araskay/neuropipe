@@ -1,3 +1,7 @@
+# Routine to calculate seed-based correlation.
+# Report bugs/issues to M. Aras Kayvanrad (mkayvan@gmail.com).
+# (c) M. Aras Kayvanrad
+
 import nibabel
 import numpy as np
 import sys

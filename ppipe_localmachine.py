@@ -6,6 +6,13 @@ Created on Thu May  3 13:48:29 2018
 @author: aras
 """
 
+# Use this script to run parallel pipe.py jobs on a machine with multiple cores.
+# Input arguments are the same as pipe.py with the additional argument --numpar
+# to set the maximum number of parallel jobs to be run simultaneously.
+# The input subjects file is split into individual subjects, each of which is run separately on a core.
+# Report bugs/issues to M. Aras Kayvanrad (mkayvan@gmail.com).
+# (c) M. Aras Kayvanrad
+
 def printhelp():
     p=subprocess.Popen(['pipe.py','-h'])
     p.communicate()

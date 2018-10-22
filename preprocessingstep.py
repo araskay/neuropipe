@@ -1,3 +1,10 @@
+# Library including the definition of the class PreprocessingStep and its routines.
+# Also includes functions related to making lists of steps from a text pipeline file
+# and various permutations.
+# Add any new preprocessing step here under the run() subroutine.
+# Report bugs/issues to M. Aras Kayvanrad (mkayvan@gmail.com).
+# (c) M. Aras Kayvanrad
+
 import subprocess # used to run bash commands
 import sys
 import fileutils
@@ -595,7 +602,8 @@ class PreprocessingStep:
             
         else:
             sys.exit('Error: preprocessing step '+self.name+' not defined')      
-         
+    
+    # remove output files (for intermediate steps, if keepintermed = False)
     def removeofiles(self):
         if (self.name == 'mcflirt'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
@@ -657,7 +665,7 @@ class PreprocessingStep:
         else:
             sys.exit('Error: preprocessing step '+self.name+' not defined')    
 
-
+# read the text pipeline file and create a list of the steps
 def makesteps(pipelinefile):
     steps=[]
     f=open(pipelinefile)
@@ -672,6 +680,7 @@ def makesteps(pipelinefile):
         s=line.split()
     return(steps)
 
+# generate all the permutations of the elements of the input list
 def permutations(l):
     if len(l)==0:
         yield([])    
@@ -682,6 +691,8 @@ def permutations(l):
             for i in range(len(l)):
                 yield(p[:i]+l[0:1]+p[i:])
 
+# generate all the on/off combinations of the elements of the input list,
+# retaining the original order
 def onoff(l):
     if len(l)==0:
         yield([])
@@ -693,11 +704,15 @@ def onoff(l):
             yield(l[0:1]+p)
             yield(p)
 
+# generate all the permutations from all the on/off combinations
+# i.e., combine permutations and onoff functions
 def permonoff(l):
     for p in onoff(l):
         for q in permutations(p):
             yield(q)
-        
+
+# select one element from the input list at a time, and return that element
+# used to generate combinations by selecting from a list of steps 
 def select(l):
     for p in l:
         yield([p])

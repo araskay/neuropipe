@@ -1,6 +1,7 @@
 import numpy as np
 import nibabel
 
+# calculate similarity of two SPMs based on Pearson correlation
 def pearsoncorr(spm1file,spm2file):
     # input: 3D SPM files
     # output: Pearson correlation between the two SPM's (single number)
@@ -18,6 +19,7 @@ def pearsoncorr(spm1file,spm2file):
     # now compute Pearson correlation coefficient
     return(np.corrcoef(spm1_1D,spm2_1D)[0][1])
 
+# calculate similarity of two SPMs based on Jaccard index
 def jaccardind(spm1file,spm2file):
     # input: 3D SPM files
     # output: Jaccard similarity index between the two SPM's (single number)

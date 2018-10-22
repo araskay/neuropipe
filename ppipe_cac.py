@@ -6,6 +6,15 @@ Created on Thu May  3 13:48:29 2018
 @author: aras
 """
 
+# Use this script to submit parallel pipe.py jobs to HPC clusters.
+# Input arguments are the same as pipe.py
+# with the additional argument --mem to set the requested memory for the job submisison.
+# The input subjects file is split into individual subjects, each of which is run separately as a job.
+# This script has been written for the CAC HPC cluster.
+# May need to modify the job submisison files, which are created here, for other clusters.
+# Report bugs/issues to M. Aras Kayvanrad (mkayvan@gmail.com).
+# (c) M. Aras Kayvanrad
+
 def printhelp():
     p=subprocess.Popen(['pipe.py','-h'])
     p.communicate()

@@ -1,12 +1,14 @@
-# includes functions for working with files/directories used in the pipeline tool.
+# Includes functions for working with files/directories used in the pipeline tool.
 
 import os, shutil
 import subprocess
 
+# remove a file
 def removefile(filename):
     if os.path.exists(filename):
         os.remove(filename)
 
+# remove file extention and return base name (incl. path)
 def removext(filename):
     noext=os.path.splitext(filename)[0]
     if noext==filename:
@@ -14,6 +16,9 @@ def removext(filename):
     else:
         return(removext(noext))
 
+# add .nii.gz extension to the file name and return the new file name
+# This does NOT compress the file- merely adds an extension
+# if the input has .nii extension, the input file name is returned unchanged
 def addniigzext(filename):
     if (filename[-4:len(filename)] == '.nii'):
         #print('Input is a file with .nii extension. Cannot add .nii.gz extension')
@@ -23,6 +28,7 @@ def addniigzext(filename):
     else:
         return(filename)
 
+# remove nifti extension(.nii or .nii.gz) from file name.
 def removeniftiext(filename):
     if (filename[-4:len(filename)] == '.nii'):
         return(filename[0:-4])
@@ -31,10 +37,10 @@ def removeniftiext(filename):
     else:
         return(filename)
     
-    
+# convert afni file format to nifti (zipped)
+# also removes the afni after conversion
 def afni2nifti(filename):
     # input: file name without extension or +orig/+tlrc
-    # also removes the afni after conversion
     if os.path.exists(filename+'+orig.HEAD'):
         process=subprocess.Popen(['3dAFNItoNIFTI', '-prefix', filename+'.nii', '-overwrite', filename+'+orig'])
         (output,error)=process.communicate()
@@ -51,12 +57,15 @@ def afni2nifti(filename):
         # remove afni files- it is important since most AFNI functions do not overwrite existing files
         removefile(filename+'+tlrc.HEAD')
         removefile(filename+'+tlrc.BRIK')
-        
+
+# convert mgz file format to nifti
+# also removes the mgz file after conversion
 def mgztonifti(filename):
     p=subprocess.Popen(['mri_convert',filename,removext(filename)+'.nii.gz'])
     p.communicate()
     removefile(filename)
 
+# remove duplicate nifti files, where both .nii and .nii.gz files exists with the same base name
 def remove_nifti_duplicate(filename,removeunzip=True):
     if removeunzip:
         if os.path.exists(removext(filename)+'.nii.gz') and os.path.exists(removext(filename)+'.nii'):
@@ -64,7 +73,8 @@ def remove_nifti_duplicate(filename,removeunzip=True):
     else:
         if os.path.exists(removext(filename)+'.nii.gz') and os.path.exists(removext(filename)+'.nii'):
             removefile(removext(filename)+'.nii.gz')
-   
+
+# unzip nifti file
 def unzipnifti(filename):
     remove_nifti_duplicate(filename)
 #    if os.path.exists(removext(filename)+'.nii.gz') and os.path.exists(removext(filename)+'.nii'):
@@ -72,7 +82,8 @@ def unzipnifti(filename):
     p=subprocess.Popen(['fslchfiletype','NIFTI',filename,removext(filename)+'.nii'])
     p.communicate()
     return(removext(filename)+'.nii')
-    
+
+# zip nifti file
 def zipnifti(filename):
     remove_nifti_duplicate(filename,removeunzip=False)
 #    if not os.path.exists(removext(filename)+'.nii'):
@@ -83,6 +94,8 @@ def zipnifti(filename):
     p.communicate()
     return(removext(filename)+'.nii.gz')
 
+# create directory.
+# if the directory exists, a warning message is printed.
 def createdir(dirpath):
     try:
         os.makedirs(dirpath)

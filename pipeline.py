@@ -1,4 +1,5 @@
-# to implement: the option to keep/discard intermediate steps
+# definition of the class Pipeline and its routines
+
 import sys
 import nibabel
 import seedcorr

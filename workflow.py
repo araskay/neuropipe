@@ -1,3 +1,15 @@
+# Includes definition of the following classes and their routines:
+# - EnvVars
+# - Data
+# - BetweenSubjectMetrics
+# - Run
+# - Session
+# - Subject
+# - Workflow
+# Also includes functions to read and save subjects to/from text-based subjects files
+# Report bugs/issues to M. Aras Kayvanrad (mkayvan@gmail.com).
+# (c) M. Aras Kayvanrad
+
 import sys
 import spmsim
 import fileutils
