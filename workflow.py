@@ -39,7 +39,7 @@ class Data:
         self.connseed=''
         self.motpar=''
         self.brainmask=''
-        self.motglm=''
+        self.glm=''
         self.siemensphysio=''
         self.biopacphysio=''
         self.sliceorder=''
@@ -712,7 +712,7 @@ def getsubjects(subjectfile):
                                               'connseed=',\
                                               'motpar=',\
                                               'brainmask=',\
-                                              'motglm=',\
+                                              'glm=',\
                                               'siemensphysio=',\
                                               'biopacphysio=',\
                                               'aseg=',\
@@ -766,8 +766,8 @@ def getsubjects(subjectfile):
                 data.motpar=arg
             elif opt in ('--brainmask'):
                 data.brainmask=arg
-            elif opt in ('--motglm'):
-                data.motglm=arg
+            elif opt in ('--glm'):
+                data.glm=arg
             elif opt in ('--siemensphysio'):
                 data.siemensphysio=arg
             elif opt in ('--biopacphysio'):
@@ -859,7 +859,7 @@ def savesubjects(filename,subjects,append=True):
                         '--connseed \''+run.data.connseed+'\' '+\
                         '--motpar \''+run.data.motpar+'\' '+\
                         '--brainmask \''+run.data.brainmask+'\' '+\
-                        '--motglm \''+run.data.motglm+'\' '+\
+                        '--glm \''+run.data.glm+'\' '+\
                         '--siemensphysio \''+run.data.siemensphysio+'\' '+\
                         '--biopacphysio \''+run.data.biopacphysio+'\' '+\
                         '--slicetiming \''+run.data.slicetiming+'\' '+\

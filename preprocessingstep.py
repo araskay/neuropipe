@@ -178,20 +178,25 @@ class PreprocessingStep:
         elif (self.name == 'motreg'):
             if self.data.motpar=='':
                 sys.exit('Cannot run regmot- no motion parameters available. Need to either provide motion parameters or have mcflirt run before regmot')
+            # convert motion parameters to design matrix
+            # (this is not required- fsl_glm works the same without coversion using Text2Vest)
+            p=subprocess.Popen(['Text2Vest',self.data.motpar,fileutils.removext(self.data.motpar)+'.mat'])
+            p.communicate()
+            
             if self.data.brainmask=='':
                 p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
-                                    '-d',self.data.motpar,\
+                                    '-d',fileutils.removext(self.data.motpar)+'.mat',\
                                     '-o',fileutils.removeniftiext(self.obase)+'__motglm',\
                                     '--out_res='+self.obase])
             else:
                 p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
-                                    '-d',self.data.motpar,\
+                                    '-d',fileutils.removext(self.data.motpar)+'.mat',\
                                     '-m',self.data.brainmask,\
                                     '-o',fileutils.removeniftiext(self.obase)+'__motglm',\
                                     '--out_res='+self.obase])
                 
             p.communicate()
-            self.data.motglm=fileutils.removeniftiext(self.obase)+'__motglm'
+            self.data.glm=fileutils.removeniftiext(self.obase)+'__motglm'
         
         elif self.name=='slicetimer':
             # get the TR from the data
@@ -600,6 +605,58 @@ class PreprocessingStep:
             # zip output to produce nii.gz file
             fileutils.zipnifti(fileutils.removext(self.obase))
             
+        elif self.name=='regress-out':
+            # check if at least one regressor given
+            if len(self.params)==0:
+                sys.exit('ERROR in preprocessing step regress-out: please specify at least one regressor.')
+            # check if all the given regressors are valid
+            valid=['motpar','motpar_derivatives']
+            invalid=False
+            for r in self.params:
+                if not r in valid:
+                    invalid = True
+            if invalid:
+                sys.exit('ERROR in preprocessing step regress-out: one or more invalid regressor(s) given.')
+                
+            rmat = np.array([])
+            if 'motpar' in self.params:
+                if self.data.motpar=='':
+                    sys.exit('ERROR in preprocessing step regress-out: requested to regress-out motion parameters but no motion parameters available. Need to either provide motion parameters or have mcflirt run before this step.')
+                r = np.loadtxt(self.data.motpar)
+                rmat = np.concatenate((rmat,r),axis=1) if rmat.size else r
+            if 'motpar_derivatives' in self.params:
+                if self.data.motpar=='':
+                    sys.exit('ERROR in preprocessing step regress-out: requested to regress-out motion parameters derivatives but no motion parameters available. Need to either provide motion parameters or have mcflirt run before this step.')
+                motpar = np.loadtxt(self.data.motpar)
+                motpar_shift = np.roll(motpar,-1,axis=0)
+                r = np.zeros(motpar.shape)
+                r[0:-1,] = motpar_shift[0:-1,]-motpar[0:-1,]
+                # replace the last row (which is zero) with the previous one
+                r[-1,] = r[-2,]
+                rmat = np.concatenate((rmat,r),axis=1) if rmat.size else r
+                
+            np.savetxt(fileutils.removext(self.obase)+'_regressors.txt',r)
+            
+            # convert regressors to design matrix
+            # (this is not required- fsl_glm works the same without coversion using Text2Vest)
+            p=subprocess.Popen(['Text2Vest',fileutils.removext(self.obase)+'_regressors.txt',fileutils.removext(self.obase)+'_regressors.mat'])
+            p.communicate()            
+            
+            if self.data.brainmask=='':
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',fileutils.removext(self.obase)+'_regressors.mat',\
+                                    '-o',fileutils.removeniftiext(self.obase)+'__glm',\
+                                    '--out_res='+self.obase])
+            else:
+                p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
+                                    '-d',fileutils.removext(self.obase)+'_regressors.mat',\
+                                    '-m',self.data.brainmask,\
+                                    '-o',fileutils.removeniftiext(self.obase)+'__glm',\
+                                    '--out_res='+self.obase])
+                
+            p.communicate()            
+            self.data.glm=fileutils.removeniftiext(self.obase)+'__glm'            
+
         else:
             sys.exit('Error: preprocessing step '+self.name+' not defined')      
     
@@ -662,6 +719,8 @@ class PreprocessingStep:
             fileutils.removefile(fileutils.addniigzext(self.obase))
         elif (self.name == 'spikecor'):
             fileutils.removefile(fileutils.addniigzext(self.obase))
+        elif (self.name == 'regress-out'):
+            fileutils.removefile(fileutils.addniigzext(self.obase))            
         else:
             sys.exit('Error: preprocessing step '+self.name+' not defined')    
 
