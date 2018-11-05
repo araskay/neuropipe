@@ -81,6 +81,7 @@ class Data:
         self.boldtmean=''
         self.envvars=EnvVars()
         self.fsrecondir=''
+        self.qa=''
         
     
     # this is not recommended anymore- use parcellate_structural
@@ -738,7 +739,8 @@ def getsubjects(subjectfile):
                                               'meantswm=',\
                                               'meantsgm=',\
                                               'meantscsf=',\
-                                              'meantscsfwm='])
+                                              'meantscsfwm=',\
+                                              'qa='])
         except getopt.GetoptError:
             sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file. Also please note that identifiers require double dash (--)')
         for (opt,arg) in opts:
@@ -819,7 +821,9 @@ def getsubjects(subjectfile):
             elif opt in ('--meantscsf'):
                 data.meantscsf=arg
             elif opt in ('--meantscsfwm'):
-                data.meantscsfwm=arg                 
+                data.meantscsfwm=arg
+            elif opt in ('--qa'):
+                data.qa=arg 
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if len(s.ID)>0 and s.ID==subjectID ] # only match if there is actually a subjectID, i.e., len(s.ID)>0
         if len(matchsubj)>0:
@@ -886,6 +890,7 @@ def savesubjects(filename,subjects,append=True):
                         '--meantswm \''+run.data.meantswm+'\' '+\
                         '--meantscsf \''+run.data.meantscsf+'\' '+\
                         '--meantscsfwm \''+run.data.meantscsfwm+'\' '+\
+                        '--qa \''+run.data.qa+'\' '+\
                         '\n')
     f.close()
     
