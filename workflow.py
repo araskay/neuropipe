@@ -714,7 +714,7 @@ def getsubjects(subjectfile):
                                               'motpar=',\
                                               'brainmask=',\
                                               'glm=',\
-                                              'motglm=',\ # for backwards compatibility, replace with glm though
+                                              'motglm=',\
                                               'siemensphysio=',\
                                               'biopacphysio=',\
                                               'aseg=',\
@@ -771,8 +771,8 @@ def getsubjects(subjectfile):
                 data.brainmask=arg
             elif opt in ('--glm'):
                 data.glm=arg
-            elif opt in ('--motglm'): # for backwards compatibility, replace with glm though
-                data.glm=arg # save in glm not in motglm
+            elif opt in ('--motglm'):
+                data.glm=arg # for backwards compatibility, save in glm not in motglm
             elif opt in ('--siemensphysio'):
                 data.siemensphysio=arg
             elif opt in ('--biopacphysio'):
