@@ -18,7 +18,7 @@ def removext(filename):
 
 def namebase(filename):
     (directory,namebase)=os.path.split(filename)
-    namebase=fileutils.removext(namebase)
+    namebase=removext(namebase)
     return(namebase)
 
 # add .nii.gz extension to the file name and return the new file name
