@@ -17,7 +17,7 @@ def removext(filename):
         return(removext(noext))
 
 def namebase(filename):
-    (directory,namebase)=os.path.split(run.data.bold)
+    (directory,namebase)=os.path.split(filename)
     namebase=fileutils.removext(namebase)
     return(namebase)
 
