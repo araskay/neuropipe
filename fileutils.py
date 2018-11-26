@@ -16,6 +16,11 @@ def removext(filename):
     else:
         return(removext(noext))
 
+def namebase(filename):
+    (directory,namebase)=os.path.split(run.data.bold)
+    namebase=fileutils.removext(namebase)
+    return(namebase)
+
 # add .nii.gz extension to the file name and return the new file name
 # This does NOT compress the file- merely adds an extension
 # if the input has .nii extension, the input file name is returned unchanged
