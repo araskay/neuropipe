@@ -1,5 +1,9 @@
 function output = spikecor( volname, maskname, mpename, outprefix, OUT_PARAM, interpname  )
 %
+% THIS SCRIPT HAS BEEN MODIFIED BY ARAS KAYVANRAD
+% FOR USE WITH THE FMRI PIPELINE TOOL
+%
+%
 % =========================================================================
 %  SPIKECOR: This script provides a quick, computationally efficient test
 %  for outlier volumes in fMRI, typically produced by head motion "spikes".
@@ -165,18 +169,32 @@ if( isempty(outprefix) )
     end
 end
 
-% load the motion parameters (matrix of [time x 6] elements)
-MPE    = load(mpename);
+% load fMRI NIFTI-format data into MatLab
+VV     = load_untouch_nii(volname); % load 4D fMRI dataset
+vol    = double(VV.img);
+dims = size(vol);
+
+% load mask or, if not available, assume the entire image
+if ~isempty(maskname)
+    MM     = load_untouch_nii(maskname);% load the binary brain mask
+    mask   = double(MM.img);
+else
+    mask = ones(dims(1:3));
+end
+
+% load the motion parameters (matrix of [time x 6] elements) or, if not
+% given, assume zero
+if ~isempty(mpename)
+    MPE    = load(mpename);
+else
+    MPE = zeros(size(vol,4),6);
+end
+
 % mean-center (subtract the mean from each timecourse)
 MPE    = MPE - repmat( mean(MPE), [size(MPE,1) 1] );
 
-% load fMRI NIFTI-format data into MatLab
-VV     = load_untouch_nii(volname); % load 4D fMRI dataset
-MM     = load_untouch_nii(maskname);% load the binary brain mask
-% convert mask into 3D matrix volume
-mask   = double(MM.img);
 % convert 4D fMRI data into (voxels x time) matrix
-rawepi = convert_nii_to_mat( VV,MM ); 
+rawepi = convert_nii_to_mat( vol, mask ); 
 % mean-center (subtract mean from each voxel
 epimat = rawepi - repmat( mean(rawepi,2), [1 size(rawepi,2)] );
 % get fMRI data matrix dimensions
@@ -188,8 +206,8 @@ if( size( epimat,2 ) ~= size(MPE,1) )
     error('number of timepoints in fMRI data and MPE data do not match!');
 end
 % catch #2: identify cases where mask and 4D EPI volumes are not the same size
-dimsV = size(VV.img(:,:,:,1));
-dimsM = size(MM.img(:,:,:,1));
+dimsV = size(vol(:,:,:,1));
+dimsM = size(mask(:,:,:,1));
 %
 if( (dimsV(1)~=dimsM(1)) || (dimsV(2)~=dimsM(2)) || (dimsV(3)~=dimsM(3)) )
     %
@@ -648,15 +666,16 @@ elseif( byslice==1 )
 end    
 
 %%
-function dataMat = convert_nii_to_mat( niiVol, niiMask )
+function dataMat = convert_nii_to_mat( vol, msk )
 %
 % take niiVol and niiMask (nifti) format, and convert
 % to matlab vector/matrix structure:
 %
 % dataMat = convert_nii_to_mat( niiVol, niiMask )
 %
-vol = double(niiVol.img);
-msk = double(niiMask.img);
+
+%vol = double(niiVol.img);
+%msk = double(niiMask.img);
 
 ldim = size(vol);
 

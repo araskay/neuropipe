@@ -563,27 +563,20 @@ class PreprocessingStep:
         elif self.name=='spikecor':
             # get OUT_PARAM
             out_param='volume' # default
-            if len(self.params)>0:
-                if self.params[0] == 'none':
-                    out_param=self.params[0]
-                elif self.params[0] == 'motion':
-                    out_param=self.params[0]
-                elif self.params[0] == 'volume':
-                    out_param=self.params[0]
-                elif self.params[0] == 'volume+motion':
-                    out_param=self.params[0]
-                elif self.params[0] == 'slice':
-                    out_param=self.params[0]
-                elif self.params[0] == 'slice+motion':
-                    out_param=self.params[0]
-                else:
+            if '-out_param' in self.params:
+                out_param = self.params[self.params.index('-out_param')+1]
+           
+            if not out_param in ['none','motion','volume','volume+motion','slice','slice+motion']:
                     sys.exit('Error: spikecor interpolation parameter (OUT_PARAM) is not valid. OUT_PARAM can be one of the followin: none, motion, volume, volume+motion, slice, slice+motion.')
+
+            print('Spikecor: out_param set to '+out_param)
+
             
             if self.data.brainmask=='':
-                sys.exit('Error in spikecor: no brainmask available. Consider adding brainExtractAfni or brainExtractFSL or providing brainmask in the subjects file')
+                print('Warning in spikecor: no brainmask available. Using the entire image as mask.')
             
             if self.data.motpar=='':
-                sys.exit('Error in SpikeCor: motion parameters not available. Consider adding mcflirt or providing motpar in the subjects file.')
+                print('Warning in SpikeCor: motion parameters not available. Assuming zero motion.')
                 
             # need to change NIFTI_GZ to NIFTI (aparently spikecore cannot handle nifti_gz)
             process=subprocess.Popen(['matlab', \
