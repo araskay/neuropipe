@@ -17,6 +17,7 @@ import workflow
 import preprocessingstep
 import sys, getopt, os
 import subprocess
+import fileutils
 
 subjectsfiles=[]
 combs=[]
@@ -124,6 +125,8 @@ for (opt,arg) in opts:
         (directory,subjfile)=os.path.split(arg) # this is inconsistent with the idea of having multiple subject files- maybe just get one subjects file?
     elif opt in ('--mem'):
         mem=arg
+    elif opt in ('--outputsubjects'):
+        fileutils.removefile(arg) # if output subjects file exists, delete it
 
 if subjectsfiles==[]:
     print('Please specify subjects file. Get help using -h or --help.')

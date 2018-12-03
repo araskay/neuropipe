@@ -2,6 +2,7 @@
 
 import os, shutil
 import subprocess
+import sys
 
 # remove a file
 def removefile(filename):
