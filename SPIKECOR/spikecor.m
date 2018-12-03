@@ -617,9 +617,12 @@ elseif( byslice==1 )
         [Nx Ny Nz Nt] = size(vimg);
         %
         % temprah for volume creation
-        ixvol = ones( [Nx Ny Nz] );
-        for(z=1:Nz) ixvol(:,:,z) = ixvol(:,:,z) .* z; end
-        ixvect = reshape(ixvol,[],1);
+        ixvol = ones( [Nx Ny Nz] ); % AK
+        %%ixvol = ones( [Nx Ny Nz Nt] ); % AK
+        for(z=1:Nz) ixvol(:,:,z) = ixvol(:,:,z) .* z; end % AK
+	%%for(z=1:Nz) ixvol(:,:,z,:) = ixvol(:,:,z,:) .* z; end % AK
+        ixvect = reshape(ixvol,[],1); % AK
+	%%ixvect = reshape(ixvol,[],Nt); % AK
         % convert to matfile data
         volmat = reshape(vimg,[],Nt); 
         % make this same as original, only overwrite needed slc
@@ -631,13 +634,19 @@ elseif( byslice==1 )
 
             if( ~isempty(find(X_slcCens==0,1,'first')) )
 
-                slcmat    = volmat( ixvect==z, : );
+                slcmat    = volmat( ixvect==z, : ); % AK
+		%%disp('Size of ixvect =');
+		%%disp(size(ixvect));
+		%%slcmat    = volmat( ixvect==z); % AK
+		%%disp('Size of slcmat =');
+		%%disp(size(slcmat));
 
                 % ------------------------------------------------
 
                 TimeList     = 1:Nt;
                 % catch outliers at run endpoints -- we don't want to extrapolate values, as this is unstable
-                idx  = find(X_cens>0); %uncensored points
+                %idx  = find(X_cens>0); %uncensored points % AK
+		idx  = find(X_slcCens>0); % AK
                 % if point 1=outlier, make it same as first non-outlier
                 if( X_slcCens(1) == 0 ) 
                     X_slcCens(1) =  1;
@@ -649,6 +658,12 @@ elseif( byslice==1 )
                     slcmat(:,Nt) = slcmat(:,idx(end));
                 end
                 %
+		%%disp('Size of volmat =');
+		%%disp(size(volmat));
+		%%disp('Size of slcmat =');
+		%%disp(size(slcmat));
+		%%disp('Size of X_slcCens =');
+		%%disp(size(X_slcCens));
                 subTimeList = TimeList(X_slcCens>0);
                 subslcmat   = slcmat(:,X_slcCens>0)';
                 %
