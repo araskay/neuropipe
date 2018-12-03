@@ -187,3 +187,4 @@ if runpipe:
             p=subprocess.Popen(['sbatch',qbatch_fname])
             p.communicate()            
 
+    print('Total of '+str(count)+' jobs submitted.')
