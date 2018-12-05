@@ -32,6 +32,7 @@ def printhelp():
     print('--outputsubjects <subj file>: specify a subject file, to which the results of the pipeline run on all subjects is appended. Only applicable with --pipeline.')
     print('--showsubjects: print the list of all subjects to be processed and exit.')
     print('--maskthresh: threshold for binarizing functional masks transformed from structural masks (Default=0.5)')
+    print('--opath <output path>: output path- overrides the opath in subjects file')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
 
@@ -61,6 +62,7 @@ outputsubjectsfile=''
 keepintermed=False
 runpipe=False
 showsubjects=False
+opath=''
 
 envvars=workflow.EnvVars()
 
@@ -162,6 +164,8 @@ for (opt,arg) in opts:
         showsubjects=True
     elif opt in ('--maskthresh'):
         envvars.maskthresh=arg
+    elif opt in ('--opath'):
+        opath=arg
 
 if subjectsfiles==[]:
     sys.exit('Please specify subjects file. Get help using -h or --help.')
@@ -197,13 +201,15 @@ if runpipe:
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
+                if len(opath)>0:
+                    run.data.opath=opath
                 (directory,namebase)=os.path.split(run.data.bold)
                 namebase=fileutils.removext(namebase)
-                opath=os.path.abspath(run.data.opath) # just to remove possible end slash (/) for consistency                
+                outpath=os.path.abspath(run.data.opath) # just to remove possible end slash (/) for consistency                
                 run.data.envvars=envvars
                 pipe=Pipeline(runpipename,runpipesteps)
                 pipe.setibase(run.data.bold)
-                pipe.setobase(opath+'/'+namebase)
+                pipe.setobase(outpath+'/'+namebase)
                 pipe.setdata(run.data) # when running pipeline do not deepcopy so that results can be recorded if needed
                 pipe.keepintermed=keepintermed
                 run.addpipeline(pipe)
