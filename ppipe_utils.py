@@ -10,6 +10,7 @@ import getopt, os
 import fileutils
 
 def argsvalid(args):
+    valid=True
     for arg in args:
         if '--' in arg:
             if not arg in ['--help','--pipeline', '--subjects', '--perm', '--onoff',\
@@ -20,10 +21,8 @@ def argsvalid(args):
                            '--boldregcost', '--structregcost', '--outputsubjects',\
                            '--keepintermed', '--runpipename', '--fixpipename',\
                            '--optpipename','--opath','--mem','--numpar']:
-                return(False)
-            else:
-                return(True)
-                
+                valid=False
+    return(valid)
 
 class arguments:
     def __init__(self):
