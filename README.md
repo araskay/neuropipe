@@ -50,7 +50,7 @@ ssmooth -fwhm 5
 retroicor -ignore 10  
 ```
 
-#mySubjects.txt*:
+*mySubjects.txt*:
 ```
 --bold ‘/data/experiment1/nii/subject1_bold.nii.gz’ --structural ‘/data/experiment1/nii/subject1_struct.nii.gz’ --structuralbrainmask ‘/data/experiment1/nii/subject1_struct_brainmask.nii.gz’ --opath ‘/data/experiment1/processed’ 
 --bold ‘/data/experiment1/nii/subject2_bold.nii.gz’ --structural ‘/data/experiment1/nii/subject2_struct.nii.gz’ --structuralbrainmask ‘/data/experiment1/nii/subject2_struct_brainmask.nii.gz’ --opath ‘/data/experiment1/processed’ 
