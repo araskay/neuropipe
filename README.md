@@ -1,5 +1,5 @@
 # fMRI Pipeline
-This project aims to create flexible and scalable fMRI preprocessing pipelines. *fMRI Pipeline* uses an object-oriented framework to create and run preprocessing pipeline. In this framework, each *pipeline* consists of a number of *preprocessing steps*, where each proprocessing step is an object of class *PreprocessingStep*. This design allows to construct versatile pipelines in which different preprocessing steps can be used in any desired order.
+This project aims to create flexible and scalable fMRI preprocessing pipelines. *fMRI Pipeline* uses an object-oriented framework to create and run preprocessing pipelines. In this framework, each *pipeline* consists of a number of *preprocessing steps*, where each proprocessing step is an object of class *PreprocessingStep*. This design allows to construct versatile pipelines in which different preprocessing steps can be used in any desired order.
 
 ## Installation
 Copy or clone the repository into a directory of your choice. Add the installation directory to your *PYTHONPATH* and you are good to go.
