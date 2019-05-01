@@ -1,5 +1,21 @@
 #!/usr/bin/env python
 
+'''
+Run fMRI preprocessing pipelines on a subjects' fMRI data.
+This is the main script called by parallel processing scripts, e.g.,
+ppipe.py and its variations for different HPC clusters.
+
+To implement:
+    - combined single GLM for all regressors
+'''
+
+import workflow
+from pipeline import Pipeline
+import fileutils
+import preprocessingstep
+import sys, getopt, os
+import copy
+
 def printhelp():
     print('USAGE:')
     print('pipe.py  --subjects <subjects file> --pipeline <pipeline file> --perm <pipeline file> --onoff <pipeline file> --const <pipeline file> --add --combine --fixed <pipeline file> --showpipes --template <template file> --resout <base name>')
@@ -35,13 +51,6 @@ def printhelp():
     print('--opath <output path>: output path- overrides the opath in subjects file')
     print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
 
-
-import workflow
-from pipeline import Pipeline
-import fileutils
-import preprocessingstep
-import sys, getopt, os
-import copy
 
 subjectsfiles=[]
 combs=[]
