@@ -9,137 +9,30 @@ To implement:
     - combined single GLM for all regressors
 '''
 
+import os,sys
+import copy
+
+# add pipe.py directory to path before loading other modules
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import workflow
 from pipeline import Pipeline
 import fileutils
 import preprocessingstep
-import sys, getopt, os
-import copy
 
-def printhelp():
-    print('USAGE:')
-    print(('pipe.py  --subjects <subjects file>'
-           ' --pipeline <pipeline file>'
-           ' [--showpipe]'
-           ' [--parcellate]'
-           ' [--meants]'
-           ' [--seedconn]'
-           ' [--tomni]'
-           ' [--template <template file>]'
-           ' [--resout <base name>]'
-           ' [--keepintermed]'
-           ' [--boldregdof <dof>]'
-           ' [--structregdof <dof>]'
-           ' [--boldregcost <cost function>]'
-           ' [--structregcost <cost function>]'
-           ' [--runpipename <name>]'
-           ' [--outputsubjects <subj file>]'
-           ' [--showsubjects]'
-           ' [--maskthresh]'
-           ' [--opath <output path>]'))
-    print('ARGUMENTS:')
-    print('--subjects <subj file>: specify subjects file (required)')
-    print('--pipeline <pipe file>: specify a pipeline file to be run on all subjects without optimization and/or calculation of between subject metrics')
-    print('--showpipe: show the pipeline to be run without running. Only use to see a list of pipelines to be run/optimized. This will NOT run/optimize the pipelines. Remove the flag to run/optimize.')
-    print('--parcellate: parcellate the output of the run/optimal/fixed pipeline(s).')
-    print('--meants: compute mean time series over CSF, GM, and WM for the pipeline output. This automatically parcellates the output. If used with --seedconn, mean time series over the network is also computed.')
-    print('--seedconn: compute seed-connectivity network on the pipeline output. Need to provide a seed file in subjects file.')
-    print('--tomni: transform pipeline output and seed connectivity (if available) to standard MNI space. Requires template to be specified')
-    print('--template <temp file>: template file to be used for between subject calculations, e.g., MNI template.')
-    print('--keepintermed: keep results of the intermediate steps')
-    print('--boldregdof <dof>: degrees of freedom to be used for bold registration (Default = 12).')
-    print('--structregdof <dof>: degrees of freedom to be used for structural registration (Default = 12).')
-    print('--boldregcost <cost function>: cost fuction to be used for bold registration (Default = \'corratio\').')
-    print('--structregcost <cost function>: cost fuction to be used for structural registration (Default = \'corratio\').')
-    print('--runpipename <name>: prefix to precede name of steps in the run pipeline output files. (Default=\'\')')
-    print('--outputsubjects <subj file>: specify a subject file, to which the results of the pipeline run on all subjects is appended. Only applicable with --pipeline.')
-    print('--showsubjects: print the list of all subjects to be processed and exit.')
-    print('--maskthresh: threshold for binarizing functional masks transformed from structural masks (Default=0.5)')
-    print('--opath <output path>: output path- overrides the opath in subjects file')
-    print('Report bugs/issues to M. Aras Kayvanrad (mkayvanrad@research.baycrest.org)')
+import parse
 
+parser = parse.ParseArgs(sys.argv[1:])
 
-subjectsfiles=[]
-runpipesteps=[] # this is a list
-showpipes=False
-parcellate=False
-meants=False
-seedconn=False
-tomni=False
-runpipename=''
-outputsubjectsfile=''
-keepintermed=False
-runpipe=False
-showsubjects=False
-opath=''
+if parser.subjectsfiles==[]:
+    parser.printhelp()
 
-envvars=workflow.EnvVars()
-
-# parse command-line arguments
-try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'h',\
-                                ['help','pipeline=', 'subjects=',
-                                 'showpipe', 'parcellate', 'meants',
-                                 'seedconn', 'tomni', 'template=',
-                                 'boldregdof=', 'structregdof=',
-                                 'boldregcost=', 'structregcost=',
-                                 'outputsubjects=', 'keepintermed',
-                                 'runpipename=', 'showsubjects',
-                                 'maskthresh=', 'opath='])
-except getopt.GetoptError:
-    printhelp()
-    sys.exit()
-for (opt,arg) in opts:
-    if opt in ('-h', '--help'):
-        printhelp()
-        sys.exit()
-    elif opt in ('--pipeline'):
-        runpipesteps+=preprocessingstep.makesteps(arg)
-        runpipe=True
-    elif opt in ('--subjects'):
-        subjectsfiles.append(arg)
-    elif opt in ('--showpipe'):
-        showpipes=True
-    elif opt in ('--template'):
-        envvars.mni152=arg
-    elif opt in ('--parcellate'):
-        parcellate=True
-    elif opt in ('--meants'):
-        meants=True
-    elif opt in ('--seedconn'):
-        seedconn=True
-    elif opt in ('--tomni'):
-        tomni=True
-    elif opt in ('--boldregdof'):
-        envvars.boldregdof=arg
-    elif opt in ('--structregdof'):
-        envvars.structregdof=arg
-    elif opt in ('--boldregcost'):
-        envvars.boldregcost=arg
-    elif opt in ('--structregcost'):
-        envvars.structregcost=arg
-    elif opt in ('--outputsubjects'):
-        outputsubjectsfile=arg
-    elif opt in ('--keepintermed'):
-        keepintermed=True
-    elif opt in ('--runpipename'):
-        runpipename=arg
-    elif opt in ('--showsubjects'):
-        showsubjects=True
-    elif opt in ('--maskthresh'):
-        envvars.maskthresh=arg
-    elif opt in ('--opath'):
-        opath=arg
-
-if subjectsfiles==[]:
-    sys.exit('Please specify subjects file. Get help using -h or --help.')
-
-if tomni and envvars.mni152=='':
+if parser.tomni and parser.envvars.mni152=='':
     sys.exit('--tomni used but template not specified. Need to provide --template to use --tomni.')
 
-if showsubjects:
+if parser.showsubjects:
     subjects=[]
-    for sfile in subjectsfiles:
+    for sfile in parser.subjectsfiles:
         subjects+=workflow.getsubjects(sfile)
     subjcount=0
     sesscount=0
@@ -157,40 +50,40 @@ if showsubjects:
     sys.exit()
 
 # run workflow
-if runpipe:
+if parser.runpipe:
     subjects=[]
-    for sfile in subjectsfiles:
+    for sfile in parser.subjectsfiles:
         subjects+=workflow.getsubjects(sfile)
     runwf=workflow.Workflow('RunWF')
     for subj in subjects:
         for sess in subj.sessions:
             for run in sess.runs:
-                if len(opath)>0:
-                    run.data.opath=opath
+                if len(parser.opath)>0:
+                    run.data.opath=parser.opath
                 (directory,namebase)=os.path.split(run.data.bold)
                 namebase=fileutils.removext(namebase)
                 outpath=os.path.abspath(run.data.opath) # just to remove possible end slash (/) for consistency                
-                run.data.envvars=envvars
-                pipe=Pipeline(runpipename,runpipesteps)
+                run.data.envvars=parser.envvars
+                pipe=Pipeline(parser.runpipename,parser.runpipesteps)
                 pipe.setibase(run.data.bold)
                 pipe.setobase(outpath+'/'+namebase)
                 pipe.setdata(run.data) # when running pipeline do not deepcopy so that results can be recorded if needed
-                pipe.keepintermed=keepintermed
+                pipe.keepintermed=parser.keepintermed
                 run.addpipeline(pipe)
         runwf.addsubject(subj)
-    if parcellate:
+    if parser.parcellate:
         runwf.parcellate=True
-    if seedconn:
+    if parser.seedconn:
         runwf.seedconn=True
-    if meants:
+    if parser.meants:
         runwf.meants=True
-    if tomni:
+    if parser.tomni:
         runwf.tomni=True
         
         
-if showpipes:
+if parser.showpipes:
     # print all pipelines run
-    if len(runpipesteps)>0:
+    if len(parser.runpipesteps)>0:
         print('-----')
         print('-----')
         print('Pipeline run:')
@@ -204,7 +97,7 @@ if showpipes:
     sys.exit()
     
 # now process    
-if runpipe:
+if parser.runpipe:
     runwf.run()
-    if len(outputsubjectsfile)>0:
-        workflow.savesubjects(outputsubjectsfile,runwf.subjects)
+    if len(parser.outputsubjectsfile)>0:
+        workflow.savesubjects(parser.outputsubjectsfile,runwf.subjects)
