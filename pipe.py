@@ -24,12 +24,6 @@ import parse
 
 parser = parse.ParseArgs(sys.argv[1:])
 
-if parser.subjectsfiles==[]:
-    parser.printhelp()
-
-if parser.tomni and parser.envvars.mni152=='':
-    sys.exit('--tomni used but template not specified. Need to provide --template to use --tomni.')
-
 if parser.showsubjects:
     subjects=[]
     for sfile in parser.subjectsfiles:
