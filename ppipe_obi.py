@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Thisis a wrapper to run parallel pipe.py jobs on HPC clusters.
+Input arguments are the same as pipe.py with the additional argument --mem
+to set the memory requtest per node.
+The input subjects file is split into individual subjects, each of which is run
+separately on a separate core.
+This script is base don the SLURM job scheduler on the Queen's Universriy CAC
+cluster, but can be modify to suit other job schedulers.
+Report bugs/issues to Aras Kayvanrad (mkayvan@gmail.com).
+# (c) Aras Kayvanrad
+"""
+
 import sys, os
 import subprocess
 
