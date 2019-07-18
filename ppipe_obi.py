@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
+import sys, os
 import subprocess
 
 # add pipe.py directory to path before loading other modules
