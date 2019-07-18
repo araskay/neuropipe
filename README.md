@@ -2,24 +2,28 @@
 This project aims to create flexible and scalable fMRI preprocessing pipelines. *fMRI Pipeline* uses an object-oriented framework to create and run preprocessing pipelines. In this framework, each *pipeline* consists of a number of *preprocessing steps*, where each proprocessing step is an object of class *PreprocessingStep*. This design allows to construct versatile pipelines in which different preprocessing steps can be used in any desired order.
 
 ## Installation
-Copy or clone the repository into a directory of your choice. Add the installation directory to your *PYTHONPATH* and you are good to go.
+Clone the repository into a directory of your choice.
 
-Quick note for beginners: In linux/unix, you can add the directory to *PYTHONPATH* by adding the following line to *~/.bashrc* or *~/.bash_profile*:
 ```
-export PYTHONPATH="${PYTHONPATH}:<path to directory>"
+git clone https://github.com/kayvanrad/fmri_pipeline.git
 ```
-where <path to directory> should be replaced with the path to the directory.
+
+Quick note for beginners: In linux/unix, you can add the installation directory to make pipe.py accessible from any directory. Simply add the following line to *~/.bashrc* or *~/.bash_profile*:
+```
+export PATH="${PATH}:<path to directory>"
+```
+where <path to directory> is the path to the installation directory.
 
 ## Requirements
 ### Python version
 The pipeline requires python 3 to run. However, if you really want to use python 2, you should be able to get it running in python 2 as well with some modifications. I recommend using [Anaconda Python 3](https://www.anaconda.com).
 
 ### Required libraries
-To run the pipeline, the following libraries need to be installed: nibabel, nipype. The libraries can be installed using pip as follows:
+Please refer to requirements.txt for a list of the required libraries. The libraries can be installed using pip as follows:
 ```
-pip install --user bibabel
-pip install --user nipype
+pip install --user -r requirements.txt
 ```
+
 ### Required MRI software packages
 The pipeline calls *FSL*, *AFNI*, and *Freesurfer* tools for preprocessing. For the pipeline to run properly, you need to have these software packages installed and the pipeline should be able to find them in the PATH.
 
