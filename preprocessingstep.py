@@ -203,6 +203,14 @@ class PreprocessingStep:
             img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
             hdr=img_nib.header
             tr=str(hdr.get_zooms()[3])
+            if 'interleaved' in self.data.slicetiming.lower():
+                if not '--odd' in self.params:
+                    self.params.append('--odd')
+            if ('descending' in self.data.slicetiming.lower() or
+                    'reverse' in self.data.slicetiming.lower()):
+                if not '--down' in self.params:
+                    self.params.append('--down')
+                
             p=subprocess.Popen(['slicetimer','-i',self.ibase,'-o',self.obase,'-r',tr]+self.params)
             p.communicate()                
 
