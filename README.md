@@ -5,7 +5,7 @@ This project aims to create flexible and scalable fMRI preprocessing pipelines. 
 Clone the repository into a directory of your choice.
 
 ```
-git clone https://github.com/kayvanrad/fmri_pipeline.git
+git clone https://github.com/kayvanrad/neuropipe.git
 ```
 
 Quick note for beginners: In linux/unix, you can add the installation directory to make pipe.py accessible from any directory. Simply add the following line to *~/.bashrc* or *~/.bash_profile*:
