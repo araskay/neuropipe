@@ -56,7 +56,12 @@ if parser.runpipe:
                     run.data.opath=parser.opath
                 (directory,namebase)=os.path.split(run.data.bold)
                 namebase=fileutils.removext(namebase)
-                outpath=os.path.abspath(run.data.opath) # just to remove possible end slash (/) for consistency                
+                # if opath given, use the opath for output path,
+                # otherwise, use the bold file directory.
+                if len(run.data.opath)>0:
+                    outpath=os.path.abspath(run.data.opath) # just to remove possible end slash (/) for consistency                
+                else:
+                    outpath=directory
                 run.data.envvars=parser.envvars
                 pipe=Pipeline(parser.runpipename,parser.runpipesteps)
                 pipe.setibase(run.data.bold)
