@@ -7,6 +7,7 @@
 
 import subprocess # used to run bash commands
 import sys
+import os
 import fileutils
 import nibabel
 from nipype.algorithms.confounds import (ACompCor, TCompCor)
@@ -350,25 +351,26 @@ class PreprocessingStep:
             # p=subprocess.Popen(['fsl_glm','-i',self.ibase,'-d',fileutils.removext(self.obase)+'__confound.txt','-o',fileutils.removext(self.obase)+'__regmodel','--out_res='+self.obase,'-m',self.data.brainmask])
             # p.communicate()
 
-            # interpolate
-            confoundmat=np.loadtxt(fileutils.removext(self.obase)+'__confound.txt')
-            outlier=np.sum(confoundmat,axis=1) # a vector in which outlier volumes are indicated by 1 and non-outliers by 0
-
             img_nib=nibabel.load(fileutils.addniigzext(self.ibase))
             img=img_nib.get_data()
             hdr=img_nib.header
             affine=img_nib.affine # used to save the result in a NIFTI file
             tr=hdr.get_zooms()[3]
-            
-            t=tr*np.arange(0,img.shape[3])
 
-            for x in np.arange(0,img.shape[0]):
-                for y in np.arange(0,img.shape[1]):
-                    for z in np.arange(0,img.shape[2]):
-                        t_nonoutlier=t[np.where(outlier != 1)]
-                        sig_nonoutlier=img[x,y,z,np.where(outlier != 1)]
-                        f=scipy.interpolate.interp1d(t_nonoutlier,sig_nonoutlier,fill_value="extrapolate")
-                        img[x,y,z,np.where(outlier==1)]=f(t[np.where(outlier==1)])
+            # interpolate if there are outliers (otherwise no confoud file generated)
+            if os.path.exists(fileutils.removext(self.obase)+'__confound.txt'):
+                confoundmat=np.loadtxt(fileutils.removext(self.obase)+'__confound.txt')
+                outlier=np.sum(confoundmat,axis=1) # a vector in which outlier volumes are indicated by 1 and non-outliers by 0
+                
+                t=tr*np.arange(0,img.shape[3])
+
+                for x in np.arange(0,img.shape[0]):
+                    for y in np.arange(0,img.shape[1]):
+                        for z in np.arange(0,img.shape[2]):
+                            t_nonoutlier=t[np.where(outlier != 1)]
+                            sig_nonoutlier=img[x,y,z,np.where(outlier != 1)]
+                            f=scipy.interpolate.interp1d(t_nonoutlier,sig_nonoutlier,fill_value="extrapolate")
+                            img[x,y,z,np.where(outlier==1)]=f(t[np.where(outlier==1)])
 
             onifti = nibabel.nifti1.Nifti1Image(img,affine,header=hdr)
             onifti.to_filename(fileutils.removeniftiext(self.obase)+'.nii.gz')
@@ -468,7 +470,6 @@ class PreprocessingStep:
                     data.bold=self.ibase
                     data.calc_meants()
             else:
-                print('DEBUG: meants already exists')
                 data=copy.deepcopy(self.data)
             if self.data.brainmask=='':
                 p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
@@ -530,7 +531,6 @@ class PreprocessingStep:
                 data.bold=self.ibase
                 data.calc_meants()
             else:
-                print('DEBUG: meantscsfwm already exists')
                 data=copy.deepcopy(self.data)
             if self.data.brainmask=='':
                 p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
