@@ -82,12 +82,24 @@ class Data:
         self.envvars=EnvVars()
         self.fsrecondir=''
         self.qa=''
+        self.motmetric='' # motion metric file
+        # regressors
+        self.cardphase=''
+        self.respphase=''
+        self.acompPCs=''
+        self.tcompPCs=''
+        self.phycaaCompS1=''
+        self.phycaaCompS2=''
+        self.gsr=''
+        self.csfwmr=''
+        self.csfr=''
+        self.wmr=''
         
     
     # this is not recommended anymore- use parcellate_structural
     def parcellate_mprage(self):
         if self.structural == '':
-            sys.exit('In parcellate_mprage: Structural data not given. Cannot proceed without. Exiting!')            
+            sys.exit('Error in parcellate_mprage: Structural data not given. Cannot proceed without. Exiting!')            
         p=subprocess.Popen(['fast','-t','1','-n','3','--segments',\
                             '-o',fileutils.removext(self.structural),\
                             self.structural])
@@ -101,7 +113,7 @@ class Data:
        
     def parcellate_structural(self):
         if self.structural == '':
-            sys.exit('In parcellate_structural: Structural image not given. Cannot proceed without. Exiting!') 
+            sys.exit('Error in parcellate_structural: Structural image not given. Cannot proceed without. Exiting!') 
         if self.aseg == '':
             print('In parcellate_structural: aseg not given. Stepping back to FSL FAST segmentation.')
             self.parcellate_mprage()
@@ -201,7 +213,7 @@ class Data:
     
     def transform_func2struct(self):
         if self.structural == '':
-            sys.exit('In func2struct: Structural data not given. Cannot proceed without. Exiting!')
+            sys.exit('Error in func2struct: Structural data not given. Cannot proceed without. Exiting!')
         
         if self.func2struct=='':
             self.calc_boldtmean()
@@ -239,7 +251,7 @@ class Data:
     
     def transform_struct2mni(self):
         if self.envvars.mni152=='':
-            sys.exit('In struct2mni: MNI152 environment variable not set. Exiting!')
+            sys.exit('Error in struct2mni: MNI152 environment variable not set. Exiting!')
         
         if self.struct2mni=='':
             p=subprocess.Popen(['flirt','-in',self.structural,\
@@ -437,7 +449,18 @@ def getsubjects(subjectfile):
                                               'meantsgm=',\
                                               'meantscsf=',\
                                               'meantscsfwm=',\
-                                              'qa='])
+                                              'qa=',\
+                                              'motmetric=',\
+                                              'cardphase=',\
+                                              'respphase=',\
+                                              'acompPCs=',\
+                                              'tcompPCs=',\
+                                              'phycaaCompS1=',\
+                                              'phycaaCompS2=',\
+                                              'gsr=',\
+                                              'csfwmr=',\
+                                              'csfr=',\
+                                              'wmr='])
         except getopt.GetoptError:
             sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file. Also please note that identifiers require double dash (--)')
         for (opt,arg) in opts:
@@ -522,7 +545,30 @@ def getsubjects(subjectfile):
             elif opt in ('--meantscsfwm'):
                 data.meantscsfwm=arg
             elif opt in ('--qa'):
-                data.qa=arg 
+                data.qa=arg
+            elif opt in ('--motmetric'):
+                data.motmetric=arg
+            elif opt in ('--cardphase'):
+                data.cardphase=arg
+            elif opt in ('--respphase'):
+                data.respphase=arg
+            elif opt in ('--acompPCs'):
+                data.acompPCs=arg
+            elif opt in ('--tcompPCs'):
+                data.tcompPCs=arg
+            elif opt in ('--phycaaCompS1'):
+                data.phycaaCompS1=arg
+            elif opt in ('--phycaaCompS2'):
+                data.phycaaCompS2=arg
+            elif opt in ('--gsr'):
+                data.gsr=arg
+            elif opt in ('--csfwmr'):
+                data.csfwmr=arg
+            elif opt in ('--csfr'):
+                data.csfr=arg
+            elif opt in ('--wmr'):
+                data.wmr=arg
+
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if len(s.ID)>0 and s.ID==subjectID ] # only match if there is actually a subjectID, i.e., len(s.ID)>0
         if len(matchsubj)>0:
@@ -590,6 +636,17 @@ def savesubjects(filename,subjects,append=True):
                         '--meantscsf \''+run.data.meantscsf+'\' '+\
                         '--meantscsfwm \''+run.data.meantscsfwm+'\' '+\
                         '--qa \''+run.data.qa+'\' '+\
+                        '--motmetric \''+run.data.motmetric+'\' '+\
+                        '--cardphase \''+run.data.cardphase+'\' '+\
+                        '--respphase \''+run.data.respphase+'\' '+\
+                        '--acompPCs \''+run.data.acompPCs+'\' '+\
+                        '--tcompPCs \''+run.data.tcompPCs+'\' '+\
+                        '--phycaaCompS1 \''+run.data.phycaaCompS1+'\' '+\
+                        '--phycaaCompS2 \''+run.data.phycaaCompS2+'\' '+\
+                        '--gsr \''+run.data.gsr+'\' '+\
+                        '--csfwmr \''+run.data.csfwmr+'\' '+\
+                        '--csfr \''+run.data.csfr+'\' '+\
+                        '--wmr \''+run.data.wmr+'\' '+\
                         '\n')
     f.close()
     

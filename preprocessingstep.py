@@ -115,9 +115,11 @@ class PreprocessingStep:
             if '-cardphase' in self.params:
                 otherparams.append('-cardphase')
                 otherparams.append(fileutils.removext(self.obase)+'_cardphase.txt')
+                self.data.cardphase = fileutils.removext(self.obase)+'_cardphase.txt'
             if '-respphase' in self.params:
                 otherparams.append('-respphase')
                 otherparams.append(fileutils.removext(self.obase)+'_respphase.txt')
+                self.data.respphase = fileutils.removext(self.obase)+'_respphase.txt'
             
             process=subprocess.Popen(['3dretroicor', '-prefix', fileutils.removext(self.obase),'-overwrite']+ \
                                      physparams + otherparams + \
@@ -257,6 +259,9 @@ class PreprocessingStep:
             shutil.move(fileutils.removext(self.ibase)+'_PHYCAA_step1+2.nii',fileutils.removext(self.obase)+'.nii')
             # zip phycaa output to produce nii.gz file
             fileutils.zipnifti(fileutils.removext(self.obase))
+            # save the regressors in the data
+            self.data.phycaCompS1 = fileutils.removext(self.obase)+'_noisecomp_split1.csv'
+            self.data.phycaCompS2 = fileutils.removext(self.obase)+'_noisecomp_split2.csv'
         
         elif self.name=='tcompcor':
             if '-ignore' in self.params:
@@ -291,6 +296,8 @@ class PreprocessingStep:
                                     '--out_res='+self.obase])
                 
             p.communicate()
+
+            self.data.tcompPCs = fileutils.removext(self.obase)+'__components.txt'
 
         elif self.name=='acompcor':
             if not '-mask' in self.params:
@@ -343,10 +350,14 @@ class PreprocessingStep:
                 
             p.communicate()
 
+            self.data.acompPCs = fileutils.removext(self.obase)+'__components.txt'
+
         elif self.name=='fsl_motion_outliers':
             p=subprocess.Popen(['fsl_motion_outliers','-i',self.ibase,'-o',fileutils.removext(self.obase)+'__confound.txt','-s',fileutils.removext(self.obase)+'__metric.txt']+self.params)
             p.communicate()
             
+            self.data.motmetric = fileutils.removext(self.obase)+'__metric.txt'
+
             # can use with fsl_glm as follows:
             # p=subprocess.Popen(['fsl_glm','-i',self.ibase,'-d',fileutils.removext(self.obase)+'__confound.txt','-o',fileutils.removext(self.obase)+'__regmodel','--out_res='+self.obase,'-m',self.data.brainmask])
             # p.communicate()
@@ -482,7 +493,8 @@ class PreprocessingStep:
                                     '-m',self.data.brainmask,\
                                     '-o',fileutils.removext(self.obase)+'__globalsigglm',\
                                     '--out_res='+self.obase])                    
-            p.communicate()                
+            p.communicate()
+            self.data.gsr = data.meants            
 
         elif self.name=='csfreg':
             if self.data.meantscsf=='':
@@ -503,7 +515,8 @@ class PreprocessingStep:
                                     '-o',fileutils.removext(self.obase)+'__csfglm',\
                                     '--out_res='+self.obase])
         
-            p.communicate()                 
+            p.communicate()
+            self.data.csfr = data.meantscsf         
             
         elif self.name=='wmreg':
             if self.data.meantswm=='':
@@ -524,6 +537,7 @@ class PreprocessingStep:
                                     '-o',fileutils.removext(self.obase)+'__wmglm',\
                                     '--out_res='+self.obase])                
             p.communicate()
+            self.data.wmr = data.meantswm
             
         elif self.name=='csfwmreg':
             if self.data.meantscsfwm=='':
@@ -543,7 +557,8 @@ class PreprocessingStep:
                                     '-m',self.data.brainmask,\
                                     '-o',fileutils.removext(self.obase)+'__csfwmglm',\
                                     '--out_res='+self.obase])                
-            p.communicate()             
+            p.communicate()
+            self.data.csfwmr = data.meantscsfwm          
 
         elif (self.name == '3dDetrend'):
             p=subprocess.Popen(['3dDetrend']+self.params+\
