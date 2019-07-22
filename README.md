@@ -1,5 +1,5 @@
-# fMRI Pipeline
-This project aims to create flexible and scalable fMRI preprocessing pipelines. *fMRI Pipeline* uses an object-oriented framework to create and run preprocessing pipelines. In this framework, each *pipeline* consists of a number of *preprocessing steps*, where each proprocessing step is an object of class *PreprocessingStep*. This design allows to construct versatile pipelines in which different preprocessing steps can be used in any desired order.
+# NeuroPipe
+This project aims to create flexible and scalable fMRI preprocessing pipelines. *NeuroPipe* uses an object-oriented framework to create and run preprocessing pipelines. In this framework, each *pipeline* consists of a number of *preprocessing steps*, where each proprocessing step is an object of class *PreprocessingStep*. This design allows to construct versatile pipelines in which different preprocessing steps can be used in any desired order.
 
 ## Installation
 Clone the repository into a directory of your choice.
@@ -66,7 +66,7 @@ retroicor -ignore 10
 
 Note: ppipe_cac.py is written for the CAC HPC cluster at Queen's University. The user may wish to make minor modifications to the script as appropriate for other clusters.
 
-Please consult the [user guide](https://github.com/kayvanrad/fmri_pipeline/blob/master/user_guide.pdf) for detailed description of the available tools.
+Please consult the [user guide](https://github.com/kayvanrad/neuropipe/blob/master/user_guide.pdf) for detailed description of the available tools.
 
 ## Getting help 
 To get help, type the following in the terminal: 
