@@ -70,7 +70,7 @@ class ParseArgs:
             print('[--numpar <number of parallel jobs = 16>]')
         if self.mem>0:
             print('--mem <amount in GB = 16>')
-        
+        print('')
         if extended:
             print('ARGUMENTS:')
             print('--subjects <subj file>: specify subjects file (required)')
@@ -91,7 +91,9 @@ class ParseArgs:
             print('--showsubjects: print the list of all subjects to be processed and exit.')
             print('--maskthresh: threshold for binarizing functional masks transformed from structural masks (Default=0.5)')
             print('--opath <output path>: output path- overrides the opath in subjects file')
+            print('')
             print('Report bugs/issues to Aras Kayvanrad (mkayvan@gmail.com)')
+            print('')
 
 
     def parse(self):
