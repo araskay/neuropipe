@@ -42,6 +42,16 @@ class ParseArgs:
         self.parse()
         self.check_args()
 
+        # check to see if the output subjects file exists and, if it does, add
+        # a number to the given file to avoid appending the results to the
+        # existing file
+        duplicate_count = 0
+        s = self.outputsubjectsfile
+        while os.path.exists(s):
+            duplicate_count += 1
+            s = self.outputsubjectsfile + str(duplicate_count)
+        self.outputsubjectsfile = s
+
     def printhelp(self, extended=False):
         print('USAGE:')
         print(('pipe.py  --subjects <subjects file>'
