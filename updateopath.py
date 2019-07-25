@@ -45,9 +45,14 @@ subjects=workflow.getsubjects(ifile)
 for subj in subjects:
     for sess in subj.sessions:
         for run in sess.runs:
+            s = ''
             if addsessions:
-                run.data.opath=opath+'/'+subj.ID+'/'+sess.ID+'/'+prefix
-            else:
-                run.data.opath=opath
+                if len(subj.ID)>0:
+                    s += '/'+subj.ID
+                if len(sess.ID)>0:
+                    s += '/'+sess.ID
+            if len(prefix)>0:
+                s += '/'+prefix
+            run.data.opath=opath+s
                 
 workflow.savesubjects(ofile,subjects,append=False)
