@@ -90,7 +90,7 @@ class ParseArgs:
             print('--outputsubjects <subj file>: specify a subject file, to which the results of the pipeline run on all subjects is appended. Only applicable with --pipeline.')
             print('--showsubjects: print the list of all subjects to be processed and exit.')
             print('--maskthresh: threshold for binarizing functional masks transformed from structural masks (Default=0.5)')
-            print('--opath <output path>: output path- overrides the opath in subjects file')
+            print('--opath <output path>: output path - overrides the opath in subjects file')
             print('')
             print('Report bugs/issues to Aras Kayvanrad (mkayvan@gmail.com)')
             print('')
