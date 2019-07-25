@@ -371,7 +371,13 @@ class PreprocessingStep:
             # interpolate if there are outliers (otherwise no confoud file generated)
             if os.path.exists(fileutils.removext(self.obase)+'__confound.txt'):
                 confoundmat=np.loadtxt(fileutils.removext(self.obase)+'__confound.txt')
-                outlier=np.sum(confoundmat,axis=1) # a vector in which outlier volumes are indicated by 1 and non-outliers by 0
+                # if there is only one corrupt volume, confoundmat will
+                # be a vector, otherwise, a matrix - one column for each
+                # corrupt volume
+                if len(confoundmat.shape) == 1:
+                    outlier = confoundmat
+                else:
+                    outlier=np.sum(confoundmat,axis=1) # a vector in which outlier volumes are indicated by 1 and non-outliers by 0
                 
                 t=tr*np.arange(0,img.shape[3])
 
