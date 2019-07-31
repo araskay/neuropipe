@@ -13,9 +13,17 @@ Report bugs/issues to Aras Kayvanrad (mkayvan@gmail.com).
 
 import sys, os
 import subprocess
+import distutils.spawn
 
+# check if pipe.py is accessible and if yes,
 # add pipe.py directory to path before loading other modules
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+if distutils.spawn.find_executable('pipe.py') == None:
+    print('Cannot find pipe.py. Possible causes/solutions:')
+    print('- Make sure the installation directory is added to the path')
+    print('- Alternatively you can run directly from the installation directory.')
+    sys.exit()
+sys.path.insert(distutils.spawn.find_executable('pipe.py'))
+
 
 import parse
 import workflow
