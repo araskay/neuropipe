@@ -65,7 +65,9 @@ for sfile in parser.subjectsfiles:
         qbatch_file.write('module load freesurfer\n')
         qbatch_file.write('module load matlab\n')
         qbatch_file.write('module load anaconda/3.5.3\n\n')
-                              
+        
+        qbatch_file.write(base_command + ' ')
+
         command_str  = ' '.join(parser.replace_subjectsfile(subject_fname))
         qbatch_file.write(command_str)
         qbatch_file.write('\n')
