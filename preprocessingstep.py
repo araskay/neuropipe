@@ -641,13 +641,11 @@ class PreprocessingStep:
                 sys.exit('ERROR in preprocessing step regress-out: one or more invalid regressor(s) given.')
                 
             rmat = np.array([])
-            regressors = ''
             if 'motpar' in self.params:
                 if self.data.motpar=='':
                     sys.exit('ERROR in preprocessing step regress-out: requested to regress-out motion parameters but no motion parameters available. Need to either provide motion parameters or have mcflirt run before this step.')
                 r = np.loadtxt(self.data.motpar)
                 rmat = np.concatenate((rmat,r),axis=1) if rmat.size else r
-                regressors += '_motpar'
             if 'motpar_derivatives' in self.params:
                 if self.data.motpar=='':
                     sys.exit('ERROR in preprocessing step regress-out: requested to regress-out motion parameters derivatives but no motion parameters available. Need to either provide motion parameters or have mcflirt run before this step.')
@@ -658,23 +656,22 @@ class PreprocessingStep:
                 # replace the last row (which is zero) with the previous one
                 r[-1,] = r[-2,]
                 rmat = np.concatenate((rmat,r),axis=1) if rmat.size else r
-                regressors += '_motpar_derivatives'
                 
-            np.savetxt(fileutils.removext(self.obase)+regressors+'_regressors.txt',rmat)
+            np.savetxt(fileutils.removext(self.obase)+'_regressors.txt',rmat)
             
             # convert regressors to design matrix
             # (this is not required- fsl_glm works the same without coversion using Text2Vest)
-            p=subprocess.Popen(['Text2Vest',fileutils.removext(self.obase)+regressors+'_regressors.txt',fileutils.removext(self.obase)+regressors+'_regressors.mat'])
+            p=subprocess.Popen(['Text2Vest',fileutils.removext(self.obase)+'_regressors.txt',fileutils.removext(self.obase)+'_regressors.mat'])
             p.communicate()            
             
             if self.data.brainmask=='':
                 p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
-                                    '-d',fileutils.removext(self.obase)+regressors+'_regressors.mat',\
+                                    '-d',fileutils.removext(self.obase)+'_regressors.mat',\
                                     '-o',fileutils.removeniftiext(self.obase)+'__glm',\
                                     '--out_res='+self.obase])
             else:
                 p=subprocess.Popen(['fsl_glm','-i',self.ibase,\
-                                    '-d',fileutils.removext(self.obase)+regressors+'_regressors.mat',\
+                                    '-d',fileutils.removext(self.obase)+'_regressors.mat',\
                                     '-m',self.data.brainmask,\
                                     '-o',fileutils.removeniftiext(self.obase)+'__glm',\
                                     '--out_res='+self.obase])
