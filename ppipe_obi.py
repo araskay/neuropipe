@@ -58,9 +58,6 @@ for sfile in parser.subjectsfiles:
         qbatch_file.write('#SBATCH -o .temp_job_'+parser.subjfile+'_'+parser.pipefile+str(count)+'.o'+'\n')
         qbatch_file.write('#SBATCH -e .temp_job_'+parser.subjfile+'_'+parser.pipefile+str(count)+'.e'+'\n\n')
 
-        qbatch_file.write('#SBATCH --partition=reserved\n')
-        qbatch_file.write('#SBATCH --account=rac-2018-hpcg1699\n\n')
-
         qbatch_file.write('module load anaconda/3.5.3\n')
         qbatch_file.write('module load afni\n')
         qbatch_file.write('module load fsl\n')
