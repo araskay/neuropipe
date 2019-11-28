@@ -94,6 +94,7 @@ class Data:
         self.csfwmr=''
         self.csfr=''
         self.wmr=''
+        self.connmat=''
         
     
     # this is not recommended anymore- use parcellate_structural
@@ -460,7 +461,8 @@ def getsubjects(subjectfile):
                                               'gsr=',\
                                               'csfwmr=',\
                                               'csfr=',\
-                                              'wmr='])
+                                              'wmr=',\
+                                               'connmat='])
         except getopt.GetoptError:
             sys.exit('Error in subjects file format. Please check the option identifiers in the subjects file. Also please note that identifiers require double dash (--)')
         for (opt,arg) in opts:
@@ -568,6 +570,8 @@ def getsubjects(subjectfile):
                 data.csfr=arg
             elif opt in ('--wmr'):
                 data.wmr=arg
+            elif opt in ('--connmat'):
+                data.connmat=arg
 
         run=Run(sequence,data)
         matchsubj=[s for s in subjects if len(s.ID)>0 and s.ID==subjectID ] # only match if there is actually a subjectID, i.e., len(s.ID)>0
@@ -647,6 +651,7 @@ def savesubjects(filename,subjects,append=True):
                         '--csfwmr \''+run.data.csfwmr+'\' '+\
                         '--csfr \''+run.data.csfr+'\' '+\
                         '--wmr \''+run.data.wmr+'\' '+\
+                        '--connmat \''+run.data.connmat+'\' '+\
                         '\n')
     f.close()
     
