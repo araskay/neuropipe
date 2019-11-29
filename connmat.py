@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys, getopt
 import workflow
 import numpy as np
