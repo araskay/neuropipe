@@ -1,10 +1,21 @@
 #!/usr/bin/env python
 
 import sys, getopt
-import workflow
 import numpy as np
 from nilearn.input_data import NiftiLabelsMasker
 from nilearn.connectome import ConnectivityMeasure
+
+# check if pipe.py is accessible and if yes,
+# add pipe.py directory to path before loading other modules
+import distutils.spawn
+if distutils.spawn.find_executable('pipe.py') == None:
+    print('Cannot find pipe.py. Possible causes/solutions:')
+    print('- Make sure the installation directory is added to the path')
+    print('- Alternatively you can run directly from the installation directory.')
+    sys.exit()
+sys.path.insert(0,distutils.spawn.find_executable('pipe.py'))
+
+import workflow, fileutils
 
 
 def connectivity_matrix(atlas_filename, fmri_filename, kind = 'correlation'):
@@ -19,7 +30,7 @@ def connectivity_matrix(atlas_filename, fmri_filename, kind = 'correlation'):
     '''
 
     # calculate time series over each label
-    masker = NiftiLabelsMasker(labels_img=atlas_filename, verbose=5)
+    masker = NiftiLabelsMasker(labels_img=atlas_filename, verbose=0)
     time_series = masker.fit_transform(fmri_filename)
 
     # calculate connectivity matrix
@@ -59,13 +70,16 @@ if subjects_file=='' or atlas_file=='':
 
 subjects=workflow.getsubjects(subjects_file)
 
+count = 0
 for subj in subjects:
     for sess in subj.sessions:
         for run in sess.runs:
+            count += 1
+            print('Processing subject',count,'out of',len(subjects))
             connmat = connectivity_matrix(atlas_filename=atlas_file,
-                                          fmri_filename=run.data.bold,
+                                          fmri_filename=fileutils.addniigzext(run.data.bold),
                                           kind=kind)
-            np.savetxt(run.data.bold+'_connmat.csv',connmat, delimiter=',')
-            run.data.connmat = run.data.bold+'_connmat.csv'
+            np.savetxt(fileutils.removeniftiext(run.data.bold)+'_connmat.csv',connmat, delimiter=',')
+            run.data.connmat = fileutils.removeniftiext(run.data.bold)+'_connmat.csv'
                 
 workflow.savesubjects(subjects_file,subjects,append=False)
