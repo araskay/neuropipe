@@ -26,7 +26,7 @@ if distutils.spawn.find_executable('pipe.py') == None:
     print('- Alternatively you can run directly from the installation directory.')
     sys.exit()
 
-sys.path.insert(0,distutils.spawn.find_executable('pipe.py'))
+sys.path.insert(0,os.path.dirname(distutils.spawn.find_executable('pipe.py')))
 
 import workflow
 import parse
