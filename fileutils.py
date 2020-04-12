@@ -42,6 +42,12 @@ def removeniftiext(filename):
         return(filename[0:-7])
     else:
         return(filename)
+
+def add_suffix_nifti(filename, sfx):
+    '''
+    add suffix to the nifti filename
+    '''
+    return addniigzext(removeniftiext(filename)+sfx)
     
 # convert afni file format to nifti (zipped)
 # also removes the afni after conversion
