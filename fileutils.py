@@ -70,18 +70,24 @@ def afni2nifti(filename):
         removefile(filename+'+tlrc.HEAD')
         removefile(filename+'+tlrc.BRIK')
 
-# convert mgz file format to nifti
+
 def mgztonifti(filename):
+    '''
+    convert mgz file format to nifti and return the converted file name
+    '''
     p=subprocess.Popen(['mri_convert',filename,removext(filename)+'.nii.gz'])
     p.communicate()
+    return removext(filename)+'.nii.gz'
 
-def reorient2std(in_fname, out_fname):
+def reorient2std(fname):
     '''
-    reorient in_fname to std using fslreorient2std and save output
-    to out_fname. in_fname and out_fname must be nifti files.
+    reorient fname to std using fslreorient2std and return the conveted
+    file name.
     '''
-    p=subprocess.Popen(['fslreorient2std',in_fname,out_fname])
+    p=subprocess.Popen(['fslreorient2std',fname,
+                        removext(fname)+'_reorient.nii.gz'])
     p.communicate()
+    return removext(fname)+'_reorient.nii.gz'
 
 # remove duplicate nifti files, where both .nii and .nii.gz files exists with the same base name
 def remove_nifti_duplicate(filename,removeunzip=True):
