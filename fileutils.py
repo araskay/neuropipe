@@ -71,11 +71,9 @@ def afni2nifti(filename):
         removefile(filename+'+tlrc.BRIK')
 
 # convert mgz file format to nifti
-# also removes the mgz file after conversion
 def mgztonifti(filename):
     p=subprocess.Popen(['mri_convert',filename,removext(filename)+'.nii.gz'])
     p.communicate()
-    removefile(filename)
 
 # remove duplicate nifti files, where both .nii and .nii.gz files exists with the same base name
 def remove_nifti_duplicate(filename,removeunzip=True):
