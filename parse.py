@@ -67,9 +67,9 @@ class ParseArgs:
             print('---------------------------------------')
             print('Additional parallel processing options:')
         if self.numpar>0:
-            print('[--numpar <number of parallel jobs = 16>]')
+            print('[--numpar <number of parallel jobs = {}>]'.format(self.numpar))
         if self.mem>0:
-            print('--mem <amount in GB = 16>')
+            print('--mem <amount in GB = {}>'.format(self.mem))
         print('')
         if extended:
             print('ARGUMENTS:')
