@@ -9,7 +9,7 @@ def printhelp():
     p.communicate()
     print('---------------------------------')
     print('Additional job scheduler options:')
-    print('[--numpar <number of parallel jobs = 16>]')
+    print('[--numpar <number of parallel jobs = 4>]')
 
 ifile=''
 ofile=''
@@ -21,15 +21,17 @@ ofile=''
 pipe_args = sys.argv[1:]
 for arg in pipe_args:
     if '--' in arg:
-        if not arg in ['--help','--input', '--output', '--directive','--numpar']:
+        if not arg in ['--help','--input', '--output', '--directive',
+                       '--numpar', '--reorient']:
             printhelp()
             sys.exit()
 
-numpar=16
+numpar=4
 
 # parse command-line arguments
 try:
-    (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',['help','input=', 'output=', 'directive=','numpar='])
+    (opts,args) = getopt.getopt(sys.argv[1:],'hi:o:',['help','input=',
+    'output=', 'directive=','numpar=', 'reorient'])
 except getopt.GetoptError:
     printhelp()
     sys.exit()
